@@ -22,6 +22,14 @@ public class Purchase {
 
     @Column(name = "date")
     private LocalDateTime date;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private Status status;
+
+    public enum Status {
+        CONFIRMED,
+        PENDING,
+        CANCELLED
+    }
 }
