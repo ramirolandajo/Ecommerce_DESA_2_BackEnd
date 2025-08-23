@@ -58,4 +58,10 @@ public class KafkaMockService {
                 new BrandDTO(6L, "Lenovo")
         );
     }
+
+    // Simula la recepción de un evento desde otro módulo (inventario)
+    public void mockListener(Event event) {
+        logger.info("Evento recibido por el listener mock: {}", event);
+        // Aquí podrías simular lógica de inventario, por ejemplo actualizar stock
+    }
 }

@@ -21,4 +21,6 @@ public class User {
     private String password;
     @Column(name = "role")
     private String role;
+    @Column(name = "account_active")
+    private boolean accountActive = false;
 }

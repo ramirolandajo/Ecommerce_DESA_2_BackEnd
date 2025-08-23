@@ -47,7 +47,36 @@ public class PurchaseServiceImpl implements PurchaseService {
             purchaseRepository.save(purchase);
             Event event = new Event("PurchaseConfirmed", purchase);
             kafkaMockService.sendEvent(event);
+            // Simula la recepción del evento en el módulo de inventario
+            kafkaMockService.mockListener(event);
         }
         return purchase;
+    }
+
+    @Override
+    public void addProductToCart(Integer cartId, Integer productId, int quantity) {
+        // Lógica para agregar producto al carrito
+        // ...
+        Event event = new Event("ProductAddedToCart", "CartId: " + cartId + ", ProductId: " + productId + ", Quantity: " + quantity);
+        kafkaMockService.sendEvent(event);
+        kafkaMockService.mockListener(event);
+    }
+
+    @Override
+    public void editCartItem(Integer cartItemId, int newQuantity) {
+        // Lógica para editar cantidad de producto en el carrito
+        // ...
+        Event event = new Event("CartItemEdited", "CartItemId: " + cartItemId + ", NewQuantity: " + newQuantity);
+        kafkaMockService.sendEvent(event);
+        kafkaMockService.mockListener(event);
+    }
+
+    @Override
+    public void removeProductFromCart(Integer cartItemId) {
+        // Lógica para eliminar producto del carrito
+        // ...
+        Event event = new Event("ProductRemovedFromCart", "CartItemId: " + cartItemId);
+        kafkaMockService.sendEvent(event);
+        kafkaMockService.mockListener(event);
     }
 }

@@ -9,4 +9,7 @@ public interface PurchaseService {
     List<Purchase> findAll();
     void deleteById(Integer id);
     Purchase confirmPurchase(Integer id);
+    void addProductToCart(Integer cartId, Integer productId, int quantity);
+    void editCartItem(Integer cartItemId, int newQuantity);
+    void removeProductFromCart(Integer cartItemId);
 }

@@ -39,4 +39,22 @@ public class PurchaseController {
         Purchase purchase = purchaseService.confirmPurchase(id);
         return ResponseEntity.ok(purchase);
     }
+
+    @PostMapping("/cart/{cartId}/add-product")
+    public ResponseEntity<String> addProductToCart(@PathVariable Integer cartId, @RequestParam Integer productId, @RequestParam int quantity) {
+        purchaseService.addProductToCart(cartId, productId, quantity);
+        return ResponseEntity.ok("Producto agregado al carrito y evento mockeado");
+    }
+
+    @PutMapping("/cart-item/{cartItemId}/edit")
+    public ResponseEntity<String> editCartItem(@PathVariable Integer cartItemId, @RequestParam int newQuantity) {
+        purchaseService.editCartItem(cartItemId, newQuantity);
+        return ResponseEntity.ok("Cantidad de producto editada y evento mockeado");
+    }
+
+    @DeleteMapping("/cart-item/{cartItemId}/remove")
+    public ResponseEntity<String> removeProductFromCart(@PathVariable Integer cartItemId) {
+        purchaseService.removeProductFromCart(cartItemId);
+        return ResponseEntity.ok("Producto eliminado del carrito y evento mockeado");
+    }
 }
