@@ -1,5 +1,6 @@
 package ar.edu.uade.ecommerce.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.Date;
@@ -14,6 +15,7 @@ public class Token {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonBackReference
     private User user;
 
     @Column(name = "token")
@@ -22,4 +24,3 @@ public class Token {
     @Column(name = "expiration_date")
     private Date expirationDate;
 }
-

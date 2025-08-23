@@ -1,22 +1,23 @@
 package ar.edu.uade.ecommerce.Entity;
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
-@Data
+import java.util.Set;
+
 @Entity
-@Table(name = "addresses")
-public class Address {
+@Data
+@Table(name = "favourite_products")
+public class FavouriteProducts {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    @Column(name = "description")
-    private String description;
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
     private User user;
 }
