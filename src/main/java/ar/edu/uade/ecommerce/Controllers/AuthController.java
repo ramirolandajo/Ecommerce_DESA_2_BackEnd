@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -15,44 +18,63 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String password = request.get("password");
         String token = authService.login(email, password);
-        return ResponseEntity.ok(token);
+        User user = authService.getUserByEmail(email);
+        user.setSessionActive(true);
+        authService.saveUser(user);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", token != null);
+        response.put("user", user);
+        response.put("bearer_token", token);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@RequestBody RegisterUserDTO registerUserDTO) {
+    public ResponseEntity<String> register(@RequestBody RegisterUserDTO registerUserDTO) {
+        User existingUser = authService.getUserByEmail(registerUserDTO.getEmail());
+        if (existingUser != null) {
+            if (existingUser.isAccountActive()) {
+                return ResponseEntity.badRequest().body("La cuenta ya está activa. Inicia sesión.");
+            } else {
+                // Reenvía el token de verificación
+                authService.resendVerificationToken(existingUser);
+                return ResponseEntity.ok("La cuenta ya existe pero no está activa. Se ha reenviado el token de verificación a tu correo.");
+            }
+        }
         User newUser = authService.registerDTO(registerUserDTO);
         UserResponseDTO responseDTO = new UserResponseDTO();
         responseDTO.setId(newUser.getId());
         responseDTO.setName(newUser.getName());
         responseDTO.setLastname(newUser.getLastname());
         responseDTO.setEmail(newUser.getEmail());
-        responseDTO.setRole(newUser.getRole());
-        return ResponseEntity.ok(responseDTO);
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<UserResponseDTO> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
-        String token = authHeader.replace("Bearer ", "");
-        String email = authService.getEmailFromToken(token);
-        User user = authService.getUserByEmail(email);
-        UserResponseDTO responseDTO = new UserResponseDTO();
-        responseDTO.setId(user.getId());
-        responseDTO.setName(user.getName());
-        responseDTO.setLastname(user.getLastname());
-        responseDTO.setEmail(user.getEmail());
-        responseDTO.setRole(user.getRole());
-        return ResponseEntity.ok(responseDTO);
+        newUser.setRole("USER");
+        return ResponseEntity.ok("Fuiste registrado satisfactoriamente, revisa tu casilla de correo para ingresar luego el token para activar la cuenta");
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<String> verifyEmail(@RequestParam String email, @RequestParam String token) {
+    public ResponseEntity<String> verifyEmail(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String token = request.get("token");
         boolean verified = authService.verifyEmailToken(email, token);
         if (verified) {
             return ResponseEntity.ok("Cuenta verificada exitosamente. Ya puedes iniciar sesión.");
         } else {
             return ResponseEntity.badRequest().body("Token inválido o expirado");
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = authService.getEmailFromToken(token);
+        User user = authService.getUserByEmail(email);
+        user.setSessionActive(false);
+        authService.saveUser(user);
+        return ResponseEntity.ok("Sesión cerrada correctamente");
     }
 }

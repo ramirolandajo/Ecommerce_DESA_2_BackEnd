@@ -4,6 +4,8 @@ import ar.edu.uade.ecommerce.Entity.CartItem;
 import ar.edu.uade.ecommerce.Repository.CartItemRepository;
 import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
 import ar.edu.uade.ecommerce.Entity.Event;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +18,18 @@ public class CartItemServiceImpl implements CartItemService {
     private CartItemRepository cartItemRepository;
     @Autowired
     private KafkaMockService kafkaMockService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public CartItem addCartItem(CartItem cartItem) {
         CartItem saved = cartItemRepository.save(cartItem);
-        kafkaMockService.sendEvent(new Event("CartItemAdded", saved));
+        try {
+            String json = objectMapper.writeValueAsString(saved);
+            kafkaMockService.sendEvent(new Event("CartItemAdded", json));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
         return saved;
     }
 
@@ -32,7 +41,12 @@ public class CartItemServiceImpl implements CartItemService {
             item.setProductId(cartItem.getProductId());
             item.setQuantity(cartItem.getQuantity());
             CartItem updated = cartItemRepository.save(item);
-            kafkaMockService.sendEvent(new Event("CartItemUpdated", updated));
+            try {
+                String json = objectMapper.writeValueAsString(updated);
+                kafkaMockService.sendEvent(new Event("CartItemUpdated", json));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
             return updated;
         }
         return null;
@@ -41,7 +55,14 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     public void removeCartItem(Integer id) {
         Optional<CartItem> item = cartItemRepository.findById(id);
-        item.ifPresent(i -> kafkaMockService.sendEvent(new Event("CartItemRemoved", i)));
+        item.ifPresent(i -> {
+            try {
+                String json = objectMapper.writeValueAsString(i);
+                kafkaMockService.sendEvent(new Event("CartItemRemoved", json));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        });
         cartItemRepository.deleteById(id);
     }
 

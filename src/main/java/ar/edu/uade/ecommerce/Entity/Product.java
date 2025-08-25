@@ -1,6 +1,5 @@
 package ar.edu.uade.ecommerce.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,48 +9,35 @@ import java.util.Set;
 @Data
 @Entity
 public class Product {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) //id a mano?
-    @Column(name = "product_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "name")
+    @Column
     private String name;
-
-    @Column(name = "description")
+    @Column
     private String description;
-
-    @Column(name = "price")
+    @Column
     private float priceunit;
-
-    @Column(name = "discount")
+    @Column
     private float discount;
-
-    @Column(name = "stock")
+    @Column
     private int stock;
-
-    @Column(name = "calification")
+    @Column
     private float calification;
 
-
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @ManyToMany
     @JoinTable(
-            name = "product_category",
-            joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id")
+        name = "product_category",
+        joinColumns = @JoinColumn(name = "product_id"),
+        inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private List<Category> categories;
+    private Set<Category> categories;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "brand_id")
     private Brand brand;
 
-    @ManyToMany(mappedBy = "categories")
-    private Set<Product> products;
-
     @ElementCollection
-    @Column(name = "image", columnDefinition = "LONGBLOB")
     private List<String> image;
-
 }

@@ -27,6 +27,9 @@ public class User {
     @Column(name = "account_active")
     private boolean accountActive = false;
 
+    @Column
+    private boolean sessionActive = false;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Address> addresses;

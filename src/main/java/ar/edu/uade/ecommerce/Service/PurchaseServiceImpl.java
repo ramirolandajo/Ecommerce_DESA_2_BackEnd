@@ -5,6 +5,7 @@ import ar.edu.uade.ecommerce.Entity.Event;
 import ar.edu.uade.ecommerce.Entity.Purchase.Status;
 import ar.edu.uade.ecommerce.Repository.PurchaseRepository;
 import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,8 @@ public class PurchaseServiceImpl implements PurchaseService {
     private PurchaseRepository purchaseRepository;
     @Autowired
     private KafkaMockService kafkaMockService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public Purchase save(Purchase purchase) {
@@ -45,10 +48,15 @@ public class PurchaseServiceImpl implements PurchaseService {
         if (purchase != null) {
             purchase.setStatus(Status.CONFIRMED);
             purchaseRepository.save(purchase);
-            Event event = new Event("PurchaseConfirmed", purchase);
-            kafkaMockService.sendEvent(event);
-            // Simula la recepción del evento en el módulo de inventario
-            kafkaMockService.mockListener(event);
+            try {
+                String json = objectMapper.writeValueAsString(purchase);
+                Event event = new Event("PurchaseConfirmed", json);
+                kafkaMockService.sendEvent(event);
+                // Simula la recepción del evento en el módulo de inventario
+                kafkaMockService.mockListener(event);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return purchase;
     }

@@ -9,4 +9,7 @@ public interface AuthService {
     String getEmailFromToken(String token);
     User getUserByEmail(String email);
     boolean verifyEmailToken(String email, String token);
+    void saveUser(User user);
+
+    void resendVerificationToken(User existingUser);
 }
