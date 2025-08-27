@@ -1,7 +1,11 @@
 package ar.edu.uade.ecommerce.Controllers;
 
+import ar.edu.uade.ecommerce.Entity.DTO.PurchaseInvoiceDTO;
 import ar.edu.uade.ecommerce.Entity.Purchase;
+import ar.edu.uade.ecommerce.Entity.User;
+import ar.edu.uade.ecommerce.Service.AuthService;
 import ar.edu.uade.ecommerce.Service.PurchaseService;
+import ar.edu.uade.ecommerce.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,47 +18,70 @@ public class PurchaseController {
     @Autowired
     private PurchaseService purchaseService;
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private AuthService authService;
+
     @GetMapping
     public List<Purchase> getAllPurchases() {
         return purchaseService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Purchase getPurchaseById(@PathVariable Integer id) {
-        return purchaseService.findById(id);
+    public ResponseEntity<Purchase> getPurchaseById(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = purchaseService.getEmailFromToken(token);
+        User user = authService.getUserByEmail(email);
+        if (!user.getSessionActive()) {
+            return ResponseEntity.status(401).build();
+        }
+        Purchase purchase = purchaseService.findById(id);
+        return ResponseEntity.ok(purchase);
     }
 
     @PostMapping
-    public Purchase createPurchase(@RequestBody Purchase purchase) {
-        return purchaseService.save(purchase);
+    public ResponseEntity<Purchase> createPurchase(@RequestHeader("Authorization") String authHeader, @RequestBody Purchase purchase) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = purchaseService.getEmailFromToken(token);
+        User user = authService.getUserByEmail(email);
+        if (!user.getSessionActive()) {
+            return ResponseEntity.status(401).build();
+        }
+        Purchase created = purchaseService.save(purchase);
+        return ResponseEntity.ok(created);
     }
 
     @DeleteMapping("/{id}")
-    public void deletePurchase(@PathVariable Integer id) {
+    public ResponseEntity<Void> deletePurchase(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = purchaseService.getEmailFromToken(token);
+        User user = authService.getUserByEmail(email);
+        if (!user.getSessionActive()) {
+            return ResponseEntity.status(401).build();
+        }
         purchaseService.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/confirm")
-    public ResponseEntity<Purchase> confirmPurchase(@PathVariable Integer id) {
+    public ResponseEntity<Purchase> confirmPurchase(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = purchaseService.getEmailFromToken(token);
+        User user = authService.getUserByEmail(email);
+        if (!user.getSessionActive()) {
+            return ResponseEntity.status(401).build();
+        }
         Purchase purchase = purchaseService.confirmPurchase(id);
         return ResponseEntity.ok(purchase);
     }
 
-    @PostMapping("/cart/{cartId}/add-product")
-    public ResponseEntity<String> addProductToCart(@PathVariable Integer cartId, @RequestParam Integer productId, @RequestParam int quantity) {
-        purchaseService.addProductToCart(cartId, productId, quantity);
-        return ResponseEntity.ok("Producto agregado al carrito y evento mockeado");
-    }
-
-    @PutMapping("/cart-item/{cartItemId}/edit")
-    public ResponseEntity<String> editCartItem(@PathVariable Integer cartItemId, @RequestParam int newQuantity) {
-        purchaseService.editCartItem(cartItemId, newQuantity);
-        return ResponseEntity.ok("Cantidad de producto editada y evento mockeado");
-    }
-
-    @DeleteMapping("/cart-item/{cartItemId}/remove")
-    public ResponseEntity<String> removeProductFromCart(@PathVariable Integer cartItemId) {
-        purchaseService.removeProductFromCart(cartItemId);
-        return ResponseEntity.ok("Producto eliminado del carrito y evento mockeado");
+    @GetMapping("/my-purchases")
+    public ResponseEntity<List<PurchaseInvoiceDTO>> getMyPurchases(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = purchaseService.getEmailFromToken(token);
+        List<PurchaseInvoiceDTO> invoices = purchaseService.getPurchasesByUserEmail(email);
+        return ResponseEntity.ok(invoices);
     }
 }

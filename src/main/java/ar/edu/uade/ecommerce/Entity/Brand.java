@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import lombok.Data;
 import jakarta.persistence.OneToMany;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Data
@@ -19,6 +20,14 @@ public class Brand {
     @Column
     private String name;
 
+    @Column(nullable = false)
+    private boolean active;
+
     @OneToMany(mappedBy = "brand")
+    @JsonManagedReference("brand-product")
     private List<Product> products;
+
+    public Brand() {
+        this.active = true;
+    }
 }

@@ -1,8 +1,11 @@
 package ar.edu.uade.ecommerce.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -20,6 +23,8 @@ public class User {
     private String lastname;
     @Column(name = "email", unique = true)
     private String email;
+
+    @JsonIgnore
     @Column(name = "password")
     private String password;
     @Column(name = "role")
@@ -31,22 +36,33 @@ public class User {
     private boolean sessionActive = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("address-user")
     private List<Address> addresses;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("cart-user")
     private List<Cart> carts;
 
+    @Setter
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("purchase-user")
     private List<Purchase> purchases;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("token-user")
+    @JsonIgnore
     private List<Token> tokens;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("favourite-user")
     private List<FavouriteProducts> favouriteProducts;
+
+    public boolean isEmpty() {
+        return this.id == null && this.name == null && this.lastname == null && this.email == null && this.password == null && this.role == null;
+    }
+
+    public Boolean getSessionActive() {
+        return sessionActive;
+    }
+
 }

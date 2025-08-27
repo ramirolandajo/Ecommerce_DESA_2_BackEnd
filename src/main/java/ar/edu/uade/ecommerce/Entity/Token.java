@@ -15,7 +15,7 @@ public class Token {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonBackReference
+    @JsonBackReference("token-user")
     private User user;
 
     @Column(name = "token")

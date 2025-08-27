@@ -38,7 +38,7 @@ public class CartItemServiceImpl implements CartItemService {
         Optional<CartItem> existing = cartItemRepository.findById(id);
         if (existing.isPresent()) {
             CartItem item = existing.get();
-            item.setProductId(cartItem.getProductId());
+            item.setId(cartItem.getId());
             item.setQuantity(cartItem.getQuantity());
             CartItem updated = cartItemRepository.save(item);
             try {

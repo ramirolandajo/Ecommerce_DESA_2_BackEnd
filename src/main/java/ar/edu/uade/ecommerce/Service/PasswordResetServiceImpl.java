@@ -9,6 +9,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Optional;
@@ -53,7 +54,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     }
 
     @Override
+    @Transactional
     public void changePassword(String email, String tokenStr, String newPassword) {
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new IllegalArgumentException("La nueva contraseña no puede ser nula o vacía");
+        }
         if (!validateToken(email, tokenStr)) throw new RuntimeException("Token inválido o expirado");
         User user = userRepository.findByEmail(email);
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -80,4 +85,3 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         mailSender.send(message);
     }
 }
-

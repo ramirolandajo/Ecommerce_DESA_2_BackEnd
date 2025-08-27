@@ -1,5 +1,7 @@
 package ar.edu.uade.ecommerce.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,18 +15,23 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @ManyToOne
+    @JoinColumn(name = "brand_id")
+    @JsonBackReference("brand-product")
+    private Brand brand;
+
     @Column
-    private String name;
+    private String title;
+
     @Column
     private String description;
+
     @Column
-    private float priceunit;
+    private float price;
+
     @Column
-    private float discount;
-    @Column
-    private int stock;
-    @Column
-    private float calification;
+    @ElementCollection
+    private List<String> mediaSrc; // solo los links de las imágenes
 
     @ManyToMany
     @JoinTable(
@@ -32,12 +39,17 @@ public class Product {
         joinColumns = @JoinColumn(name = "product_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
+    @JsonIgnore
     private Set<Category> categories;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "brand_id")
-    private Brand brand;
-
-    @ElementCollection
-    private List<String> image;
+    @Column
+    private boolean isNew;
+    @Column
+    private boolean isBestseller;
+    @Column
+    private boolean isFeatured;
+    @Column
+    private int stock;
+    @Column
+    private boolean hero;
 }

@@ -25,7 +25,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/purchase/**", "/cart/**", "/cart-items/**").authenticated()
+                .requestMatchers("/purchase/**", "/cart/**", "/cart-items/**","/user/**").authenticated()
                 .anyRequest().permitAll()
             );
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

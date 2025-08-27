@@ -1,8 +1,10 @@
 package ar.edu.uade.ecommerce.Entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import lombok.Data;
-
 import java.util.Set;
 
 @Entity
@@ -15,6 +17,10 @@ public class Category {
     @Column
     private String name;
 
-    @ManyToMany(mappedBy = "categories")
-    private Set<Product> products;
+    @Column(nullable = false)
+    private boolean active;
+
+    public Category() {
+        this.active = true;
+    }
 }

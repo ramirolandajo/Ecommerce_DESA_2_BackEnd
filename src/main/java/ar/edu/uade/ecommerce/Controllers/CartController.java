@@ -13,7 +13,12 @@ public class CartController {
     private CartService cartService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<Cart> getCartById(@PathVariable Integer id) {
+    public ResponseEntity<Cart> getCartById(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = cartService.getEmailFromToken(token);
+        if (!cartService.isUserSessionActive(email)) {
+            return ResponseEntity.status(401).build();
+        }
         Cart cart = cartService.findById(id);
         if (cart == null) {
             return ResponseEntity.notFound().build();
@@ -22,13 +27,23 @@ public class CartController {
     }
 
     @PostMapping
-    public ResponseEntity<Cart> createCart(@RequestBody Cart cart) {
+    public ResponseEntity<Cart> createCart(@RequestHeader("Authorization") String authHeader, @RequestBody Cart cart) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = cartService.getEmailFromToken(token);
+        if (!cartService.isUserSessionActive(email)) {
+            return ResponseEntity.status(401).build();
+        }
         Cart created = cartService.save(cart);
         return ResponseEntity.ok(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Cart> updateCart(@PathVariable Integer id, @RequestBody Cart cart) {
+    public ResponseEntity<Cart> updateCart(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id, @RequestBody Cart cart) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = cartService.getEmailFromToken(token);
+        if (!cartService.isUserSessionActive(email)) {
+            return ResponseEntity.status(401).build();
+        }
         Cart existing = cartService.findById(id);
         if (existing == null) {
             return ResponseEntity.notFound().build();
@@ -42,12 +57,17 @@ public class CartController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCart(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteCart(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = cartService.getEmailFromToken(token);
+        if (!cartService.isUserSessionActive(email)) {
+            return ResponseEntity.status(401).build();
+        }
         Cart existing = cartService.findById(id);
         if (existing == null) {
             return ResponseEntity.notFound().build();
         }
-        cartService.delete(id);
+        cartService.deleteCart(id);
         return ResponseEntity.ok().build();
     }
 }

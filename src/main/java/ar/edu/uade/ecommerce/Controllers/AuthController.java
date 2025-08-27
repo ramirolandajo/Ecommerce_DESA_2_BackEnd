@@ -1,6 +1,7 @@
 package ar.edu.uade.ecommerce.Controllers;
 
 import ar.edu.uade.ecommerce.Entity.DTO.RegisterUserDTO;
+import ar.edu.uade.ecommerce.Entity.DTO.UserLoginResponseDTO;
 import ar.edu.uade.ecommerce.Entity.DTO.UserResponseDTO;
 import ar.edu.uade.ecommerce.Entity.User;
 import ar.edu.uade.ecommerce.Service.AuthService;
@@ -18,7 +19,7 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request) {
+    public ResponseEntity<UserLoginResponseDTO> login(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         String password = request.get("password");
         String token = authService.login(email, password);
@@ -26,10 +27,17 @@ public class AuthController {
         user.setSessionActive(true);
         authService.saveUser(user);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", token != null);
-        response.put("user", user);
-        response.put("bearer_token", token);
+        UserLoginResponseDTO.UserBasicDTO userDTO = new UserLoginResponseDTO.UserBasicDTO();
+        userDTO.setId(user.getId());
+        userDTO.setName(user.getName());
+        userDTO.setLastname(user.getLastname());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setAddresses(user.getAddresses());
+
+        UserLoginResponseDTO response = new UserLoginResponseDTO();
+        response.setSuccess(token != null);
+        response.setBearer_token(token);
+        response.setUser(userDTO);
 
         return ResponseEntity.ok(response);
     }

@@ -15,16 +15,19 @@ public class Purchase {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("purchase-user")
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "cart_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("purchase-cart")
     private Cart cart;
 
     @Column(name = "date")
     private LocalDateTime date;
+
+    @Column(name = "reservation_time")
+    private LocalDateTime reservationTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")

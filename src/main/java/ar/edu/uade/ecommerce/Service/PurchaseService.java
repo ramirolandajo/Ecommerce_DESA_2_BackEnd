@@ -1,5 +1,6 @@
 package ar.edu.uade.ecommerce.Service;
 
+import ar.edu.uade.ecommerce.Entity.DTO.PurchaseInvoiceDTO;
 import ar.edu.uade.ecommerce.Entity.Purchase;
 import java.util.List;
 
@@ -12,4 +13,6 @@ public interface PurchaseService {
     void addProductToCart(Integer cartId, Integer productId, int quantity);
     void editCartItem(Integer cartItemId, int newQuantity);
     void removeProductFromCart(Integer cartItemId);
+    String getEmailFromToken(String token);
+    List<PurchaseInvoiceDTO> getPurchasesByUserEmail(String email);
 }

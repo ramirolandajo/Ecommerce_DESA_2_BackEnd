@@ -14,12 +14,14 @@ public class CartItem {
 
     @ManyToOne
     @JoinColumn(name = "cart_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("cart-item")
     private Cart cart;
 
     // Suponiendo que la entidad Product existe
-    @Column(name = "product_id")
-    private Integer productId;
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    @JsonBackReference("product-item")
+    private Product product;
 
     @Column(name = "quantity")
     private Integer quantity;

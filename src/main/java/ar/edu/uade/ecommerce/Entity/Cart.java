@@ -18,13 +18,13 @@ public class Cart {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("cart-user")
     private User user;
 
     @Column(name = "final_price")
     private Float finalPrice;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonManagedReference("cart-item")
     private List<CartItem> items = new ArrayList<>();
 }
