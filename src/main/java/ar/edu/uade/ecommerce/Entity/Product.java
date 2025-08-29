@@ -27,29 +27,72 @@ public class Product {
     private String description;
 
     @Column
-    private float price;
+    private Float price;
 
     @Column
     @ElementCollection
     private List<String> mediaSrc; // solo los links de las imágenes
 
+    @Column
+    private boolean isNew;
+
+    @Column
+    private boolean isBestseller;
+
+    @Column
+    private boolean isFeatured;
+
+    @Column
+    private int stock;
+
+    @Column
+    private boolean hero;
+
     @ManyToMany
     @JoinTable(
-        name = "product_category",
-        joinColumns = @JoinColumn(name = "product_id"),
-        inverseJoinColumns = @JoinColumn(name = "category_id")
+            name = "product_category",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
     )
     @JsonIgnore
     private Set<Category> categories;
 
     @Column
-    private boolean isNew;
+    private boolean active;
+
     @Column
-    private boolean isBestseller;
+    private Float discount;
+
     @Column
-    private boolean isFeatured;
+    private Float priceUnit;
+
     @Column
-    private int stock;
+    private Integer productCode;
+
     @Column
-    private boolean hero;
+    private Float calification;
+
+    public Product() {
+        this.active = true;
+    }
+
+    public Boolean getIsNew() {
+        return isNew;
+    }
+
+    public Boolean isIsBestseller() {
+        return isBestseller;
+    }
+
+    public Boolean isIsFeatured() {
+        return isFeatured;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = (active != null) ? active : true;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
 }

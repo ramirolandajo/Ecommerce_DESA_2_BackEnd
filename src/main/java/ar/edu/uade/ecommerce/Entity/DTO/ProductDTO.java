@@ -1,27 +1,59 @@
 package ar.edu.uade.ecommerce.Entity.DTO;
 
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class ProductDTO {
     private Long id;
-    private String name;
+    private String title;
     private String description;
-    private Double price;
+    private Float price;
     private Integer stock;
-    private String imageUrl;
+    private List<String> mediaSrc;
     private BrandDTO brand;
-    private CategoryDTO category;
+    private List<CategoryDTO> categories;
+    private Boolean isNew;
+    private Boolean isBestseller;
+    private Boolean isFeatured;
+    private Boolean hero;
+    private Float calification;
+    private Float discount;
+    private Float priceUnit;
+    private Integer productCode;
 
-    public ProductDTO(Long id, String name, String description, Double price, Integer stock, String image, BrandDTO brand, CategoryDTO category) {
+    private Boolean active = true;
+
+    public ProductDTO() {
+        this.active = true;
+    }
+
+    public ProductDTO(Long id, String title, String description, Float price, Integer stock, List<String> mediaSrc, BrandDTO brand, List<CategoryDTO> categories, Boolean isNew, Boolean isBestseller, Boolean isFeatured, Boolean hero, Boolean active, Float calification, Float discount, Float priceUnit, Integer productCode) {
         this.id = id;
-        this.name = name;
+        this.title = title;
         this.description = description;
         this.price = price;
         this.stock = stock;
-        this.imageUrl = image;
+        this.mediaSrc = mediaSrc;
         this.brand = brand;
-        this.category = category;
+        this.categories = categories;
+        this.isNew = isNew;
+        this.isBestseller = isBestseller;
+        this.isFeatured = isFeatured;
+        this.hero = hero;
+        this.active = (active != null) ? active : true;
+        this.calification = calification;
+        this.discount = discount;
+        this.priceUnit = priceUnit;
+        this.productCode = productCode;
     }
-}
 
+    public Float getCalification() { return calification; }
+    public void setCalification(Float calification) { this.calification = calification; }
+    public Float getDiscount() { return discount; }
+    public void setDiscount(Float discount) { this.discount = discount; }
+    public Float getPriceUnit() { return priceUnit; }
+    public void setPriceUnit(Float priceUnit) { this.priceUnit = priceUnit; }
+    public Integer getProductCode() { return productCode; }
+    public void setProductCode(Integer productCode) { this.productCode = productCode; }
+}

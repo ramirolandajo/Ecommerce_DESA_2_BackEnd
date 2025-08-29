@@ -1,9 +1,13 @@
 package ar.edu.uade.ecommerce.Repository;
 
+import ar.edu.uade.ecommerce.Entity.Review;
 import ar.edu.uade.ecommerce.Entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Integer> {
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+    List<Review> findByProduct(Product product);
 }
+
