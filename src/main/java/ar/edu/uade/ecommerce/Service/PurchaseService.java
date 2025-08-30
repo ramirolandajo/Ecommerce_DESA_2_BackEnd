@@ -15,4 +15,8 @@ public interface PurchaseService {
     void removeProductFromCart(Integer cartItemId);
     String getEmailFromToken(String token);
     List<PurchaseInvoiceDTO> getPurchasesByUserEmail(String email);
+
+    Purchase findLastPendingPurchaseByUserWithinHours(Integer userId, int hours);
+
+    List<Purchase> findByUserId(Integer id);
 }

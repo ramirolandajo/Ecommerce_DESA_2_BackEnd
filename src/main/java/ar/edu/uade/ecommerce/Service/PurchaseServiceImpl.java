@@ -70,7 +70,20 @@ public class PurchaseServiceImpl implements PurchaseService {
 
     @Override
     public void deleteById(Integer id) {
-        purchaseRepository.deleteById(id);
+        Purchase purchase = findById(id);
+        if (purchase != null && purchase.getStatus() != Status.CANCELLED) {
+            purchase.setStatus(Status.CANCELLED);
+            purchaseRepository.save(purchase);
+            // Avisar por Kafka que se debe liberar el stock
+            try {
+                String json = objectMapper.writeValueAsString(purchase);
+                Event event = new Event("ReleaseStock", json);
+                kafkaMockService.sendEvent(event);
+                kafkaMockService.mockListener(event);
+            } catch (Exception e) {
+                logger.error("Error al liberar reserva por cancelación manual", e);
+            }
+        }
     }
 
     @Override
@@ -78,15 +91,16 @@ public class PurchaseServiceImpl implements PurchaseService {
         Purchase purchase = findById(id);
         if (purchase != null) {
             purchase.setStatus(Status.CONFIRMED);
+            purchase.setDate(LocalDateTime.now()); // Setea la fecha de confirmación
+            // Solo enviar evento de confirmación de compra y generación de factura por Kafka (mock)
             purchaseRepository.save(purchase);
             try {
                 String json = objectMapper.writeValueAsString(purchase);
-                Event event = new Event("PurchaseConfirmed", json);
+                Event event = new Event("PurchaseConfirmed_GenerateInvoice", json);
                 kafkaMockService.sendEvent(event);
-                // Simula la recepción del evento en el módulo de inventario
                 kafkaMockService.mockListener(event);
             } catch (Exception e) {
-                logger.error("Error al confirmar compra", e);
+                logger.error("Error al confirmar compra y generar factura", e);
             }
         }
         return purchase;
@@ -179,5 +193,22 @@ public class PurchaseServiceImpl implements PurchaseService {
             invoices.add(invoice);
         }
         return invoices;
+    }
+
+    @Override
+    public Purchase findLastPendingPurchaseByUserWithinHours(Integer userId, int hours) {
+        List<Purchase> purchases = purchaseRepository.findByUser_IdAndStatusOrderByReservationTimeDesc(userId, Purchase.Status.PENDING);
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        for (Purchase purchase : purchases) {
+            if (purchase.getReservationTime() != null && purchase.getReservationTime().plusHours(hours).isAfter(now)) {
+                return purchase;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List<Purchase> findByUserId(Integer id) {
+        return purchaseRepository.findByUser_Id(id);
     }
 }

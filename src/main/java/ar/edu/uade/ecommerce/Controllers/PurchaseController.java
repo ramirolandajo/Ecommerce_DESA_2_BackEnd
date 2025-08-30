@@ -24,6 +24,9 @@ public class PurchaseController {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private ar.edu.uade.ecommerce.Service.CartService cartService;
+
     @GetMapping
     public List<Purchase> getAllPurchases() {
         return purchaseService.findAll();
@@ -49,23 +52,30 @@ public class PurchaseController {
         if (!user.getSessionActive()) {
             return ResponseEntity.status(401).build();
         }
+        // Setear el usuario y el estado PENDING automáticamente
+        purchase.setUser(user);
+        purchase.setStatus(Purchase.Status.PENDING);
         Purchase created = purchaseService.save(purchase);
         return ResponseEntity.ok(created);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePurchase(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+    @DeleteMapping("/{id}") //cancelo la compra por tiempo de vida de la compra (4 horas) o manualmente se cancela
+    public ResponseEntity<?> deletePurchase(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
         if (!user.getSessionActive()) {
             return ResponseEntity.status(401).build();
         }
+        Purchase purchase = purchaseService.findById(id);
+        if (purchase != null && purchase.getCart() != null) {
+            cartService.revertProductStock(purchase.getCart());
+        }
         purchaseService.deleteById(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Compra eliminada correctamente. ID: " + id);
     }
 
-    @PostMapping("/{id}/confirm")
+    @PostMapping("/{id}/confirm") //confirmo la compra y genero la factura
     public ResponseEntity<Purchase> confirmPurchase(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
@@ -74,6 +84,10 @@ public class PurchaseController {
             return ResponseEntity.status(401).build();
         }
         Purchase purchase = purchaseService.confirmPurchase(id);
+        if (purchase != null && purchase.getCart() != null) {
+            // Confirmar el stock y enviar evento por Kafka
+            cartService.confirmProductStock(purchase.getCart());
+        }
         return ResponseEntity.ok(purchase);
     }
 
@@ -83,5 +97,33 @@ public class PurchaseController {
         String email = purchaseService.getEmailFromToken(token);
         List<PurchaseInvoiceDTO> invoices = purchaseService.getPurchasesByUserEmail(email);
         return ResponseEntity.ok(invoices);
+    }
+
+    @GetMapping("/pending-cart")
+    public ResponseEntity<Purchase> getPendingCart(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = purchaseService.getEmailFromToken(token);
+        User user = authService.getUserByEmail(email);
+        if (!user.getSessionActive()) {
+            return ResponseEntity.status(401).build();
+        }
+        // Buscar la última compra pendiente del usuario cuyo tiempo de vida sea menor a 4 horas
+        Purchase pending = purchaseService.findLastPendingPurchaseByUserWithinHours(user.getId(), 4);
+        if (pending == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(pending);
+    }
+
+    @GetMapping("/user-purchases")
+    public ResponseEntity<List<Purchase>> getPurchasesByUser(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = purchaseService.getEmailFromToken(token);
+        User user = authService.getUserByEmail(email);
+        if (!user.getSessionActive()) {
+            return ResponseEntity.status(401).build();
+        }
+        List<Purchase> purchases = purchaseService.findByUserId(user.getId());
+        return ResponseEntity.ok(purchases);
     }
 }
