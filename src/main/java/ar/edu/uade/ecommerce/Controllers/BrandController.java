@@ -53,6 +53,16 @@ public class BrandController {
 
     @PostMapping
     public BrandDTO addBrand(@RequestBody BrandDTO brandDTO) {
+        // Verificar si ya existe una marca con el mismo nombre (incluyendo ambos null)
+        Brand existing = brandService.getAllBrands().stream()
+            .filter(b -> (b.getName() == null && brandDTO.getName() == null) ||
+                         (b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName())))
+            .findFirst()
+            .orElse(null);
+        if (existing != null) {
+            // Si existe, devolver el DTO de la marca existente
+            return new BrandDTO(Long.valueOf(existing.getId()), existing.getName(), existing.isActive());
+        }
         Brand brand = new Brand();
         brand.setName(brandDTO.getName());
         brand.setActive(brandDTO.getActive() != null ? brandDTO.getActive() : true);
@@ -66,15 +76,12 @@ public class BrandController {
                 .filter(b -> b.getId().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
-        brand.setName(brandDTO.getName());
-        // Si el campo active es null, asignar el valor actual de la entidad (no null)
-        if (brandDTO.getActive() == null) {
-            brand.setActive(brand.isActive());
-        } else {
+        brand.setName(brandDTO.getName()); // Permitir null
+        if (brandDTO.getActive() != null) {
             brand.setActive(brandDTO.getActive());
         }
-        Brand updated = brandService.saveBrand(brand);
-        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+        brandService.saveBrand(brand);
+        return new BrandDTO(Long.valueOf(brand.getId()), brand.getName(), brand.isActive());
     }
 
     @DeleteMapping("/{id}")

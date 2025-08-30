@@ -37,7 +37,7 @@ public class PurchaseController {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
-        if (!user.getSessionActive()) {
+        if (user == null || !user.getSessionActive()) {
             return ResponseEntity.status(401).build();
         }
         Purchase purchase = purchaseService.findById(id);
@@ -49,7 +49,7 @@ public class PurchaseController {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
-        if (!user.getSessionActive()) {
+        if (user == null || !user.getSessionActive()) {
             return ResponseEntity.status(401).build();
         }
         // Setear el usuario y el estado PENDING automáticamente
@@ -64,7 +64,7 @@ public class PurchaseController {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
-        if (!user.getSessionActive()) {
+        if (user == null || !user.getSessionActive()) {
             return ResponseEntity.status(401).build();
         }
         Purchase purchase = purchaseService.findById(id);
@@ -80,7 +80,7 @@ public class PurchaseController {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
-        if (!user.getSessionActive()) {
+        if (user == null || !user.getSessionActive()) {
             return ResponseEntity.status(401).build();
         }
         Purchase purchase = purchaseService.confirmPurchase(id);
@@ -104,7 +104,7 @@ public class PurchaseController {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
-        if (!user.getSessionActive()) {
+        if (user == null || !user.getSessionActive()) {
             return ResponseEntity.status(401).build();
         }
         // Buscar la última compra pendiente del usuario cuyo tiempo de vida sea menor a 4 horas
@@ -120,7 +120,7 @@ public class PurchaseController {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
-        if (!user.getSessionActive()) {
+        if (user == null || !user.getSessionActive()) {
             return ResponseEntity.status(401).build();
         }
         List<Purchase> purchases = purchaseService.findByUserId(user.getId());

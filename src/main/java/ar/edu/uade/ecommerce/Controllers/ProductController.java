@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/products")
 public class ProductController {
     @Autowired
-    private KafkaMockService kafkaMockService;
+    KafkaMockService kafkaMockService;
     @Autowired
-    private ProductRepository productRepository;
+    ProductRepository productRepository;
     @Autowired
     private ReviewRepository reviewRepository;
     @PersistenceContext
-    private EntityManager entityManager;
+    EntityManager entityManager;
 
     // Sincroniza productos desde el mock
     @GetMapping("/sync")
