@@ -17,7 +17,8 @@ FROM amazoncorretto:21
 WORKDIR /app
 
 # Copiamos el JAR generado
-COPY --from=builder /app/target/Ecommerce-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/target/app.jar app.jar
+
 
 # Exponemos puerto
 EXPOSE 8080
