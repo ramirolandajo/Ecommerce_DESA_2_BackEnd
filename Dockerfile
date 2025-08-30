@@ -1,17 +1,12 @@
-FROM amazoncorretto:21-alpine-jdk
+# Etapa 1: Construcción
+FROM maven:3.9.11-eclipse-temurin-21 AS builder
 WORKDIR /app
-
-# Copiamos todo el proyecto
 COPY . .
-
-# Instalamos Maven para construir el jar
-RUN apt-get update && apt-get install -y maven
-
-# Construimos el jar
 RUN mvn clean package -DskipTests
 
-# Copiamos el jar generado a app.jar
-RUN cp target/Ecommerce-0.0.1-SNAPSHOT.jar app.jar
-
+# Etapa 2: Imagen final
+FROM amazoncorretto:21-jdk
+WORKDIR /app
+COPY --from=builder /app/target/Ecommerce-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
