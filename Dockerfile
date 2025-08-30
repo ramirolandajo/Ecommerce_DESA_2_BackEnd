@@ -1,15 +1,18 @@
-# Etapa 1: Construcción del JAR
+# Etapa 1: Construcción
 FROM maven:3.9.11-eclipse-temurin-21 AS builder
 WORKDIR /app
 
-# Copiamos todo el proyecto
+# Primero copiamos solo pom.xml y resolvemos dependencias (caché)
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copiamos el resto del proyecto
 COPY src ./src
 
 # Construimos el JAR sin tests
 RUN mvn clean package -DskipTests
 
-# Etapa 2: Imagen final con solo el JAR
+# Etapa 2: Imagen final
 FROM amazoncorretto:21
 WORKDIR /app
 
