@@ -8,6 +8,6 @@ RUN mvn clean package -DskipTests
 # Etapa 2: Imagen final
 FROM amazoncorretto:21-alpine-jdk
 WORKDIR /app
-COPY --from=builder /app/target/backGrupo3ViMa-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/target/Ecommerce-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
