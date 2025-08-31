@@ -11,7 +11,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
     @Value("${jwt.secret}")
-    private String jwtSecret;
+    private String secret;
 
     private final long EXPIRATION_TIME = 7200000; // 2 horas
 
@@ -20,16 +20,21 @@ public class JwtUtil {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
     }
 
     public String extractUsername(String token) {
-        return getClaims(token).getSubject();
+        try {
+            return getClaims(token).getSubject();
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public boolean validateToken(String token, String username) {
         String extractedUsername = extractUsername(token);
+        if (extractedUsername == null || username == null) return false;
         return (extractedUsername.equals(username) && !isTokenExpired(token));
     }
 
@@ -38,6 +43,6 @@ public class JwtUtil {
     }
 
     private Claims getClaims(String token) {
-        return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
+        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
     }
 }
