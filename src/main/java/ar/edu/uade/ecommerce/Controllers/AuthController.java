@@ -24,21 +24,25 @@ public class AuthController {
         String password = request.get("password");
         String token = authService.login(email, password);
         User user = authService.getUserByEmail(email);
+        if (user == null) {
+            UserLoginResponseDTO response = new UserLoginResponseDTO();
+            response.setSuccess(false);
+            response.setBearer_token(null);
+            response.setUser(null);
+            return ResponseEntity.ok(response);
+        }
         user.setSessionActive(true);
         authService.saveUser(user);
-
         UserLoginResponseDTO.UserBasicDTO userDTO = new UserLoginResponseDTO.UserBasicDTO();
         userDTO.setId(user.getId());
         userDTO.setName(user.getName());
         userDTO.setLastname(user.getLastname());
         userDTO.setEmail(user.getEmail());
         userDTO.setAddresses(user.getAddresses());
-
         UserLoginResponseDTO response = new UserLoginResponseDTO();
         response.setSuccess(token != null);
         response.setBearer_token(token);
         response.setUser(userDTO);
-
         return ResponseEntity.ok(response);
     }
 

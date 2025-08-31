@@ -49,6 +49,42 @@ class AuthControllerTest {
     }
 
     @Test
+    void testLogin_Failure() {
+        Map<String, String> request = new HashMap<>();
+        request.put("email", "fail@email.com");
+        request.put("password", "wrongpass");
+        when(authService.login("fail@email.com", "wrongpass")).thenReturn(null);
+        User user = new User();
+        user.setId(99);
+        user.setName("Fail");
+        user.setLastname("User");
+        user.setEmail("fail@email.com");
+        user.setSessionActive(false);
+        when(authService.getUserByEmail("fail@email.com")).thenReturn(user);
+        doNothing().when(authService).saveUser(any(User.class));
+        ResponseEntity<UserLoginResponseDTO> response = authController.login(request);
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertNull(response.getBody().getBearer_token());
+    }
+
+    @Test
+    void testLogin_UserNotFound() {
+        Map<String, String> request = new HashMap<>();
+        request.put("email", "noexiste@email.com");
+        request.put("password", "cualquier");
+        when(authService.login("noexiste@email.com", "cualquier")).thenReturn(null);
+        when(authService.getUserByEmail("noexiste@email.com")).thenReturn(null);
+        ResponseEntity<UserLoginResponseDTO> response = authController.login(request);
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertNull(response.getBody().getBearer_token());
+        assertNull(response.getBody().getUser());
+    }
+
+    @Test
     void testRegister_NewUser() {
         RegisterUserDTO dto = new RegisterUserDTO();
         dto.setEmail("new@email.com");

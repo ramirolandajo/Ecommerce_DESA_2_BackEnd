@@ -22,6 +22,9 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null) {
+            return ResponseEntity.status(401).body(null);
+        }
         String token = authHeader.replace("Bearer ", "");
         String email = authService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
@@ -33,11 +36,25 @@ public class UserController {
 
     @PostMapping("/address")
     public ResponseEntity<?> addAddress(@RequestHeader("Authorization") String authHeader, @RequestBody Address address) {
+        if (authHeader == null) {
+            return ResponseEntity.status(401).body("Usuario no logueado");
+        }
         String token = authHeader.replace("Bearer ", "");
         String email = authService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
         if (user == null || !user.getSessionActive()) {
             return ResponseEntity.status(401).body("Usuario no logueado");
+        }
+        if (address == null) {
+            return ResponseEntity.ok(null);
+        }
+        // Validación extra: si la dirección ya existe para el usuario, retorna 409
+        if (user.getAddresses() != null) {
+            for (Object addr : user.getAddresses()) {
+                if (addr.equals(address)) {
+                    return ResponseEntity.status(409).body("La dirección ya existe para el usuario");
+                }
+            }
         }
         address.setUser(user);
         Address saved = userService.addAddress(address);
@@ -93,6 +110,6 @@ public class UserController {
         if (user == null || !user.getSessionActive()) {
             return ResponseEntity.status(401).body(null);
         }
-        return ResponseEntity.ok(user.getAddresses());
+        return ResponseEntity.ok((List<Address>) user.getAddresses());
     }
 }

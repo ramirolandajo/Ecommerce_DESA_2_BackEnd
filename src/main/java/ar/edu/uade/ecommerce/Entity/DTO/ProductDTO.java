@@ -22,10 +22,10 @@ public class ProductDTO {
     private Float priceUnit;
     private Integer productCode;
 
-    private Boolean active = true;
+    private Boolean active;
 
     public ProductDTO() {
-        this.active = true;
+        // No inicializar active aquí, debe ser null por defecto
     }
 
     public ProductDTO(Long id, String title, String description, Float price, Integer stock, List<String> mediaSrc, BrandDTO brand, List<CategoryDTO> categories, Boolean isNew, Boolean isBestseller, Boolean isFeatured, Boolean hero, Boolean active, Float calification, Float discount, Float priceUnit, Integer productCode) {
@@ -41,7 +41,7 @@ public class ProductDTO {
         this.isBestseller = isBestseller;
         this.isFeatured = isFeatured;
         this.hero = hero;
-        this.active = (active != null) ? active : true;
+        this.active = active;
         this.calification = calification;
         this.discount = discount;
         this.priceUnit = priceUnit;
@@ -56,4 +56,7 @@ public class ProductDTO {
     public void setPriceUnit(Float priceUnit) { this.priceUnit = priceUnit; }
     public Integer getProductCode() { return productCode; }
     public void setProductCode(Integer productCode) { this.productCode = productCode; }
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
 }

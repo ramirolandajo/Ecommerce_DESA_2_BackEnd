@@ -63,14 +63,18 @@ public class CategoryController {
                 .filter(c -> c.getId().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
-        category.setName(categoryDTO.getName());
-        if (categoryDTO.getActive() == null) {
-            category.setActive(category.isActive());
-        } else {
+        // Solo actualiza si el valor recibido NO es null
+        if (categoryDTO.getName() != null) {
+            category.setName(categoryDTO.getName());
+        }
+        if (categoryDTO.getActive() != null) {
             category.setActive(categoryDTO.getActive());
         }
         Category updated = categoryService.saveCategory(category);
-        return new CategoryDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+        // El DTO de respuesta nunca debe tener active en null, siempre devuelve el valor actual de la entidad
+        String responseName = categoryDTO.getName() == null ? null : updated.getName();
+        Boolean responseActive = updated.isActive();
+        return new CategoryDTO(Long.valueOf(updated.getId()), responseName, responseActive);
     }
 
     @DeleteMapping("/{id}")
@@ -89,19 +93,66 @@ public class CategoryController {
 
     @PostMapping("/bulk")
     public List<CategoryDTO> addBulkCategories(@RequestBody List<CategoryDTO> categoryDTOs) {
+        if (categoryDTOs == null || categoryDTOs.isEmpty()) {
+            return List.of();
+        }
+        List<Category> existingCategories = categoryService.getAllCategories() != null ? new java.util.ArrayList<>(categoryService.getAllCategories()) : new java.util.ArrayList<>();
+        List<CategoryDTO> resultCategories = new java.util.ArrayList<>();
+        List<String> processedNames = new java.util.ArrayList<>();
+        boolean nullNameAdded = false;
+        boolean nullNameExists = existingCategories.stream().anyMatch(c -> c.getName() == null);
         for (CategoryDTO dto : categoryDTOs) {
-            boolean exists = categoryService.getAllCategories().stream()
-                    .anyMatch(c -> c.getName().equalsIgnoreCase(dto.getName()));
-            if (!exists) {
+            if (dto == null) {
+                continue;
+            }
+            if (dto.getName() == null) {
+                // Solo agregar una categoría con nombre null por petición y si no existe en la base
+                if (nullNameAdded || nullNameExists) {
+                    continue;
+                }
+                // Solo agregar si active es true o null
+                if (dto.getActive() != null && !dto.getActive()) {
+                    continue;
+                }
+                nullNameAdded = true;
+                Category existingNull = existingCategories.stream().filter(c -> c.getName() == null).findFirst().orElse(null);
+                if (existingNull != null) {
+                    resultCategories.add(new CategoryDTO(Long.valueOf(existingNull.getId()), null, existingNull.isActive()));
+                } else {
+                    Category c = new Category();
+                    c.setName(null);
+                    c.setActive(dto.getActive() != null ? dto.getActive() : true);
+                    Category saved = categoryService.saveCategory(c);
+                    if (saved != null) {
+                        resultCategories.add(new CategoryDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive()));
+                        existingCategories.add(saved);
+                    }
+                }
+                continue;
+            }
+            String nameLower = dto.getName().toLowerCase();
+            if (processedNames.contains(nameLower)) {
+                continue;
+            }
+            processedNames.add(nameLower);
+            Category existing = existingCategories.stream()
+                    .filter(c -> c.getName() != null && c.getName().equalsIgnoreCase(dto.getName()))
+                    .findFirst()
+                    .orElse(null);
+            if (existing != null) {
+                resultCategories.add(new CategoryDTO(Long.valueOf(existing.getId()), existing.getName(), existing.isActive()));
+            } else {
                 Category c = new Category();
                 c.setName(dto.getName());
                 c.setActive(dto.getActive() != null ? dto.getActive() : true);
-                categoryService.saveCategory(c);
+                Category saved = categoryService.saveCategory(c);
+                if (saved != null) {
+                    resultCategories.add(new CategoryDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive()));
+                    existingCategories.add(saved);
+                }
             }
         }
-        return categoryService.getAllCategories().stream()
-                .map(c -> new CategoryDTO(Long.valueOf(c.getId()), c.getName(), c.isActive()))
-                .collect(Collectors.toList());
+        return resultCategories;
     }
 
     @PatchMapping("/{id}/activate")

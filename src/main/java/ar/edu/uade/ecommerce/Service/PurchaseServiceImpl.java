@@ -177,17 +177,26 @@ public class PurchaseServiceImpl implements PurchaseService {
             PurchaseInvoiceDTO invoice = new PurchaseInvoiceDTO();
             invoice.setPurchaseId(purchase.getId());
             invoice.setPurchaseDate(purchase.getDate());
+            if (purchase.getCart() == null) {
+                invoice.setTotalAmount(0.0F);
+                invoice.setProducts(new java.util.ArrayList<>());
+                invoices.add(invoice);
+                continue;
+            }
             invoice.setTotalAmount(purchase.getCart().getFinalPrice());
             List<ProductDetailDTO> products = new java.util.ArrayList<>();
-            for (CartItem item : purchase.getCart().getItems()) {
-                Product product = productRepository.findById(item.getId()).orElse(null);
-                if (product == null) continue;
-                ProductDetailDTO pd = new ProductDetailDTO();
-                pd.setId(product.getId());
-                pd.setDescription(product.getDescription());
-                pd.setStock(product.getStock());
-                pd.setPrice(product.getPrice());
-                products.add(pd);
+            List<CartItem> items = purchase.getCart().getItems();
+            if (items != null) {
+                for (CartItem item : items) {
+                    Product product = productRepository.findById(item.getId()).orElse(null);
+                    if (product == null) continue;
+                    ProductDetailDTO pd = new ProductDetailDTO();
+                    pd.setId(product.getId());
+                    pd.setDescription(product.getDescription());
+                    pd.setStock(product.getStock());
+                    pd.setPrice(product.getPrice());
+                    products.add(pd);
+                }
             }
             invoice.setProducts(products);
             invoices.add(invoice);
@@ -198,6 +207,7 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     public Purchase findLastPendingPurchaseByUserWithinHours(Integer userId, int hours) {
         List<Purchase> purchases = purchaseRepository.findByUser_IdAndStatusOrderByReservationTimeDesc(userId, Purchase.Status.PENDING);
+        if (purchases == null) return null;
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
         for (Purchase purchase : purchases) {
             if (purchase.getReservationTime() != null && purchase.getReservationTime().plusHours(hours).isAfter(now)) {

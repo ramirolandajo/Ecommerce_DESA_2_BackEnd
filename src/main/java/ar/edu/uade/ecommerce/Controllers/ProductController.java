@@ -134,27 +134,38 @@ public class ProductController {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
         Product product = productOpt.get();
-        product.setTitle(dto.getTitle());
-        product.setDescription(dto.getDescription());
-        product.setStock(dto.getStock());
-        product.setMediaSrc(dto.getMediaSrc() != null ? dto.getMediaSrc() : List.of());
-        product.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);
-        product.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);
-        product.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);
-        product.setHero(dto.getHero() != null ? dto.getHero() : false);
-        product.setActive(dto.getActive() != null ? dto.getActive() : true);
-        product.setProductCode(dto.getProductCode());
-        // Lógica de precio unitario y descuento
+        // Campos simples
+        if (dto.getTitle() != null) product.setTitle(dto.getTitle());
+        if (dto.getDescription() != null) product.setDescription(dto.getDescription());
+        if (dto.getStock() != null) product.setStock(dto.getStock());
+        // MediaSrc: si es null, setear lista vacía
+        if (dto.getMediaSrc() == null) {
+            product.setMediaSrc(List.of());
+        } else {
+            product.setMediaSrc(dto.getMediaSrc());
+        }
+        // Booleanos: solo asignar si no son null
+        if (dto.getIsNew() != null) product.setNew(dto.getIsNew());
+        if (dto.getIsBestseller() != null) product.setBestseller(dto.getIsBestseller());
+        if (dto.getIsFeatured() != null) product.setIsFeatured(dto.getIsFeatured());
+        if (dto.getHero() != null) product.setHero(dto.getHero());
+        // Active
+        if (dto.getActive() != null) product.setActive(dto.getActive());
+        // ProductCode: si es null, setear null
+        if (dto.getProductCode() == null) {
+            product.setProductCode(null);
+        } else {
+            product.setProductCode(dto.getProductCode());
+        }
+        // PriceUnit y Discount
         if (dto.getPriceUnit() != null) product.setPriceUnit(dto.getPriceUnit());
         if (dto.getDiscount() != null) product.setDiscount(dto.getDiscount());
-        // Si se tocó priceUnit o discount, recalcular price
-        if (dto.getPriceUnit() != null || dto.getDiscount() != null) {
-            Float priceUnit = product.getPriceUnit();
-            Float discount = product.getDiscount() != null ? product.getDiscount() : 0f;
-            if (priceUnit != null) {
-                Float price = priceUnit - (priceUnit * (discount / 100f));
-                product.setPrice(price);
-            }
+        // Recalcular price si priceUnit o discount se tocan y ambos existen
+        Float priceUnit = product.getPriceUnit();
+        Float discount = product.getDiscount();
+        if ((dto.getPriceUnit() != null || dto.getDiscount() != null) && priceUnit != null && discount != null) {
+            Float price = priceUnit - (priceUnit * (discount / 100f));
+            product.setPrice(price);
         } else if (dto.getPrice() != null) {
             product.setPrice(dto.getPrice());
         }
@@ -267,9 +278,9 @@ public class ProductController {
     }
 
     // Conversión a DTO
-    private ProductDTO toDTO(Product product) {
+    ProductDTO toDTO(Product product) {
         ProductDTO dto = new ProductDTO();
-        dto.setId(Long.valueOf(product.getId()));
+        dto.setId(product.getId() != null ? Long.valueOf(product.getId()) : null);
         dto.setTitle(product.getTitle());
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
@@ -279,15 +290,20 @@ public class ProductController {
         dto.setDiscount(product.getDiscount());
         dto.setPriceUnit(product.getPriceUnit());
         dto.setProductCode(product.getProductCode());
-        dto.setActive(product.getActive());
+        // Si el campo active es null, setear null en el DTO
+        dto.setActive(product.getActive() != null ? product.getActive() : null);
         // Devuelve el nombre de la marca y categorías
         if (product.getBrand() != null) {
             dto.setBrand(new BrandDTO(Long.valueOf(product.getBrand().getId()), product.getBrand().getName(), product.getBrand().isActive()));
+        } else {
+            dto.setBrand(null);
         }
         if (product.getCategories() != null && !product.getCategories().isEmpty()) {
             dto.setCategories(product.getCategories().stream()
                 .map(cat -> new CategoryDTO(Long.valueOf(cat.getId()), cat.getName(), cat.isActive()))
                 .collect(Collectors.toList()));
+        } else {
+            dto.setCategories(null);
         }
         dto.setIsNew(product.getIsNew());
         dto.setIsBestseller(product.isIsBestseller());

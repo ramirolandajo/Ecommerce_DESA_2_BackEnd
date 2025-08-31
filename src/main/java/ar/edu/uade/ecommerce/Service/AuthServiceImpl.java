@@ -104,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
         return true;
     }
 
-    private String generateToken() {
+    String generateToken() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder();
         Random rnd = new Random();
@@ -114,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
         return sb.toString();
     }
 
-    private void sendVerificationEmail(String to, String token) {
+    void sendVerificationEmail(String to, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("CompuMundoHiperMegaRed <no-reply@compumundo.com>");
         message.setTo(to);

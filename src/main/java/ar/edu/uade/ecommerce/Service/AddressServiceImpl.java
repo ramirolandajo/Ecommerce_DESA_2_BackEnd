@@ -30,7 +30,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     public List<Address> getAddressesByUser(ar.edu.uade.ecommerce.Entity.User user) {
-        return user.getAddresses();
+        return (List<Address>) user.getAddresses();
     }
 
     public void deleteAddress(Integer id, ar.edu.uade.ecommerce.Entity.User user) {

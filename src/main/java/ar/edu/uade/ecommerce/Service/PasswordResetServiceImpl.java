@@ -66,7 +66,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         tokenRepository.deleteByToken(tokenStr);
     }
 
-    private String generateToken() {
+    String generateToken() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder();
         Random rnd = new Random();
@@ -76,7 +76,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         return sb.toString();
     }
 
-    private void sendEmail(String to, String token) {
+    void sendEmail(String to, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("CompuMundoHiperMegaRed <no-reply@compumundo.com>");
         message.setTo(to);

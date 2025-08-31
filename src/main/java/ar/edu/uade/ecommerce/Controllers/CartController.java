@@ -33,16 +33,13 @@ public class CartController {
         if (!cartService.isUserSessionActive(email)) {
             return ResponseEntity.status(401).build();
         }
-        // Asignar el usuario al carrito usando el email del token
         ar.edu.uade.ecommerce.Entity.User user = cartService.findUserByEmail(email);
         cart.setUser(user);
-        // Asociar cada CartItem al carrito
         if (cart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem item : cart.getItems()) {
                 item.setCart(cart);
             }
         }
-        // Calcular el precio final sumando los precios de los productos por cantidad
         float finalPrice = 0f;
         if (cart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem item : cart.getItems()) {
@@ -56,26 +53,32 @@ public class CartController {
         }
         cart.setFinalPrice(finalPrice);
         Cart createdCart = cartService.createCart(cart);
-        // Baja provisoria de stock: por cada CartItem, buscar el producto real y restar la cantidad
-        if (createdCart.getItems() != null) {
+        boolean stockError = false;
+        boolean kafkaError = false;
+        // Solo si createdCart no es null, realizar lógica de stock y Kafka
+        if (createdCart != null && createdCart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem item : createdCart.getItems()) {
                 ar.edu.uade.ecommerce.Entity.Product product = item.getProduct();
                 if (product != null && item.getQuantity() != null) {
-                    // Buscar el producto real en la base por ID
                     ar.edu.uade.ecommerce.Entity.Product realProduct = cartService.getProductById(product.getId());
                     if (realProduct != null) {
                         int nuevoStock = realProduct.getStock() - item.getQuantity();
                         realProduct.setStock(nuevoStock);
-                        cartService.updateProductStock(realProduct);
-                        // Actualizar el objeto en el CartItem para que el stock refleje el nuevo valor
+                        try {
+                            cartService.updateProductStock(realProduct);
+                        } catch (Exception e) {
+                            stockError = true;
+                        }
                         item.setProduct(realProduct);
                     }
                 }
             }
+            try {
+                cartService.sendKafkaEvent("StockReserved_PendingPurchase", createdCart);
+            } catch (Exception e) {
+                kafkaError = true;
+            }
         }
-        // Enviar mensaje por Kafka de reserva de stock y compra pendiente
-        cartService.sendKafkaEvent("StockReserved_PendingPurchase", createdCart);
-        // Crear la compra pendiente asociada al carrito
         ar.edu.uade.ecommerce.Entity.Purchase purchase = new ar.edu.uade.ecommerce.Entity.Purchase();
         purchase.setUser(user);
         purchase.setCart(createdCart);
@@ -83,6 +86,10 @@ public class CartController {
         purchase.setDate(java.time.LocalDateTime.now());
         purchase.setReservationTime(java.time.LocalDateTime.now());
         ar.edu.uade.ecommerce.Entity.Purchase createdPurchase = cartService.createPurchase(purchase);
+        // Si hubo error de stock o kafka, incluir info en el header
+        if (stockError || kafkaError) {
+            return ResponseEntity.ok().header("X-Stock-Error", String.valueOf(stockError)).header("X-Kafka-Error", String.valueOf(kafkaError)).body(createdPurchase);
+        }
         return ResponseEntity.ok(createdPurchase);
     }
 

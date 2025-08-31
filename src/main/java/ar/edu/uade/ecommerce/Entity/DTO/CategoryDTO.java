@@ -16,8 +16,7 @@ public class CategoryDTO {
     public CategoryDTO(Long id, String name, Boolean active) {
         this.id = id;
         this.name = name;
-        this.active = active != null ? active : true;
+        this.active = active;
     }
     public CategoryDTO() {}
 }
-

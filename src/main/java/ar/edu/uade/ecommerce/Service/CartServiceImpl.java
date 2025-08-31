@@ -55,7 +55,6 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Cart createCart(Cart cart) {
-        // Verificar stock de cada producto antes de crear el carrito
         float finalPrice = 0f;
         if (cart.getItems() != null) {
             for (CartItem item : cart.getItems()) {
@@ -63,17 +62,14 @@ public class CartServiceImpl implements CartService {
                 if (productRequest == null || productRequest.getId() == null) {
                     throw new IllegalArgumentException("Producto inválido en el carrito");
                 }
-                // Buscar el producto real en la base de datos
                 Product product = productRepository.findById(productRequest.getId()).orElse(null);
                 if (product == null) {
                     throw new IllegalArgumentException("Producto no encontrado: " + productRequest.getId());
                 }
-                if (product.getStock() < item.getQuantity()) {
+                if (item.getQuantity() == null || item.getQuantity() <= 0 || product.getStock() < item.getQuantity()) {
                     throw new IllegalArgumentException("No hay suficiente stock para el producto: " + product.getId());
                 }
-                // Asociar el producto real al CartItem
                 item.setProduct(product);
-                // Calcular el precio final sumando el precio del producto por la cantidad requerida
                 if (product.getPrice() != null && item.getQuantity() != null) {
                     finalPrice += product.getPrice() * item.getQuantity();
                 }
@@ -81,7 +77,6 @@ public class CartServiceImpl implements CartService {
         }
         cart.setFinalPrice(finalPrice);
         Cart created = cartRepository.save(cart);
-        // Lanzar evento por Kafka al crear el carrito para reserva de stock
         try {
             String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(created);
             kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event("CartCreated_ReserveStock", json));
@@ -135,7 +130,7 @@ public class CartServiceImpl implements CartService {
         for (Cart cart : carts) {
             // Buscar compras pendientes asociadas a este carrito
             List<Purchase> purchases = purchaseRepository.findAll().stream()
-                .filter(p -> p.getCart().getId().equals(cart.getId()) && p.getStatus() == Purchase.Status.PENDING && p.getReservationTime() != null)
+                .filter(p -> p.getCart() != null && p.getCart().getId() != null && cart.getId() != null && p.getCart().getId().equals(cart.getId()) && p.getStatus() == Purchase.Status.PENDING && p.getReservationTime() != null)
                 .toList();
             for (Purchase purchase : purchases) {
                 if (purchase.getReservationTime().plusHours(4).isBefore(LocalDateTime.now())) {

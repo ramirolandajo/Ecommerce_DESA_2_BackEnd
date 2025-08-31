@@ -43,7 +43,7 @@ public class Product {
     private boolean isFeatured;
 
     @Column
-    private int stock;
+    private Integer stock;
 
     @Column
     private boolean hero;
@@ -58,7 +58,7 @@ public class Product {
     private Set<Category> categories;
 
     @Column
-    private boolean active;
+    private Boolean active;
 
     @Column
     private Float discount;
@@ -73,7 +73,7 @@ public class Product {
     private Float calification;
 
     public Product() {
-        this.active = true;
+        // No inicializar active aquí, debe ser null por defecto
     }
 
     public Boolean getIsNew() {
@@ -89,10 +89,34 @@ public class Product {
     }
 
     public void setActive(Boolean active) {
-        this.active = (active != null) ? active : true;
+        this.active = active;
     }
 
     public Boolean getActive() {
         return active;
+    }
+
+    public void setIsNew(Object o) {
+        this.isNew = (o != null) && Boolean.parseBoolean(o.toString());
+    }
+
+    public void setIsBestseller(boolean b) {
+        this.isBestseller = b;
+    }
+
+    public void setIsFeatured(boolean b) {
+        this.isFeatured = b;
+    }
+
+    public void setNew(boolean b) {
+        this.isNew = b;
+    }
+
+    public void setBestseller(boolean b) {
+        this.isBestseller = b;
+    }
+
+    public void setFeatured(boolean b) {
+        this.isFeatured = b;
     }
 }
