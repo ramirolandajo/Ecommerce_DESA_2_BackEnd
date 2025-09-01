@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ProductViewService {
+public class ProductViewServiceImpl {
     @Autowired
     private ProductViewRepository productViewRepository;
 
@@ -44,6 +44,6 @@ public class ProductViewService {
     }
 
     public List<ProductView> getAllViews() {
-        return null;
+        return productViewRepository.findAll();
     }
 }

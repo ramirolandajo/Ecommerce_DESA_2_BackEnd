@@ -1,9 +1,9 @@
-package ar.edu.uade.ecommerce.Controller;
+package ar.edu.uade.ecommerce.Controllers;
 
 import ar.edu.uade.ecommerce.Entity.Product;
 import ar.edu.uade.ecommerce.Entity.ProductView;
 import ar.edu.uade.ecommerce.Entity.User;
-import ar.edu.uade.ecommerce.Service.ProductViewService;
+import ar.edu.uade.ecommerce.Service.ProductViewServiceImpl;
 import ar.edu.uade.ecommerce.DTO.ProductViewResponseDTO;
 import ar.edu.uade.ecommerce.Service.AuthService;
 import ar.edu.uade.ecommerce.Service.ProductService;
@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,7 +25,7 @@ import java.util.List;
 @RequestMapping("/api/product-views")
 public class ProductViewController {
     @Autowired
-    private ProductViewService productViewService;
+    private ProductViewServiceImpl productViewServiceImpl;
     @Autowired
     private ProductService productService;
     @Autowired
@@ -51,7 +50,7 @@ public class ProductViewController {
         if (product == null) {
             return ResponseEntity.status(404).body("Producto no encontrado");
         }
-        ProductView view = productViewService.saveProductView(user, product);
+        ProductView view = productViewServiceImpl.saveProductView(user, product);
         String msg = String.format("El usuario %s vio el producto '%s' (ID: %d) en %s", user.getEmail(), product.getTitle(), product.getId(), view.getViewedAt());
         return ResponseEntity.ok(msg);
     }
@@ -71,7 +70,7 @@ public class ProductViewController {
             return ResponseEntity.status(401).body(Page.empty());
         }
         Pageable pageable = PageRequest.of(page, size);
-        Page<ProductViewResponseDTO> views = productViewService.getProductViewsByUser(user, pageable);
+        Page<ProductViewResponseDTO> views = productViewServiceImpl.getProductViewsByUser(user, pageable);
 
 
         // Construir el mensaje Kafka simulado para este usuario y página como JSON
@@ -102,7 +101,7 @@ public class ProductViewController {
     // Evento programado cada 24 horas
     @Scheduled(fixedRate = 86400000) // 24 horas en milisegundos
     public void sendDailyProductViewEvent() {
-        List<ProductView> allViews = productViewService.getAllViews();
+        List<ProductView> allViews = productViewServiceImpl.getAllViews();
         // Lanzar evento mockeado por Kafka
         StringBuilder sb = new StringBuilder();
         sb.append("Vistas de productos del día:\n");

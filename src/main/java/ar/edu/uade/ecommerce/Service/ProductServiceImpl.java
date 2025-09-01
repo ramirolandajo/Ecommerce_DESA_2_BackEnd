@@ -23,8 +23,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product findById(Long productId) {
-        return productRepository.findById(Math.toIntExact(productId)).orElse(null);
+    public Product findById(Long id) {
+        return productRepository.findById(Math.toIntExact(id))
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
     }
 }
-

@@ -44,4 +44,23 @@ class ProductServiceImplTest {
         verify(productRepository).findById(2);
         verify(productRepository, never()).save(any());
     }
+
+    @Test
+    void findById_success() {
+        Product product = new Product();
+        product.setId(1);
+        when(productRepository.findById(1)).thenReturn(Optional.of(product));
+        Product found = productService.findById(1L);
+        assertNotNull(found);
+        assertEquals(1, found.getId());
+        verify(productRepository).findById(1);
+    }
+
+    @Test
+    void findById_notFound() {
+        when(productRepository.findById(2)).thenReturn(Optional.empty());
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> productService.findById(2L));
+        assertEquals("Producto no encontrado", ex.getMessage());
+        verify(productRepository).findById(2);
+    }
 }
