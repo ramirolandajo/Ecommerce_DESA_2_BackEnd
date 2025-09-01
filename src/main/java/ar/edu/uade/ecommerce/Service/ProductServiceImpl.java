@@ -21,5 +21,10 @@ public class ProductServiceImpl implements ProductService {
         product.setStock(newStock);
         return productRepository.save(product);
     }
+
+    @Override
+    public Product findById(Long productId) {
+        return productRepository.findById(Math.toIntExact(productId)).orElse(null);
+    }
 }
 
