@@ -14,6 +14,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -28,57 +29,98 @@ public class ProductController {
     ProductRepository productRepository;
     @Autowired
     private ReviewRepository reviewRepository;
+    @Autowired
+    ar.edu.uade.ecommerce.Repository.CartItemRepository cartItemRepository;
+    @Autowired
+    ar.edu.uade.ecommerce.Repository.BrandRepository brandRepository;
+    @Autowired
+    ar.edu.uade.ecommerce.Repository.CategoryRepository categoryRepository;
     @PersistenceContext
     EntityManager entityManager;
 
     // Sincroniza productos desde el mock
+    @Transactional(timeout = 60)
     @GetMapping("/sync")
     public List<ProductDTO> syncProductsFromMock() {
         KafkaMockService.ProductSyncMessage message = kafkaMockService.getProductsMock();
         List<ProductDTO> mockProducts = message.payload.products;
-        productRepository.deleteAll();
         for (ProductDTO dto : mockProducts) {
-            Product product = new Product();
-            product.setTitle(dto.getTitle());
-            product.setDescription(dto.getDescription());
-            product.setPrice(dto.getPrice());
-            product.setStock(dto.getStock());
-            product.setMediaSrc(dto.getMediaSrc() != null ? dto.getMediaSrc() : List.of());
-            product.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);
-            product.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);
-            product.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);
-            product.setHero(dto.getHero() != null ? dto.getHero() : false);
-            product.setActive(dto.getActive() != null ? dto.getActive() : true);
-            product.setDiscount(dto.getDiscount());
-            product.setPriceUnit(dto.getPriceUnit());
-            product.setProductCode(dto.getProductCode());
-            // Relacionar Brand y Category usando EntityManager por id
+            if (dto.getProductCode() == null) continue;
+            Product existing = productRepository.findAll().stream()
+                .filter(p -> p.getProductCode() != null && p.getProductCode().equals(dto.getProductCode()))
+                .findFirst().orElse(null);
+            StringBuilder errorMsg = new StringBuilder();
+            Brand brandEntity = null;
             if (dto.getBrand() != null && dto.getBrand().getId() != null) {
-                Brand brand = entityManager.find(Brand.class, dto.getBrand().getId().intValue());
-                if (brand != null) {
-                    product.setBrand(brand);
-                } else {
-                    throw new RuntimeException("La marca con id " + dto.getBrand().getId() + " no existe");
+                brandEntity = brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null);
+                if (brandEntity == null) {
+                    errorMsg.append("Marca no encontrada (ID: " + dto.getBrand().getId() + ") para producto: " + dto.getTitle() + " (productCode: " + dto.getProductCode() + "). ");
                 }
             }
+            Set<Category> cats = null;
             if (dto.getCategories() != null && !dto.getCategories().isEmpty()) {
-                Set<Category> categories = dto.getCategories().stream()
-                        .map(catDto -> catDto.getId() != null ? entityManager.find(Category.class, catDto.getId().intValue()) : null)
-                        .filter(c -> c != null)
-                        .collect(Collectors.toSet());
-                product.setCategories(categories);
+                cats = dto.getCategories().stream()
+                    .map(catDto -> categoryRepository.findById((long) catDto.getId().intValue()).orElse(null))
+                    .collect(java.util.stream.Collectors.toSet());
+                for (Category c : cats) {
+                    if (c == null) {
+                        errorMsg.append("Categoría no encontrada para producto: " + dto.getTitle() + " (productCode: " + dto.getProductCode() + "). ");
+                    }
+                }
             }
-            productRepository.save(product);
+            if (errorMsg.length() > 0) {
+                throw new RuntimeException(errorMsg.toString());
+            }
+            // Al asignar mediaSrc, usar nueva lista mutable
+            List<String> mediaSrcMutable = dto.getMediaSrc() != null ? new java.util.ArrayList<>(dto.getMediaSrc()) : new java.util.ArrayList<>();
+            if (existing == null) {
+                Product product = new Product();
+                product.setTitle(dto.getTitle());
+                product.setDescription(dto.getDescription());
+                product.setPrice(dto.getPrice());
+                product.setStock(dto.getStock());
+                product.setMediaSrc(mediaSrcMutable);
+                product.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);
+                product.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);
+                product.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);
+                product.setHero(dto.getHero() != null ? dto.getHero() : false);
+                product.setActive(dto.getActive() != null ? dto.getActive() : true);
+                product.setDiscount(dto.getDiscount());
+                product.setPriceUnit(dto.getPriceUnit());
+                product.setProductCode(dto.getProductCode());
+                product.setBrand(brandEntity);
+                if (cats != null) {
+                    product.setCategories(new java.util.HashSet<>(cats.stream().filter(c -> c != null).toList()));
+                }
+                product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);
+                productRepository.save(product);
+            } else {
+                existing.setTitle(dto.getTitle());
+                existing.setDescription(dto.getDescription());
+                existing.setPrice(dto.getPrice());
+                existing.setStock(dto.getStock());
+                existing.setMediaSrc(mediaSrcMutable);
+                existing.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);
+                existing.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);
+                existing.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);
+                existing.setHero(dto.getHero() != null ? dto.getHero() : false);
+                existing.setActive(dto.getActive() != null ? dto.getActive() : true);
+                existing.setDiscount(dto.getDiscount());
+                existing.setPriceUnit(dto.getPriceUnit());
+                existing.setProductCode(dto.getProductCode());
+                existing.setBrand(brandEntity);
+                if (cats != null) {
+                    existing.setCategories(new java.util.HashSet<>(cats.stream().filter(c -> c != null).toList()));
+                } else {
+                    existing.setCategories(null);
+                }
+                existing.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);
+                productRepository.save(existing);
+            }
         }
-        // Imprimir el mensaje recibido del mock en formato core de mensajería
-        System.out.println("Mensaje recibido del core de mensajería:");
-        System.out.println("{" +
-            "type='" + message.type + "', " +
-            "payload=" + message.payload + ", " +
-            "timestamp=" + message.timestamp +
-            "}");
+        // Retornar todos los productos como DTO
         return productRepository.findAll().stream()
-            .map(this::toDTO)
+            .map(ProductDTO::fromEntity)
             .collect(Collectors.toList());
     }
 
@@ -107,37 +149,40 @@ public class ProductController {
         return toDTO(saved);
     }
 
-    // Edita solo precio y stock
-    @PatchMapping("/{id}/simple")
-    public ProductDTO editProductSimple(@PathVariable Long id, @RequestBody ProductDTO dto) {
+    // Edita solo precio y stock usando mensaje mockeado
+    public static class EditProductSimpleRequest {
+        public Long id;
+    }
+
+    @PatchMapping("/simple")
+    public ProductDTO editProductSimple(@RequestBody EditProductSimpleRequest request) {
+        KafkaMockService.EditProductSimpleMessage msg = kafkaMockService.getEditProductMockSimple(request.id);
+        KafkaMockService.EditProductSimplePayload dto = msg.payload;
+        Long id = dto.id;
         Optional<Product> productOpt = productRepository.findById(id.intValue());
         if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
         Product product = productOpt.get();
-        if (dto.getPrice() != null) {
-            product.setPrice(dto.getPrice());
+        if (dto.price != null) {
+            product.setPrice(dto.price);
             Float discount = product.getDiscount() != null ? product.getDiscount() : 0f;
-            // Ingeniería inversa para recalcular priceUnit
-            Float priceUnit = dto.getPrice() / (1 - (discount / 100f));
+            Float priceUnit = dto.price / (1 - (discount / 100f));
             product.setPriceUnit(priceUnit);
         }
-        if (dto.getStock() != null) product.setStock(dto.getStock());
-        if (dto.getDiscount() != null) {
-            product.setDiscount(dto.getDiscount());
-            // Si se toca el descuento, recalcular price
-            Float priceUnit = product.getPriceUnit() != null ? product.getPriceUnit() : null;
-            Float discount = dto.getDiscount();
-            if (priceUnit != null) {
-                Float price = priceUnit - (priceUnit * (discount / 100f));
-                product.setPrice(price);
-            }
-        }
+        if (dto.stock != null) product.setStock(dto.stock);
         Product updated = productRepository.save(product);
         return toDTO(updated);
     }
 
-    // Edita el producto completo
-    @PatchMapping("/{id}")
-    public ProductDTO editProduct(@PathVariable Integer id, @RequestBody ProductDTO dto) {
+    public static class EditProductFullRequest {
+        public Integer id;
+    }
+
+    // Edita el producto completo usando mensaje mockeado
+    @PatchMapping
+    public ProductDTO editProduct(@RequestBody EditProductFullRequest request) {
+        KafkaMockService.EditProductFullMessage msg = kafkaMockService.getEditProductMockFull(request.id);
+        ProductDTO dto = msg.payload;
+        Integer id = Math.toIntExact(dto.getId());
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
         Product product = productOpt.get();
@@ -149,7 +194,7 @@ public class ProductController {
         if (dto.getMediaSrc() == null) {
             product.setMediaSrc(List.of());
         } else {
-            product.setMediaSrc(dto.getMediaSrc());
+            product.setMediaSrc(new java.util.ArrayList<>(dto.getMediaSrc()));
         }
         // Booleanos: solo asignar si no son null
         if (dto.getIsNew() != null) product.setNew(dto.getIsNew());
@@ -158,7 +203,7 @@ public class ProductController {
         if (dto.getHero() != null) product.setHero(dto.getHero());
         // Active
         if (dto.getActive() != null) product.setActive(dto.getActive());
-        // ProductCode: si es null, setear null
+        // ProductCode
         if (dto.getProductCode() == null) {
             product.setProductCode(null);
         } else {
@@ -176,6 +221,24 @@ public class ProductController {
         } else if (dto.getPrice() != null) {
             product.setPrice(dto.getPrice());
         }
+        // Marca
+        if (dto.getBrand() != null && dto.getBrand().getId() != null) {
+            product.setBrand(brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null));
+        } else {
+            product.setBrand(null);
+        }
+        // Categorías
+        if (dto.getCategories() != null && !dto.getCategories().isEmpty()) {
+            Set<ar.edu.uade.ecommerce.Entity.Category> cats = dto.getCategories().stream()
+                .map(catDto -> categoryRepository.findById((long) catDto.getId().intValue()).orElse(null))
+                .filter(c -> c != null)
+                .collect(java.util.stream.Collectors.toSet());
+            product.setCategories(new java.util.HashSet<>(cats));
+        } else {
+            product.setCategories(null);
+        }
+        // Calificación
+        product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);
         Product updated = productRepository.save(product);
         return toDTO(updated);
     }
@@ -313,12 +376,35 @@ public class ProductController {
             .collect(Collectors.toList());
     }
 
-    // Obtener producto por id
+    // Obtener producto por id y productos relacionados
     @GetMapping("/{id}")
-    public ProductDTO getProductById(@PathVariable("id") Long id) {
+    public ProductWithRelatedDTO getProductById(@PathVariable("id") Long id) {
         Optional<Product> productOpt = productRepository.findById(id.intValue());
         if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
-        return toDTO(productOpt.get());
+        Product product = productOpt.get();
+        ProductDTO mainProduct = toDTO(product);
+        List<Product> allProducts = productRepository.findAll();
+        // Filtrar productos relacionados por marca o categoría (excluyendo el mismo producto)
+        List<ProductDTO> related = allProducts.stream()
+            .filter(p -> !p.getId().equals(product.getId()) && (
+                (product.getBrand() != null && p.getBrand() != null && p.getBrand().getId().equals(product.getBrand().getId())) ||
+                (product.getCategories() != null && p.getCategories() != null && p.getCategories().stream().anyMatch(cat -> product.getCategories().stream().anyMatch(pc -> pc.getId().equals(cat.getId()))) )
+            ))
+            .map(this::toDTO)
+            .collect(Collectors.toList());
+        return new ProductWithRelatedDTO(mainProduct, related);
+    }
+
+    // DTO para producto con relacionados
+    public static class ProductWithRelatedDTO {
+        public ProductDTO product;
+        public List<ProductDTO> relatedProducts;
+        public ProductWithRelatedDTO(ProductDTO product, List<ProductDTO> relatedProducts) {
+            this.product = product;
+            this.relatedProducts = relatedProducts;
+        }
+        public ProductDTO getProduct() { return product; }
+        public List<ProductDTO> getRelatedProducts() { return relatedProducts; }
     }
 
     // Conversión a DTO

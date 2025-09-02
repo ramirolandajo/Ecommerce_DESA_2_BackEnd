@@ -59,4 +59,38 @@ public class ProductDTO {
     public void setActive(Boolean active) {
         this.active = active;
     }
+
+    public static ProductDTO fromEntity(ar.edu.uade.ecommerce.Entity.Product product) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(product.getId() != null ? Long.valueOf(product.getId()) : null);
+        dto.setTitle(product.getTitle());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setStock(product.getStock());
+        dto.setMediaSrc(product.getMediaSrc());
+        dto.setCalification(product.getCalification());
+        dto.setDiscount(product.getDiscount());
+        dto.setPriceUnit(product.getPriceUnit());
+        dto.setProductCode(product.getProductCode());
+        dto.setActive(product.getActive());
+        // Marca
+        if (product.getBrand() != null) {
+            dto.setBrand(new BrandDTO(Long.valueOf(product.getBrand().getId()), product.getBrand().getName(), product.getBrand().isActive()));
+        } else {
+            dto.setBrand(null);
+        }
+        // Categorías
+        if (product.getCategories() != null && !product.getCategories().isEmpty()) {
+            dto.setCategories(product.getCategories().stream()
+                .map(cat -> new CategoryDTO(Long.valueOf(cat.getId()), cat.getName(), cat.isActive()))
+                .toList());
+        } else {
+            dto.setCategories(null);
+        }
+        dto.setIsNew(product.getIsNew());
+        dto.setIsBestseller(product.isIsBestseller());
+        dto.setIsFeatured(product.isIsFeatured());
+        dto.setHero(product.isHero());
+        return dto;
+    }
 }
