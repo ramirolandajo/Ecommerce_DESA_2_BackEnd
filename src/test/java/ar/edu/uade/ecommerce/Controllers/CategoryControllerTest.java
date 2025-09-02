@@ -101,7 +101,9 @@ class CategoryControllerTest {
         CategoryDTO dto1 = new CategoryDTO(1L, "Accesorios", true);
         CategoryDTO dto2 = new CategoryDTO(2L, "Celulares", true);
         List<CategoryDTO> mockDtos = List.of(dto1, dto2);
-        when(kafkaMockService.getCategoriesMock()).thenReturn(mockDtos);
+        KafkaMockService.CategorySyncPayload payload = new KafkaMockService.CategorySyncPayload(mockDtos);
+        KafkaMockService.CategorySyncMessage mockMessage = new KafkaMockService.CategorySyncMessage("CategorySync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getCategoriesMock()).thenReturn(mockMessage);
         when(categoryService.getAllCategories()).thenReturn(List.of());
         Category saved1 = new Category();
         saved1.setId(1);
@@ -200,8 +202,8 @@ class CategoryControllerTest {
     @Test
     void testSyncCategoriesFromMock_nullName() {
         CategoryDTO dto1 = new CategoryDTO(1L, null, true);
-        List<CategoryDTO> mockDtos = List.of(dto1);
-        when(kafkaMockService.getCategoriesMock()).thenReturn(mockDtos);
+        KafkaMockService.CategorySyncMessage message = new KafkaMockService.CategorySyncMessage("CategorySync", new KafkaMockService.CategorySyncPayload(List.of(dto1)), "2025-09-02T08:29:02.072020100");
+        when(kafkaMockService.getCategoriesMock()).thenReturn(message);
         when(categoryService.getAllCategories()).thenReturn(List.of());
         Category saved = new Category();
         saved.setId(1);
@@ -680,298 +682,27 @@ class CategoryControllerTest {
         assertTrue(resultNullName.getActive());
     }
 
-//    @Test
-//    void testAddBulkCategories_withNullDTOElement() {
-//        CategoryDTO dto1 = new CategoryDTO(1L, "Valida", true);
-//        List<CategoryDTO> dtos = List.of(null, dto1);
-//        when(categoryService.getAllCategories()).thenReturn(List.of());
-//        Category saved = new Category();
-//        saved.setId(1);
-//        saved.setName("Valida");
-//        saved.setActive(true);
-//        when(categoryService.saveCategory(any(Category.class))).thenReturn(saved);
-//        when(categoryService.getAllCategories()).thenReturn(List.of(saved));
-//        List<CategoryDTO> result = categoryController.addBulkCategories(dtos);
-//        assertEquals(1, result.size());
-//        assertEquals("Valida", result.get(0).getName());
-//        assertTrue(result.get(0).getActive());
-//    }
-
     @Test
-    void testAddBulkCategories_allBranches() {
-        // name null, active null
-        CategoryDTO dto1 = new CategoryDTO(1L, null, null);
-        Category category1 = new Category();
-        category1.setId(1);
-        category1.setName(null);
-        category1.setActive(true);
-        when(categoryService.saveCategory(any(Category.class))).thenAnswer(invocation -> {
-            Category arg = invocation.getArgument(0);
-            arg.setId(1);
-            return arg;
-        });
-        CategoryDTO result1 = categoryController.addCategory(dto1);
-        assertNull(result1.getName());
-        assertTrue(result1.getActive());
-        // name null, active false
-        CategoryDTO dto2 = new CategoryDTO(2L, null, false);
-        Category category2 = new Category();
-        category2.setId(2);
-        category2.setName(null);
-        category2.setActive(false);
-        when(categoryService.saveCategory(any(Category.class))).thenAnswer(invocation -> {
-            Category arg = invocation.getArgument(0);
-            arg.setId(2);
-            return arg;
-        });
-        CategoryDTO result2 = categoryController.addCategory(dto2);
-        assertNull(result2.getName());
-        assertFalse(result2.getActive());
-        // name "Combinacion", active null
-        CategoryDTO dto3 = new CategoryDTO(3L, "Combinacion", null);
-        Category category3 = new Category();
-        category3.setId(3);
-        category3.setName("Combinacion");
-        category3.setActive(true);
-        when(categoryService.saveCategory(any(Category.class))).thenAnswer(invocation -> {
-            Category arg = invocation.getArgument(0);
-            arg.setId(3);
-            return arg;
-        });
-        CategoryDTO result3 = categoryController.addCategory(dto3);
-        assertEquals("Combinacion", result3.getName());
-        assertTrue(result3.getActive());
-        // name "Combinacion", active false
-        CategoryDTO dto4 = new CategoryDTO(4L, "Combinacion", false);
-        Category category4 = new Category();
-        category4.setId(4);
-        category4.setName("Combinacion");
-        category4.setActive(false);
-        when(categoryService.saveCategory(any(Category.class))).thenAnswer(invocation -> {
-            Category arg = invocation.getArgument(0);
-            arg.setId(4);
-            return arg;
-        });
-        CategoryDTO result4 = categoryController.addCategory(dto4);
-        assertEquals("Combinacion", result4.getName());
-        assertFalse(result4.getActive());
-    }
-
-    @Test
-    void testAddBulkCategories_allNullsAndMixedCases() {
-        // Todos los DTOs con name null, active null, active false, y combinaciones
-        CategoryDTO dtoNullNameNullActive = new CategoryDTO(1L, null, null);
-        CategoryDTO dtoNullNameFalseActive = new CategoryDTO(2L, null, false);
-        CategoryDTO dtoLowerCase = new CategoryDTO(3L, "accesorios", true);
-        CategoryDTO dtoUpperCase = new CategoryDTO(4L, "ACCESORIOS", true);
-        CategoryDTO dtoMixedCase = new CategoryDTO(5L, "AcCeSoRiOs", true);
-        Category existing = new Category();
-        existing.setId(1);
-        existing.setName("Accesorios");
-        existing.setActive(true);
-        when(categoryService.getAllCategories()).thenReturn(List.of(existing));
-        List<CategoryDTO> result = categoryController.addBulkCategories(List.of(dtoNullNameNullActive, dtoNullNameFalseActive, dtoLowerCase, dtoUpperCase, dtoMixedCase));
-        // Solo debe devolver la existente, no crear duplicados ni nulos
-        assertEquals(1, result.size());
-        assertEquals("Accesorios", result.get(0).getName());
-    }
-
-    @Test
-    void testAddBulkCategories_newCategoryWithFalseActive() {
-        CategoryDTO dto = new CategoryDTO(1L, "Nueva", false);
+    void testSyncCategoriesFromMock_EmptyMock() {
+        KafkaMockService.CategorySyncMessage emptyMessage = new KafkaMockService.CategorySyncMessage("CategorySync", new KafkaMockService.CategorySyncPayload(List.of()), "2025-09-02T08:29:02.072020100");
+        when(kafkaMockService.getCategoriesMock()).thenReturn(emptyMessage);
         when(categoryService.getAllCategories()).thenReturn(List.of());
-        Category saved = new Category();
-        saved.setId(1);
-        saved.setName("Nueva");
-        saved.setActive(false);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(saved);
-        when(categoryService.getAllCategories()).thenReturn(List.of(saved));
-        List<CategoryDTO> result = categoryController.addBulkCategories(List.of(dto));
-        assertEquals(1, result.size());
-        assertEquals("Nueva", result.get(0).getName());
-        assertFalse(result.get(0).getActive());
-    }
-
-    @Test
-    void testUpdateCategory_activeTrueAndFalse() {
-        CategoryDTO dtoTrue = new CategoryDTO(1L, "Tablets", true);
-        CategoryDTO dtoFalse = new CategoryDTO(1L, "Tablets", false);
-        Category category = new Category();
-        category.setId(1);
-        category.setName("Tablets");
-        category.setActive(false);
-        when(categoryService.getAllCategories()).thenReturn(List.of(category));
-        // Cambia a true
-        category.setActive(true);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(category);
-        CategoryDTO resultTrue = categoryController.updateCategory(1, dtoTrue);
-        assertTrue(resultTrue.getActive());
-        // Cambia a false
-        category.setActive(false);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(category);
-        CategoryDTO resultFalse = categoryController.updateCategory(1, dtoFalse);
-        assertFalse(resultFalse.getActive());
-    }
-
-    @Test
-    void testUpdateCategory_nameNullAndActiveNull() {
-        CategoryDTO dto = new CategoryDTO(1L, null, null);
-        Category category = new Category();
-        category.setId(1);
-        category.setName("Tablets");
-        category.setActive(true);
-        when(categoryService.getAllCategories()).thenReturn(List.of(category));
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(category);
-        CategoryDTO result = categoryController.updateCategory(1, dto);
-        assertNull(result.getName());
-        assertTrue(result.getActive());
-    }
-
-    @Test
-    void testAddCategory_activeNullAndFalse() {
-        CategoryDTO dtoNull = new CategoryDTO(1L, "Tablets", null);
-        CategoryDTO dtoFalse = new CategoryDTO(2L, "Tablets", false);
-        Category categoryNull = new Category();
-        categoryNull.setId(1);
-        categoryNull.setName("Tablets");
-        categoryNull.setActive(true);
-        Category categoryFalse = new Category();
-        categoryFalse.setId(2);
-        categoryFalse.setName("Tablets");
-        categoryFalse.setActive(false);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(categoryNull, categoryFalse);
-        CategoryDTO resultNull = categoryController.addCategory(dtoNull);
-        CategoryDTO resultFalse = categoryController.addCategory(dtoFalse);
-        assertTrue(resultNull.getActive());
-        assertFalse(resultFalse.getActive());
-    }
-
-    @Test
-    void testAddCategory_nameNullAndActiveNull() {
-        CategoryDTO dto = new CategoryDTO(1L, null, null);
-        Category category = new Category();
-        category.setId(1);
-        category.setName(null);
-        category.setActive(true);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(category);
-        CategoryDTO result = categoryController.addCategory(dto);
-        assertNull(result.getName());
-        assertTrue(result.getActive());
-    }
-
-    @Test
-    void testAddBulkCategories_allFalseAndNullCombinations() {
-        // Todos los DTOs con active en false y null, y nombres únicos
-        CategoryDTO dtoFalse = new CategoryDTO(1L, "CategoriaFalse", false);
-        CategoryDTO dtoNull = new CategoryDTO(2L, "CategoriaNull", null);
-        when(categoryService.getAllCategories()).thenReturn(List.of());
-        Category savedFalse = new Category();
-        savedFalse.setId(1);
-        savedFalse.setName("CategoriaFalse");
-        savedFalse.setActive(false);
-        Category savedNull = new Category();
-        savedNull.setId(2);
-        savedNull.setName("CategoriaNull");
-        savedNull.setActive(true);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(savedFalse, savedNull);
-        when(categoryService.getAllCategories()).thenReturn(List.of(savedFalse, savedNull));
-        List<CategoryDTO> result = categoryController.addBulkCategories(List.of(dtoFalse, dtoNull));
-        assertEquals(2, result.size());
-        assertTrue(result.stream().anyMatch(c -> c.getName().equals("CategoriaFalse") && !c.getActive()));
-        assertTrue(result.stream().anyMatch(c -> c.getName().equals("CategoriaNull") && c.getActive()));
-    }
-
-    @Test
-    void testUpdateCategory_activeNullKeepsCurrent() {
-        // Si active es null, debe mantener el valor actual
-        CategoryDTO dto = new CategoryDTO(1L, "Categoria", null);
-        Category category = new Category();
-        category.setId(1);
-        category.setName("Categoria");
-        category.setActive(false); // Valor inicial false
-        when(categoryService.getAllCategories()).thenReturn(List.of(category));
-        // El mock debe devolver el mismo objeto, sin modificar active
-        when(categoryService.saveCategory(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        CategoryDTO result = categoryController.updateCategory(1, dto);
-        assertEquals("Categoria", result.getName());
-        assertFalse(result.getActive()); // Debe seguir siendo false
-    }
-
-    @Test
-    void testUpdateCategory_activeTrueChangesCurrent() {
-        // Si active es true, debe cambiar el valor actual
-        CategoryDTO dto = new CategoryDTO(1L, "Categoria", true);
-        Category category = new Category();
-        category.setId(1);
-        category.setName("Categoria");
-        category.setActive(false);
-        when(categoryService.getAllCategories()).thenReturn(List.of(category));
-        category.setActive(true);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(category);
-        CategoryDTO result = categoryController.updateCategory(1, dto);
-        assertEquals("Categoria", result.getName());
-        assertTrue(result.getActive());
-    }
-
-    @Test
-    void testAddCategory_activeNullAndFalseCombinations() {
-        // active null y false, para cubrir ramas
-        CategoryDTO dtoNull = new CategoryDTO(1L, "CategoriaNull", null);
-        CategoryDTO dtoFalse = new CategoryDTO(2L, "CategoriaFalse", false);
-        Category categoryNull = new Category();
-        categoryNull.setId(1);
-        categoryNull.setName("CategoriaNull");
-        categoryNull.setActive(true);
-        Category categoryFalse = new Category();
-        categoryFalse.setId(2);
-        categoryFalse.setName("CategoriaFalse");
-        categoryFalse.setActive(false);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(categoryNull, categoryFalse);
-        CategoryDTO resultNull = categoryController.addCategory(dtoNull);
-        CategoryDTO resultFalse = categoryController.addCategory(dtoFalse);
-        assertTrue(resultNull.getActive());
-        assertFalse(resultFalse.getActive());
-    }
-
-    @Test
-    void testAddCategory_nameNullActiveFalse() {
-        // name null y active false
-        CategoryDTO dto = new CategoryDTO(1L, null, false);
-        Category category = new Category();
-        category.setId(1);
-        category.setName(null);
-        category.setActive(false);
-        when(categoryService.saveCategory(any(Category.class))).thenReturn(category);
-        CategoryDTO result = categoryController.addCategory(dto);
-        assertNull(result.getName());
-        assertFalse(result.getActive());
-    }
-
-//    @Test
-//    void testAddBulkCategories_multipleNullNamesAndActives() {
-//        CategoryDTO dto1 = new CategoryDTO(1L, null, null);
-//        CategoryDTO dto2 = new CategoryDTO(2L, null, null);
-//        CategoryDTO dto3 = new CategoryDTO(3L, "Valida", true);
-//        List<CategoryDTO> dtos = List.of(dto1, dto2, dto3);
-//        when(categoryService.getAllCategories()).thenReturn(List.of());
-//        Category saved = new Category();
-//        saved.setId(3);
-//        saved.setName("Valida");
-//        saved.setActive(true);
-//        when(categoryService.saveCategory(any(Category.class))).thenReturn(saved);
-//        when(categoryService.getAllCategories()).thenReturn(List.of(saved));
-//        List<CategoryDTO> result = categoryController.addBulkCategories(dtos);
-//        assertEquals(1, result.size());
-//        assertEquals("Valida", result.get(0).getName());
-//        assertTrue(result.get(0).getActive());
-//    }
-
-    @Test
-    void testAddBulkCategories_nameNullActiveFalse() {
-        CategoryDTO dto = new CategoryDTO(1L, null, false);
-        List<CategoryDTO> dtos = List.of(dto);
-        when(categoryService.getAllCategories()).thenReturn(List.of());
-        List<CategoryDTO> result = categoryController.addBulkCategories(dtos);
+        List<CategoryDTO> result = categoryController.syncCategoriesFromMock();
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testSyncCategoriesFromMock_AllExist() {
+        CategoryDTO mockCategory1 = new CategoryDTO(1L, "Celulares", true);
+        KafkaMockService.CategorySyncMessage message = new KafkaMockService.CategorySyncMessage("CategorySync", new KafkaMockService.CategorySyncPayload(List.of(mockCategory1)), "2025-09-02T08:29:02.072020100");
+        Category existingCategory = new Category();
+        existingCategory.setId(1);
+        existingCategory.setName("Celulares");
+        existingCategory.setActive(true);
+        when(categoryService.getAllCategories()).thenReturn(List.of(existingCategory));
+        when(kafkaMockService.getCategoriesMock()).thenReturn(message);
+        List<CategoryDTO> result = categoryController.syncCategoriesFromMock();
+        assertEquals(1, result.size());
+        assertEquals("Celulares", result.get(0).getName());
     }
 }

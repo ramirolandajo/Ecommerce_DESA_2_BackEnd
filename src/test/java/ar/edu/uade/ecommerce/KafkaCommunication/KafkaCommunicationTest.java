@@ -20,7 +20,8 @@ public class KafkaCommunicationTest {
     @Test
     void testGetProductsMock() {
         KafkaMockService service = new KafkaMockService();
-        List<ProductDTO> products = service.getProductsMock();
+        KafkaMockService.ProductSyncMessage msg = service.getProductsMock();
+        List<ProductDTO> products = msg.payload.products;
         assertNotNull(products);
         assertFalse(products.isEmpty());
     }
@@ -28,7 +29,8 @@ public class KafkaCommunicationTest {
     @Test
     void testGetCategoriesMock() {
         KafkaMockService service = new KafkaMockService();
-        List<CategoryDTO> categories = service.getCategoriesMock();
+        KafkaMockService.CategorySyncMessage msg = service.getCategoriesMock();
+        List<CategoryDTO> categories = msg.payload.categories;
         assertNotNull(categories);
         assertFalse(categories.isEmpty());
     }
@@ -36,7 +38,8 @@ public class KafkaCommunicationTest {
     @Test
     void testGetBrandsMock() {
         KafkaMockService service = new KafkaMockService();
-        List<BrandDTO> brands = service.getBrandsMock();
+        KafkaMockService.BrandSyncMessage msg = service.getBrandsMock();
+        List<BrandDTO> brands = msg.payload.brands;
         assertNotNull(brands);
         assertFalse(brands.isEmpty());
     }

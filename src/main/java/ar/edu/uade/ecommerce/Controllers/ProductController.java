@@ -7,7 +7,6 @@ import ar.edu.uade.ecommerce.Entity.DTO.CategoryDTO;
 import ar.edu.uade.ecommerce.Entity.Product;
 import ar.edu.uade.ecommerce.Entity.DTO.ProductDTO;
 import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
-import ar.edu.uade.ecommerce.Service.ProductService;
 import ar.edu.uade.ecommerce.Repository.ProductRepository;
 import ar.edu.uade.ecommerce.Entity.Review;
 import ar.edu.uade.ecommerce.Repository.ReviewRepository;
@@ -35,7 +34,8 @@ public class ProductController {
     // Sincroniza productos desde el mock
     @GetMapping("/sync")
     public List<ProductDTO> syncProductsFromMock() {
-        List<ProductDTO> mockProducts = kafkaMockService.getProductsMock();
+        KafkaMockService.ProductSyncMessage message = kafkaMockService.getProductsMock();
+        List<ProductDTO> mockProducts = message.payload.products;
         productRepository.deleteAll();
         for (ProductDTO dto : mockProducts) {
             Product product = new Product();
@@ -70,6 +70,13 @@ public class ProductController {
             }
             productRepository.save(product);
         }
+        // Imprimir el mensaje recibido del mock en formato core de mensajería
+        System.out.println("Mensaje recibido del core de mensajería:");
+        System.out.println("{" +
+            "type='" + message.type + "', " +
+            "payload=" + message.payload + ", " +
+            "timestamp=" + message.timestamp +
+            "}");
         return productRepository.findAll().stream()
             .map(this::toDTO)
             .collect(Collectors.toList());
@@ -275,6 +282,43 @@ public class ProductController {
             .map(r -> new ReviewDTO(r.getId(), r.getCalification(), r.getDescription()))
             .collect(Collectors.toList());
         return new ReviewResponse(product.getId(), product.getTitle(), promedio, reviewDTOs);
+    }
+
+    // Filtrado de productos por categoría, marca y rango de precio
+    @GetMapping("/filter")
+    public List<ProductDTO> filterProducts(
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "brandId", required = false) Long brandId,
+            @RequestParam(value = "priceMin", required = false) Float priceMin,
+            @RequestParam(value = "priceMax", required = false) Float priceMax) {
+        List<Product> products = productRepository.findAll();
+        return products.stream()
+            .filter(p -> {
+                boolean matches = true;
+                if (categoryId != null && (p.getCategories() == null || p.getCategories().stream().noneMatch(c -> c.getId().equals(categoryId.intValue())))) {
+                    matches = false;
+                }
+                if (brandId != null && (p.getBrand() == null || !p.getBrand().getId().equals(brandId.intValue()))) {
+                    matches = false;
+                }
+                if (priceMin != null && (p.getPrice() == null || p.getPrice() < priceMin)) {
+                    matches = false;
+                }
+                if (priceMax != null && (p.getPrice() == null || p.getPrice() > priceMax)) {
+                    matches = false;
+                }
+                return matches;
+            })
+            .map(this::toDTO)
+            .collect(Collectors.toList());
+    }
+
+    // Obtener producto por id
+    @GetMapping("/{id}")
+    public ProductDTO getProductById(@PathVariable("id") Long id) {
+        Optional<Product> productOpt = productRepository.findById(id.intValue());
+        if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
+        return toDTO(productOpt.get());
     }
 
     // Conversión a DTO

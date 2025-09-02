@@ -22,7 +22,8 @@ public class CategoryController {
 
     @GetMapping("/sync")
     public List<CategoryDTO> syncCategoriesFromMock() {
-        List<CategoryDTO> mockCategories = kafkaMockService.getCategoriesMock();
+        KafkaMockService.CategorySyncMessage message = kafkaMockService.getCategoriesMock();
+        List<CategoryDTO> mockCategories = message.payload.categories;
         List<Category> existingCategories = categoryService.getAllCategories();
         for (CategoryDTO dto : mockCategories) {
             Category existing = existingCategories.stream()
@@ -32,10 +33,17 @@ public class CategoryController {
             if (existing == null) {
                 Category c = new Category();
                 c.setName(dto.getName());
-                c.setActive(true);
+                c.setActive(dto.getActive() != null ? dto.getActive() : true);
                 categoryService.saveCategory(c);
             }
         }
+        // Imprimir el mensaje recibido del mock en formato core de mensajería
+        System.out.println("Mensaje recibido del core de mensajería:");
+        System.out.println("{" +
+            "type='" + message.type + "', " +
+            "payload=" + message.payload + ", " +
+            "timestamp=" + message.timestamp +
+            "}");
         return categoryService.getAllCategories().stream()
                 .map(c -> new CategoryDTO(Long.valueOf(c.getId()), c.getName(), c.isActive()))
                 .collect(Collectors.toList());

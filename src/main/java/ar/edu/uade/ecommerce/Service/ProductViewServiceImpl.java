@@ -3,7 +3,7 @@ package ar.edu.uade.ecommerce.Service;
 import ar.edu.uade.ecommerce.Entity.ProductView;
 import ar.edu.uade.ecommerce.Entity.Product;
 import ar.edu.uade.ecommerce.Entity.User;
-import ar.edu.uade.ecommerce.DTO.ProductViewResponseDTO;
+import ar.edu.uade.ecommerce.Entity.DTO.ProductViewResponseDTO;
 import ar.edu.uade.ecommerce.Repository.ProductViewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

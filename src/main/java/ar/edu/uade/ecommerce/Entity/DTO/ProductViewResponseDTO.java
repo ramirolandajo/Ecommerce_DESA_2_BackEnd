@@ -1,4 +1,4 @@
-package ar.edu.uade.ecommerce.DTO;
+package ar.edu.uade.ecommerce.Entity.DTO;
 
 import lombok.Data;
 

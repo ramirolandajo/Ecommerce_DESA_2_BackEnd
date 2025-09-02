@@ -4,7 +4,7 @@ import ar.edu.uade.ecommerce.Entity.Product;
 import ar.edu.uade.ecommerce.Entity.ProductView;
 import ar.edu.uade.ecommerce.Entity.User;
 import ar.edu.uade.ecommerce.Service.ProductViewServiceImpl;
-import ar.edu.uade.ecommerce.DTO.ProductViewResponseDTO;
+import ar.edu.uade.ecommerce.Entity.DTO.ProductViewResponseDTO;
 import ar.edu.uade.ecommerce.Service.AuthService;
 import ar.edu.uade.ecommerce.Service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;

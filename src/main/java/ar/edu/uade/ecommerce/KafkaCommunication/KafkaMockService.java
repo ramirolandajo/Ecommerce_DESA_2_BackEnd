@@ -20,8 +20,10 @@ public class KafkaMockService {
     }
 
     // Simula recibir todos los productos
-    public List<ProductDTO> getProductsMock() {
-        return List.of(
+    public ProductSyncMessage getProductsMock() {
+        return new ProductSyncMessage(
+            "ProductSync",
+            new ProductSyncPayload(List.of(
                 new ProductDTO(
                         1L,
                         "Smartphone",
@@ -98,33 +100,95 @@ public class KafkaMockService {
                         180.0f,
                         1004
                 )
+            )),
+            java.time.LocalDateTime.now().toString()
         );
+    }
+
+    // Clases internas para el mensaje mock
+    public static class ProductSyncMessage {
+        public String type;
+        public ProductSyncPayload payload;
+        public String timestamp;
+        public ProductSyncMessage(String type, ProductSyncPayload payload, String timestamp) {
+            this.type = type;
+            this.payload = payload;
+            this.timestamp = timestamp;
+        }
+    }
+    public static class ProductSyncPayload {
+        public List<ProductDTO> products;
+        public ProductSyncPayload(List<ProductDTO> products) {
+            this.products = products;
+        }
     }
 
     // Simula recibir todas las categorías
-    public List<CategoryDTO> getCategoriesMock() {
-        return List.of(
-                new CategoryDTO(1L, "Celulares"),
-                new CategoryDTO(2L, "Computadoras"),
-                new CategoryDTO(3L, "Audio"),
-                new CategoryDTO(4L, "Wearables"),
-                new CategoryDTO(5L, "Accesorios"),
-                new CategoryDTO(6L, "Tablets"),
-                new CategoryDTO(7L, "Monitores"),
-                new CategoryDTO(8L, "Impresoras")
+    public CategorySyncMessage getCategoriesMock() {
+        return new CategorySyncMessage(
+            "CategorySync",
+            new CategorySyncPayload(List.of(
+                new CategoryDTO(1L, "Celulares", true),
+                new CategoryDTO(2L, "Computadoras", true),
+                new CategoryDTO(3L, "Audio", true),
+                new CategoryDTO(4L, "Wearables", true),
+                new CategoryDTO(5L, "Accesorios", true),
+                new CategoryDTO(6L, "Tablets", true),
+                new CategoryDTO(7L, "Monitores", true),
+                new CategoryDTO(8L, "Impresoras", true)
+            )),
+            java.time.LocalDateTime.now().toString()
         );
     }
 
+    public static class CategorySyncMessage {
+        public String type;
+        public CategorySyncPayload payload;
+        public String timestamp;
+        public CategorySyncMessage(String type, CategorySyncPayload payload, String timestamp) {
+            this.type = type;
+            this.payload = payload;
+            this.timestamp = timestamp;
+        }
+    }
+    public static class CategorySyncPayload {
+        public List<CategoryDTO> categories;
+        public CategorySyncPayload(List<CategoryDTO> categories) {
+            this.categories = categories;
+        }
+    }
+
     // Simula recibir todas las marcas
-    public List<BrandDTO> getBrandsMock() {
-        return List.of(
-                new BrandDTO(1L, "Samsung"),
-                new BrandDTO(2L, "Dell"),
-                new BrandDTO(3L, "Sony"),
-                new BrandDTO(4L, "Apple"),
-                new BrandDTO(5L, "HP"),
-                new BrandDTO(6L, "Lenovo")
+    public BrandSyncMessage getBrandsMock() {
+        return new BrandSyncMessage(
+            "BrandSync",
+            new BrandSyncPayload(List.of(
+                new BrandDTO(1L, "Samsung", true),
+                new BrandDTO(2L, "Dell", true),
+                new BrandDTO(3L, "Sony", true),
+                new BrandDTO(4L, "Apple", true),
+                new BrandDTO(5L, "HP", true),
+                new BrandDTO(6L, "Lenovo", true)
+            )),
+            java.time.LocalDateTime.now().toString()
         );
+    }
+
+    public static class BrandSyncMessage {
+        public String type;
+        public BrandSyncPayload payload;
+        public String timestamp;
+        public BrandSyncMessage(String type, BrandSyncPayload payload, String timestamp) {
+            this.type = type;
+            this.payload = payload;
+            this.timestamp = timestamp;
+        }
+    }
+    public static class BrandSyncPayload {
+        public List<BrandDTO> brands;
+        public BrandSyncPayload(List<BrandDTO> brands) {
+            this.brands = brands;
+        }
     }
 
     // Simula la recepción de un evento desde otro módulo (inventario)

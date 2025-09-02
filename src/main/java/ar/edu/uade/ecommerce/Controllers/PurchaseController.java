@@ -84,7 +84,10 @@ public class PurchaseController {
             return ResponseEntity.status(401).build();
         }
         Purchase purchase = purchaseService.confirmPurchase(id);
-        if (purchase != null && purchase.getCart() != null) {
+        if (purchase == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (purchase.getCart() != null) {
             // Confirmar el stock y enviar evento por Kafka
             cartService.confirmProductStock(purchase.getCart());
         }

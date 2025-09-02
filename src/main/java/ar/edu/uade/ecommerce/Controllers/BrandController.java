@@ -22,23 +22,28 @@ public class BrandController {
 
     @GetMapping("/sync")
     public List<BrandDTO> syncBrandsFromMock() {
-        List<BrandDTO> mockBrands = kafkaMockService.getBrandsMock();
+        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
+        List<BrandDTO> mockBrands = message.payload.brands;
         List<Brand> existingBrands = brandService.getAllBrands();
         for (BrandDTO dto : mockBrands) {
-            // Buscar si ya existe una marca con el mismo nombre
             Brand existing = existingBrands.stream()
                 .filter(b -> b.getName() != null && b.getName().equalsIgnoreCase(dto.getName()))
                 .findFirst()
                 .orElse(null);
             if (existing == null) {
-                // Si no existe, crear una nueva marca
                 Brand b = new Brand();
                 b.setName(dto.getName());
-                b.setActive(true);
+                b.setActive(dto.getActive() != null ? dto.getActive() : true);
                 brandService.saveBrand(b);
             }
-            // Si existe, no hacer nada (mantener el id)
         }
+        // Imprimir el mensaje recibido del mock en formato core de mensajería
+        System.out.println("Mensaje recibido del core de mensajería:");
+        System.out.println("{" +
+            "type='" + message.type + "', " +
+            "payload=" + message.payload + ", " +
+            "timestamp=" + message.timestamp +
+            "}");
         return brandService.getAllBrands().stream()
                 .map(b -> new BrandDTO(Long.valueOf(b.getId()), b.getName(), b.isActive()))
                 .collect(Collectors.toList());

@@ -63,7 +63,8 @@ class BrandControllerTest {
 
     @Test
     void testSyncBrandsFromMock_EmptyMock() {
-        when(kafkaMockService.getBrandsMock()).thenReturn(List.of());
+        KafkaMockService.BrandSyncMessage emptyMessage = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of()), "2025-09-02T08:29:02.072020100");
+        when(kafkaMockService.getBrandsMock()).thenReturn(emptyMessage);
         when(brandService.getAllBrands()).thenReturn(List.of());
         List<BrandDTO> result = brandController.syncBrandsFromMock();
         assertTrue(result.isEmpty());
@@ -98,12 +99,13 @@ class BrandControllerTest {
     @Test
     void testSyncBrandsFromMock_AllExist() {
         BrandDTO mockBrand1 = new BrandDTO(1L, "Apple", true);
+        KafkaMockService.BrandSyncMessage message = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of(mockBrand1)), "2025-09-02T08:29:02.072020100");
         Brand existingBrand = new Brand();
         existingBrand.setId(1);
         existingBrand.setName("Apple");
         existingBrand.setActive(true);
         when(brandService.getAllBrands()).thenReturn(List.of(existingBrand));
-        when(kafkaMockService.getBrandsMock()).thenReturn(List.of(mockBrand1));
+        when(kafkaMockService.getBrandsMock()).thenReturn(message);
         List<BrandDTO> result = brandController.syncBrandsFromMock();
         assertEquals(1, result.size());
         assertEquals("Apple", result.get(0).getName());
@@ -288,7 +290,8 @@ class BrandControllerTest {
     @Test
     void testSyncBrandsFromMock_NullNameInMock_shouldNotAddNullName() {
         BrandDTO mockDto = new BrandDTO(7L, null, true);
-        when(kafkaMockService.getBrandsMock()).thenReturn(List.of(mockDto));
+        KafkaMockService.BrandSyncMessage message = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of(mockDto)), "2025-09-02T08:29:02.072020100");
+        when(kafkaMockService.getBrandsMock()).thenReturn(message);
         when(brandService.getAllBrands()).thenReturn(List.of());
         // El método no debería agregar marcas con nombre null
         List<BrandDTO> result = brandController.syncBrandsFromMock();
@@ -298,7 +301,8 @@ class BrandControllerTest {
     @Test
     void testSyncBrandsFromMock_EmptyExistingBrands_shouldAddBrand() {
         BrandDTO mockDto = new BrandDTO(8L, "Alcatel", true);
-        when(kafkaMockService.getBrandsMock()).thenReturn(List.of(mockDto));
+        KafkaMockService.BrandSyncMessage message = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of(mockDto)), "2025-09-02T08:29:02.072020100");
+        when(kafkaMockService.getBrandsMock()).thenReturn(message);
         when(brandService.getAllBrands()).thenReturn(List.of());
         Brand brand = new Brand();
         brand.setId(8);
@@ -367,7 +371,9 @@ class BrandControllerTest {
         existingBrand.setId(17);
         existingBrand.setName(null);
         existingBrand.setActive(true);
-        when(kafkaMockService.getBrandsMock()).thenReturn(List.of(mockDto));
+        KafkaMockService.BrandSyncPayload payload = new KafkaMockService.BrandSyncPayload(List.of(mockDto));
+        KafkaMockService.BrandSyncMessage mockMessage = new KafkaMockService.BrandSyncMessage("BrandSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getBrandsMock()).thenReturn(mockMessage);
         when(brandService.getAllBrands()).thenReturn(List.of(existingBrand));
         List<BrandDTO> result = brandController.syncBrandsFromMock();
         assertTrue(result.stream().anyMatch(b -> b.getName() == null));
@@ -651,7 +657,9 @@ class BrandControllerTest {
         existingNotNull.setId(43);
         existingNotNull.setName("Sony");
         existingNotNull.setActive(true);
-        when(kafkaMockService.getBrandsMock()).thenReturn(List.of(mockDtoNull, mockDtoNotNull));
+        KafkaMockService.BrandSyncPayload payload = new KafkaMockService.BrandSyncPayload(List.of(mockDtoNull, mockDtoNotNull));
+        KafkaMockService.BrandSyncMessage mockMessage = new KafkaMockService.BrandSyncMessage("BrandSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getBrandsMock()).thenReturn(mockMessage);
         when(brandService.getAllBrands()).thenReturn(List.of(existingNull, existingNotNull));
         List<BrandDTO> result = brandController.syncBrandsFromMock();
         assertTrue(result.stream().anyMatch(b -> b.getName() == null));

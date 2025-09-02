@@ -1,0 +1,10 @@
+{
+  "apple": ["celular", "laptop", "tablet", "smartwatch", "auriculares", "cellphone", "laptop", "tablet", "smartwatch", "headphones"],
+  "samsung": ["celular", "tablet", "smartwatch", "auriculares", "monitor", "cellphone", "tablet", "smartwatch", "headphones", "monitor"],
+  "dell": ["laptop", "computadora", "monitor", "teclado", "laptop", "computer", "monitor", "keyboard"],
+  "notebook": ["laptop", "computadora", "ultrabook", "laptop", "computer", "ultrabook"],
+  "phone": ["celular", "smartphone", "móvil", "cellphone", "smartphone", "mobile"],
+  "macbook": ["laptop", "ultrabook", "computadora", "laptop", "ultrabook", "computer"],
+  "iphone": ["celular", "smartphone", "móvil", "cellphone", "smartphone", "mobile"]
+}
+

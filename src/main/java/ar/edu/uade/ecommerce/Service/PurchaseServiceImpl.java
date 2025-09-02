@@ -89,20 +89,23 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Override
     public Purchase confirmPurchase(Integer id) {
         Purchase purchase = findById(id);
-        if (purchase != null) {
-            purchase.setStatus(Status.CONFIRMED);
-            purchase.setDate(LocalDateTime.now()); // Setea la fecha de confirmación
-            // Solo enviar evento de confirmación de compra y generación de factura por Kafka (mock)
-            purchaseRepository.save(purchase);
-            try {
-                String json = objectMapper.writeValueAsString(purchase);
-                Event event = new Event("PurchaseConfirmed_GenerateInvoice", json);
-                kafkaMockService.sendEvent(event);
-                kafkaMockService.mockListener(event);
-            } catch (Exception e) {
-                logger.error("Error al confirmar compra y generar factura", e);
-            }
+        if (purchase == null) {
+            logger.warn("Intento de confirmar compra inexistente. ID: {}", id);
+            return null;
         }
+        logger.info("Confirmando compra. Estado previo: {}", purchase.getStatus());
+        purchase.setStatus(Status.CONFIRMED);
+        purchase.setDate(LocalDateTime.now()); // Setea la fecha de confirmación
+        purchaseRepository.save(purchase);
+        try {
+            String json = objectMapper.writeValueAsString(purchase);
+            Event event = new Event("PurchaseConfirmed_GenerateInvoice", json);
+            kafkaMockService.sendEvent(event);
+            kafkaMockService.mockListener(event);
+        } catch (Exception e) {
+            logger.error("Error al confirmar compra y generar factura", e);
+        }
+        logger.info("Compra confirmada. Estado actual: {}", purchase.getStatus());
         return purchase;
     }
 

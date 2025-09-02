@@ -1,6 +1,6 @@
 package ar.edu.uade.ecommerce.Service;
 
-import ar.edu.uade.ecommerce.DTO.ProductViewResponseDTO;
+import ar.edu.uade.ecommerce.Entity.DTO.ProductViewResponseDTO;
 import ar.edu.uade.ecommerce.Entity.*;
 import ar.edu.uade.ecommerce.Repository.ProductViewRepository;
 import org.junit.jupiter.api.Test;

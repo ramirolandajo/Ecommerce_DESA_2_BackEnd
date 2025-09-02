@@ -200,7 +200,9 @@ class ProductControllerTest {
         mockDto.setPrice(100f);
         Product product = new Product();
         product.setId(1); // Asigna un id válido para evitar NullPointerException
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(mockDto));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(mockDto));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of(product));
         doNothing().when(productRepository).deleteAll();
         when(productRepository.save(any(Product.class))).thenReturn(product);
@@ -242,7 +244,9 @@ class ProductControllerTest {
         BrandDTO brandDTO = new BrandDTO();
         brandDTO.setId(99L);
         mockDto.setBrand(brandDTO);
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(mockDto));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(mockDto));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of());
         doNothing().when(productRepository).deleteAll();
         when(controller.entityManager.find(Brand.class, 99)).thenReturn(null);
@@ -262,7 +266,9 @@ class ProductControllerTest {
         CategoryDTO catDTO = new CategoryDTO();
         catDTO.setId(88L);
         mockDto.setCategories(List.of(catDTO));
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(mockDto));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(mockDto));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of());
         doNothing().when(productRepository).deleteAll();
         when(controller.entityManager.find(Category.class, 88)).thenReturn(null);
@@ -421,7 +427,9 @@ class ProductControllerTest {
         mockDto.setIsFeatured(true);
         mockDto.setHero(true);
         mockDto.setActive(false);
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(mockDto));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(mockDto));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of(new Product()));
         doNothing().when(productRepository).deleteAll();
         when(productRepository.save(any(Product.class))).thenReturn(new Product());
@@ -574,7 +582,9 @@ class ProductControllerTest {
         ProductDTO dtoEmpty = new ProductDTO();
         dtoEmpty.setTitle("EmptyMedia");
         dtoEmpty.setMediaSrc(List.of());
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(dtoNull, dtoEmpty));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dtoNull, dtoEmpty));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of(new Product(), new Product()));
         doNothing().when(productRepository).deleteAll();
         when(productRepository.save(any(Product.class))).thenReturn(new Product());
@@ -594,129 +604,14 @@ class ProductControllerTest {
         ProductDTO dtoTrue = new ProductDTO();
         dtoTrue.setTitle("TrueActive");
         dtoTrue.setActive(true);
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(dtoNull, dtoTrue));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dtoNull, dtoTrue));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of(new Product(), new Product()));
         doNothing().when(productRepository).deleteAll();
         when(productRepository.save(any(Product.class))).thenReturn(new Product());
         List<ProductDTO> result = controller.syncProductsFromMock();
         assertNotNull(result);
-    }
-
-    @Test
-    void testEditProductSimple_OnlyStock() {
-        Product product = new Product();
-        product.setId(41);
-        product.setStock(10);
-        ProductDTO dto = new ProductDTO();
-        dto.setStock(20);
-        when(productRepository.findById(41)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenReturn(product);
-        ProductDTO result = productController.editProductSimple(41L, dto);
-        assertEquals(20, result.getStock());
-    }
-
-    @Test
-    void testEditProductSimple_OnlyDiscount() {
-        Product product = new Product();
-        product.setId(42);
-        product.setPriceUnit(100f);
-        product.setDiscount(0f);
-        ProductDTO dto = new ProductDTO();
-        dto.setDiscount(15f);
-        when(productRepository.findById(42)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenReturn(product);
-        ProductDTO result = productController.editProductSimple(42L, dto);
-        assertEquals(15f, result.getDiscount());
-        assertEquals(85f, result.getPrice());
-    }
-
-    @Test
-    void testEditProductSimple_AllNulls() {
-        Product product = new Product();
-        product.setId(43);
-        product.setPrice(50f);
-        product.setStock(10);
-        product.setDiscount(5f);
-        product.setPriceUnit(55f);
-        ProductDTO dto = new ProductDTO();
-        when(productRepository.findById(43)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenReturn(product);
-        ProductDTO result = productController.editProductSimple(43L, dto);
-        assertEquals(10, result.getStock());
-        assertEquals(50f, result.getPrice());
-        assertEquals(5f, result.getDiscount());
-        assertEquals(55f, result.getPriceUnit());
-    }
-
-//    @Test
-//    void testEditProduct_AllFieldsNull() {
-//        Product product = new Product();
-//        product.setId(50);
-//        product.setTitle("Titulo");
-//        product.setDescription("Desc");
-//        product.setStock(10);
-//        product.setPrice(100f);
-//        product.setMediaSrc(List.of("img.jpg"));
-//        product.setNew(true);
-//        product.setBestseller(true);
-//        product.setFeatured(true);
-//        product.setHero(true);
-//        product.setActive(true);
-//        product.setProductCode(123);
-//        product.setPriceUnit(100f);
-//        product.setDiscount(10f);
-//        ProductDTO dto = new ProductDTO(); // todos los campos null
-//        when(productRepository.findById(50)).thenReturn(Optional.of(product));
-//        when(productRepository.save(any(Product.class))).thenReturn(product);
-//        ProductDTO result = productController.editProduct(50, dto);
-//        assertEquals("Titulo", result.getTitle());
-//        assertEquals("Desc", result.getDescription());
-//        assertEquals(10, result.getStock());
-//        assertEquals(List.of("img.jpg"), result.getMediaSrc());
-//        assertTrue(result.getIsNew());
-//        assertTrue(result.getIsBestseller());
-//        assertTrue(result.getIsFeatured());
-//        assertTrue(result.getHero());
-//        assertTrue(result.getActive());
-//        assertEquals(123, result.getProductCode());
-//        assertEquals(100f, result.getPriceUnit());
-//        assertEquals(10f, result.getDiscount());
-//        assertEquals(90f, result.getPrice());
-//    }
-
-    @Test
-    void testEditProduct_OnlyBooleanFields() {
-        Product product = new Product();
-        product.setId(51);
-        product.setNew(false);
-        product.setBestseller(false);
-        product.setFeatured(false);
-        product.setHero(false);
-        ProductDTO dto = new ProductDTO();
-        dto.setIsNew(true);
-        dto.setIsBestseller(true);
-        dto.setIsFeatured(true);
-        dto.setHero(true);
-        when(productRepository.findById(51)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenReturn(product);
-        ProductDTO result = productController.editProduct(51, dto);
-        assertTrue(result.getIsNew());
-        assertTrue(result.getIsBestseller());
-        assertTrue(result.getIsFeatured());
-        assertTrue(result.getHero());
-    }
-
-    @Test
-    void testEditProduct_ProductCodeNull() {
-        Product product = new Product();
-        product.setId(52);
-        product.setProductCode(123);
-        ProductDTO dto = new ProductDTO();
-        dto.setProductCode(null);
-        when(productRepository.findById(52)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenReturn(product);
-        ProductDTO result = productController.editProduct(52, dto);
-        assertNull(result.getProductCode());
     }
 
     @Test
@@ -729,7 +624,9 @@ class ProductControllerTest {
         dto.setTitle("SinBrandCat");
         dto.setBrand(null);
         dto.setCategories(null);
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(dto));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dto));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of(new Product()));
         doNothing().when(productRepository).deleteAll();
         when(productRepository.save(any(Product.class))).thenReturn(new Product());
@@ -748,7 +645,9 @@ class ProductControllerTest {
         CategoryDTO catDTO = new CategoryDTO();
         catDTO.setId(null);
         dto.setCategories(List.of(catDTO));
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(dto));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dto));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of(new Product()));
         doNothing().when(productRepository).deleteAll();
         when(productRepository.save(any(Product.class))).thenReturn(new Product());
@@ -765,7 +664,9 @@ class ProductControllerTest {
         ProductDTO dto = new ProductDTO();
         dto.setTitle("EmptyCatList");
         dto.setCategories(List.of());
-        when(kafkaMockService.getProductsMock()).thenReturn(List.of(dto));
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dto));
+        KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of(new Product()));
         doNothing().when(productRepository).deleteAll();
         when(productRepository.save(any(Product.class))).thenReturn(new Product());

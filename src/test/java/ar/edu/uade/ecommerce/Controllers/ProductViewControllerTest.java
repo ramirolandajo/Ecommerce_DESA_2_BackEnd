@@ -3,7 +3,7 @@ package ar.edu.uade.ecommerce.Controllers;
 import ar.edu.uade.ecommerce.Entity.Product;
 import ar.edu.uade.ecommerce.Entity.ProductView;
 import ar.edu.uade.ecommerce.Entity.User;
-import ar.edu.uade.ecommerce.DTO.ProductViewResponseDTO;
+import ar.edu.uade.ecommerce.Entity.DTO.ProductViewResponseDTO;
 import ar.edu.uade.ecommerce.Service.ProductViewServiceImpl;
 import ar.edu.uade.ecommerce.Service.AuthService;
 import ar.edu.uade.ecommerce.Service.ProductService;
@@ -15,8 +15,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
