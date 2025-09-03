@@ -4,6 +4,7 @@ import ar.edu.uade.ecommerce.Entity.Brand;
 import ar.edu.uade.ecommerce.Entity.Category;
 import ar.edu.uade.ecommerce.Entity.DTO.BrandDTO;
 import ar.edu.uade.ecommerce.Entity.DTO.CategoryDTO;
+import ar.edu.uade.ecommerce.Entity.DTO.FilterProductRequest;
 import ar.edu.uade.ecommerce.Entity.Product;
 import ar.edu.uade.ecommerce.Entity.DTO.ProductDTO;
 import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
@@ -132,9 +133,11 @@ public class ProductController {
             .collect(Collectors.toList());
     }
 
-    // Agrega un producto específico
+    // Agrega un producto específico usando mensaje mockeado
     @PostMapping
-    public ProductDTO addProduct(@RequestBody ProductDTO dto) {
+    public ProductDTO addProduct() {
+        KafkaMockService.AddProductMessage msg = kafkaMockService.getAddProductMock();
+        ProductDTO dto = msg.payload.product;
         Product product = new Product();
         product.setTitle(dto.getTitle());
         product.setDescription(dto.getDescription());
@@ -145,6 +148,21 @@ public class ProductController {
         product.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);
         product.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);
         product.setHero(dto.getHero() != null ? dto.getHero() : false);
+        product.setActive(dto.getActive() != null ? dto.getActive() : true);
+        product.setDiscount(dto.getDiscount());
+        product.setPriceUnit(dto.getPriceUnit());
+        product.setProductCode(dto.getProductCode());
+        product.setBrand(dto.getBrand() != null ? brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null) : null);
+        if (dto.getCategories() != null && !dto.getCategories().isEmpty()) {
+            Set<Category> cats = dto.getCategories().stream()
+                .map(catDto -> categoryRepository.findById((long) catDto.getId().intValue()).orElse(null))
+                .filter(c -> c != null)
+                .collect(java.util.stream.Collectors.toSet());
+            product.setCategories(new java.util.HashSet<>(cats));
+        } else {
+            product.setCategories(null);
+        }
+        product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);
         Product saved = productRepository.save(product);
         return toDTO(saved);
     }
@@ -155,8 +173,8 @@ public class ProductController {
     }
 
     @PatchMapping("/simple")
-    public ProductDTO editProductSimple(@RequestBody EditProductSimpleRequest request) {
-        KafkaMockService.EditProductSimpleMessage msg = kafkaMockService.getEditProductMockSimple(request.id);
+    public ProductDTO editProductSimple() {
+        KafkaMockService.EditProductSimpleMessage msg = kafkaMockService.getEditProductMockSimple();
         KafkaMockService.EditProductSimplePayload dto = msg.payload;
         Long id = dto.id;
         Optional<Product> productOpt = productRepository.findById(id.intValue());
@@ -173,14 +191,10 @@ public class ProductController {
         return toDTO(updated);
     }
 
-    public static class EditProductFullRequest {
-        public Integer id;
-    }
-
     // Edita el producto completo usando mensaje mockeado
     @PatchMapping
-    public ProductDTO editProduct(@RequestBody EditProductFullRequest request) {
-        KafkaMockService.EditProductFullMessage msg = kafkaMockService.getEditProductMockFull(request.id);
+    public ProductDTO editProduct() {
+        KafkaMockService.EditProductFullMessage msg = kafkaMockService.getEditProductMockFull();
         ProductDTO dto = msg.payload;
         Integer id = Math.toIntExact(dto.getId());
         Optional<Product> productOpt = productRepository.findById(id);
@@ -243,24 +257,28 @@ public class ProductController {
         return toDTO(updated);
     }
 
-    // Activar producto
-    @PatchMapping("/{id}/activate")
-    public ProductDTO activateProduct(@PathVariable Integer id) {
-        Optional<Product> productOpt = productRepository.findById(id);
+    // Activar producto usando mensaje mockeado
+    @PatchMapping("/activate")
+    public ProductDTO activateProduct() {
+        KafkaMockService.ActivateProductMessage msg = kafkaMockService.getActivateProductMock();
+        Long id = msg.payload.id;
+        Optional<Product> productOpt = productRepository.findById(id.intValue());
         if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
         Product product = productOpt.get();
-        product.setActive(true); // ejemplo de campo para activar
+        product.setActive(true);
         Product updated = productRepository.save(product);
         return toDTO(updated);
     }
 
-    // Desactivar producto
-    @PatchMapping("/{id}/deactivate")
-    public ProductDTO deactivateProduct(@PathVariable Integer id) {
-        Optional<Product> productOpt = productRepository.findById(id);
+    // Desactivar producto usando mensaje mockeado
+    @PatchMapping("/deactivate")
+    public ProductDTO deactivateProduct() {
+        KafkaMockService.DeactivateProductMessage msg = kafkaMockService.getDeactivateProductMock();
+        Long id = msg.payload.id;
+        Optional<Product> productOpt = productRepository.findById(id.intValue());
         if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
         Product product = productOpt.get();
-        product.setActive(false); // ejemplo de campo para desactivar
+        product.setActive(false);
         Product updated = productRepository.save(product);
         return toDTO(updated);
     }
@@ -348,13 +366,13 @@ public class ProductController {
     }
 
     // Filtrado de productos por categoría, marca y rango de precio
-    @GetMapping("/filter")
-    public List<ProductDTO> filterProducts(
-            @RequestParam(value = "categoryId", required = false) Long categoryId,
-            @RequestParam(value = "brandId", required = false) Long brandId,
-            @RequestParam(value = "priceMin", required = false) Float priceMin,
-            @RequestParam(value = "priceMax", required = false) Float priceMax) {
+    @PostMapping("/filter")
+    public List<ProductDTO> filterProducts(@RequestBody FilterProductRequest filterRequest) {
         List<Product> products = productRepository.findAll();
+        Long categoryId = filterRequest.getCategoryId();
+        Long brandId = filterRequest.getBrandId();
+        Float priceMin = filterRequest.getPriceMin();
+        Float priceMax = filterRequest.getPriceMax();
         return products.stream()
             .filter(p -> {
                 boolean matches = true;
@@ -440,5 +458,18 @@ public class ProductController {
         dto.setIsFeatured(product.isIsFeatured());
         dto.setHero(product.isHero());
         return dto;
+    }
+
+    // Obtener productos destacados para el home screen
+    @GetMapping("/homescreen")
+    public List<ProductDTO> getHomeScreenProducts() {
+        return productRepository.findAll().stream()
+            .filter(p -> Boolean.TRUE.equals(p.isIsBestseller())
+                || Boolean.TRUE.equals(p.isHero())
+                || Boolean.TRUE.equals(p.isIsFeatured())
+                || Boolean.TRUE.equals(p.getIsNew())
+                || (p.getDiscount() != null && p.getDiscount() > 0))
+            .map(this::toDTO)
+            .collect(Collectors.toList());
     }
 }

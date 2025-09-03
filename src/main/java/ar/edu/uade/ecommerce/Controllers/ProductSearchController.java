@@ -1,6 +1,7 @@
 package ar.edu.uade.ecommerce.Controllers;
 
 import ar.edu.uade.ecommerce.Entity.DTO.ProductDTO;
+import ar.edu.uade.ecommerce.Entity.DTO.SearchProductDTO;
 import ar.edu.uade.ecommerce.Entity.Product;
 import ar.edu.uade.ecommerce.Repository.ProductRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,25 +41,23 @@ public class ProductSearchController {
     }
 
     @GetMapping
-    public List<ProductDTO> searchProducts(@RequestParam("query") String query) {
+    public List<SearchProductDTO> searchProducts(@RequestParam("query") String query) {
         String lowerQuery = query.toLowerCase();
         Set<String> relatedTypes = new HashSet<>();
         if (synonyms.containsKey(lowerQuery)) {
             relatedTypes.addAll(synonyms.get(lowerQuery));
         }
         List<Product> products = productRepository.findAll();
-        List<ProductDTO> result = products.stream()
+        List<SearchProductDTO> result = products.stream()
             .filter(p -> p.getTitle().toLowerCase().contains(lowerQuery)
                 || relatedTypes.stream().anyMatch(type -> p.getTitle().toLowerCase().contains(type)))
-            .map(p -> {
-                ProductDTO dto = new ProductDTO();
-                dto.setTitle(p.getTitle());
-                dto.setMediaSrc(p.getMediaSrc());
-                dto.setPrice(p.getPrice());
-                return dto;
-            })
+            .map(p -> new SearchProductDTO(
+                p.getId() != null ? Long.valueOf(p.getId()) : null,
+                p.getTitle(),
+                p.getDescription(),
+                p.getMediaSrc()
+            ))
             .collect(Collectors.toList());
         return result;
     }
 }
-

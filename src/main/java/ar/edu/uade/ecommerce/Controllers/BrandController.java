@@ -56,16 +56,17 @@ public class BrandController {
                 .collect(Collectors.toList());
     }
 
-    @PostMapping
-    public BrandDTO addBrand(@RequestBody BrandDTO brandDTO) {
-        // Verificar si ya existe una marca con el mismo nombre (incluyendo ambos null)
+    @PostMapping("/mock/add")
+    public BrandDTO addBrandFromMock() {
+        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
+        // Tomar la primera marca del mock como ejemplo
+        BrandDTO brandDTO = message.payload.brands.get(0);
         Brand existing = brandService.getAllBrands().stream()
             .filter(b -> (b.getName() == null && brandDTO.getName() == null) ||
                          (b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName())))
             .findFirst()
             .orElse(null);
         if (existing != null) {
-            // Si existe, devolver el DTO de la marca existente
             return new BrandDTO(Long.valueOf(existing.getId()), existing.getName(), existing.isActive());
         }
         Brand brand = new Brand();
@@ -75,41 +76,48 @@ public class BrandController {
         return new BrandDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive());
     }
 
-    @PatchMapping("/{id}")
-    public BrandDTO updateBrand(@PathVariable Integer id, @RequestBody BrandDTO brandDTO) {
+    @PatchMapping("/mock/activate")
+    public BrandDTO activateBrandFromMock() {
+        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
+        // Tomar la primera marca del mock como ejemplo
+        BrandDTO brandDTO = message.payload.brands.get(0);
         Brand brand = brandService.getAllBrands().stream()
-                .filter(b -> b.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
-        brand.setName(brandDTO.getName()); // Permitir null
-        if (brandDTO.getActive() != null) {
-            brand.setActive(brandDTO.getActive());
-        }
-        brandService.saveBrand(brand);
-        return new BrandDTO(Long.valueOf(brand.getId()), brand.getName(), brand.isActive());
-    }
-
-    @DeleteMapping("/{id}")
-    public List<BrandDTO> deleteBrand(@PathVariable Integer id) {
-        Brand brand = brandService.getAllBrands().stream()
-                .filter(b -> b.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
-        brand.setActive(false);
-        brandService.saveBrand(brand);
-        // Devuelve el listado completo con el campo active
-        return brandService.getAllBrands().stream()
-                .map(b -> new BrandDTO(Long.valueOf(b.getId()), b.getName(), b.isActive()))
-                .collect(java.util.stream.Collectors.toList());
-    }
-
-    @PatchMapping("/{id}/activate")
-    public BrandDTO activateBrand(@PathVariable Integer id) {
-        Brand brand = brandService.getAllBrands().stream()
-                .filter(b -> b.getId().equals(id))
+                .filter(b -> b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
         brand.setActive(true);
+        Brand updated = brandService.saveBrand(brand);
+        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+    }
+
+    @PatchMapping("/mock/deactivate")
+    public BrandDTO deactivateBrandFromMock() {
+        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
+        // Tomar la primera marca del mock como ejemplo
+        BrandDTO brandDTO = message.payload.brands.get(0);
+        Brand brand = brandService.getAllBrands().stream()
+                .filter(b -> b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+        brand.setActive(false);
+        Brand updated = brandService.saveBrand(brand);
+        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+    }
+
+    @PatchMapping("/mock/update")
+    public BrandDTO updateBrandFromMock() {
+        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
+        // Tomar la primera marca del mock como ejemplo
+        BrandDTO brandDTO = message.payload.brands.get(0);
+        Brand brand = brandService.getAllBrands().stream()
+                .filter(b -> b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
+        // Actualizar el nombre y el estado activo según el mock
+        brand.setName(brandDTO.getName());
+        if (brandDTO.getActive() != null) {
+            brand.setActive(brandDTO.getActive());
+        }
         Brand updated = brandService.saveBrand(brand);
         return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
     }

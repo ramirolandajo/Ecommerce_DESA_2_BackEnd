@@ -328,11 +328,11 @@ public class KafkaMockService {
     }
 
     // Mock para edición simple de producto
-    public EditProductSimpleMessage getEditProductMockSimple(Long id) {
+    public EditProductSimpleMessage getEditProductMockSimple() {
         return new EditProductSimpleMessage(
             "EditProductSimple",
             new EditProductSimplePayload(
-                id,
+                    31L,
                 999, // nuevo stock
                 199.99f // nuevo precio
             ),
@@ -360,11 +360,11 @@ public class KafkaMockService {
         }
     }
     // Mock para edición completa de producto
-    public EditProductFullMessage getEditProductMockFull(Integer id) {
+    public EditProductFullMessage getEditProductMockFull() {
         return new EditProductFullMessage(
             "EditProductFull",
             new EditProductFullPayload(
-                id,
+                30,
                 "Producto editado desde mock",
                 "Descripción editada desde mock",
                 123.45f,
@@ -398,6 +398,100 @@ public class KafkaMockService {
     public static class EditProductFullPayload extends ProductDTO {
         public EditProductFullPayload(Integer id, String title, String description, Float price, Integer stock, List<String> mediaSrc, BrandDTO brand, List<CategoryDTO> categories, Boolean isNew, Boolean isBestseller, Boolean isFeatured, Boolean hero, Boolean active, Float calification, Float discount, Float priceUnit, Integer productCode) {
             super(Long.valueOf(id), title, description, price, stock, mediaSrc, brand, categories, isNew, isBestseller, isFeatured, hero, active, calification, discount, priceUnit, productCode);
+        }
+    }
+    // Mock para agregar producto
+    public AddProductMessage getAddProductMock() {
+        return new AddProductMessage(
+            "AddProduct",
+            new AddProductPayload(
+                new ProductDTO(
+                    99L,
+                    "Nuevo Producto Mock",
+                    "Descripción del producto mockeado",
+                    500.0f,
+                    50,
+                    List.of("https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1400&auto=format&fit=crop"),
+                    new BrandDTO(1L, "Samsung", true),
+                    List.of(new CategoryDTO(1L, "Celulares", true)),
+                    true,
+                    false,
+                    true,
+                    true,
+                    true,
+                    0f,
+                    10.0f,
+                    450.0f,
+                    9999
+                )
+            ),
+            java.time.LocalDateTime.now().toString()
+        );
+    }
+    public static class AddProductMessage {
+        public String type;
+        public AddProductPayload payload;
+        public String timestamp;
+        public AddProductMessage(String type, AddProductPayload payload, String timestamp) {
+            this.type = type;
+            this.payload = payload;
+            this.timestamp = timestamp;
+        }
+    }
+    public static class AddProductPayload {
+        public ProductDTO product;
+        public AddProductPayload(ProductDTO product) {
+            this.product = product;
+        }
+    }
+
+    // Mock para activar producto
+    public ActivateProductMessage getActivateProductMock() {
+        return new ActivateProductMessage(
+            "ActivateProduct",
+            new ActivateProductPayload(29L),
+            java.time.LocalDateTime.now().toString()
+        );
+    }
+    public static class ActivateProductMessage {
+        public String type;
+        public ActivateProductPayload payload;
+        public String timestamp;
+        public ActivateProductMessage(String type, ActivateProductPayload payload, String timestamp) {
+            this.type = type;
+            this.payload = payload;
+            this.timestamp = timestamp;
+        }
+    }
+    public static class ActivateProductPayload {
+        public Long id;
+        public ActivateProductPayload(Long id) {
+            this.id = id;
+        }
+    }
+
+    // Mock para desactivar producto
+    public DeactivateProductMessage getDeactivateProductMock() {
+        return new DeactivateProductMessage(
+            "DeactivateProduct",
+            new DeactivateProductPayload(29L),
+            java.time.LocalDateTime.now().toString()
+        );
+    }
+    public static class DeactivateProductMessage {
+        public String type;
+        public DeactivateProductPayload payload;
+        public String timestamp;
+        public DeactivateProductMessage(String type, DeactivateProductPayload payload, String timestamp) {
+            this.type = type;
+            this.payload = payload;
+            this.timestamp = timestamp;
+        }
+    }
+    public static class DeactivateProductPayload {
+        public Long id;
+        public DeactivateProductPayload(Long id) {
+            this.id = id;
         }
     }
 }
