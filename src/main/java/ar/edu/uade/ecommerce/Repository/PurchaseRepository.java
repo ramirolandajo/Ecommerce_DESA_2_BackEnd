@@ -9,4 +9,6 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Integer> {
     List<Purchase> findByUser_Id(Integer userId);
 
     List<Purchase> findByUser_IdAndStatusOrderByReservationTimeDesc(Integer userId, Purchase.Status status);
+
+    Purchase findByCartId(Integer id);
 }

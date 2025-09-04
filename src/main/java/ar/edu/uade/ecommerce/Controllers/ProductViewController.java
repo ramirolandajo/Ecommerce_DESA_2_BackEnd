@@ -102,21 +102,23 @@ public class ProductViewController {
     @Scheduled(fixedRate = 86400000) // 24 horas en milisegundos
     public void sendDailyProductViewEvent() {
         List<ProductView> allViews = productViewServiceImpl.getAllViews();
-        // Lanzar evento mockeado por Kafka
         StringBuilder sb = new StringBuilder();
-        sb.append("Vistas de productos del día:\n");
-        allViews.forEach(view -> {
-            sb.append(String.format("Usuario: %s, Producto: %s, Fecha: %s\n",
-                view.getUser().getEmail(),
-                view.getProduct().getTitle(),
-                view.getViewedAt()
+        sb.append("{");
+        for (int i = 0; i < allViews.size(); i++) {
+            ProductView view = allViews.get(i);
+            sb.append(String.format("{id: %d, nombre: '%s'}",
+                view.getProduct().getId(),
+                view.getProduct().getTitle()
             ));
-        });
+            if (i < allViews.size() - 1) {
+                sb.append(",");
+            }
+        }
+        sb.append("}");
         kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(
             "DAILY_PRODUCT_VIEWS",
             sb.toString()
         ));
-        // Mostrar el mensaje enviado por Kafka en el log y en consola
         System.out.println("Mensaje enviado a Kafka (core de mensajería):\n" + sb.toString());
     }
 }

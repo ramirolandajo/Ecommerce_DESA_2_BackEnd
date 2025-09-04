@@ -157,9 +157,22 @@ public class CartServiceImpl implements CartService {
     @Override
     public void sendKafkaEvent(String eventName, Object payload) {
         try {
-            // Si el payload es un Cart, armar el detalle de productos
+            // Si el payload es un Cart, armar el evento completo
             if (payload instanceof Cart cart) {
-                java.util.List<java.util.Map<String, Object>> products = new java.util.ArrayList<>();
+                // Buscar la compra asociada al carrito
+                ar.edu.uade.ecommerce.Entity.Purchase purchase = null;
+                if (cart.getId() != null && purchaseRepository != null) {
+                    purchase = purchaseRepository.findByCartId(cart.getId());
+                }
+                // Armar usuario
+                java.util.Map<String, Object> userMap = new java.util.HashMap<>();
+                if (cart.getUser() != null) {
+                    userMap.put("id", cart.getUser().getId());
+                    userMap.put("name", cart.getUser().getName());
+                    userMap.put("email", cart.getUser().getEmail());
+                }
+                // Armar items
+                java.util.List<java.util.Map<String, Object>> items = new java.util.ArrayList<>();
                 if (cart.getItems() != null) {
                     for (CartItem item : cart.getItems()) {
                         Product product = item.getProduct();
@@ -167,17 +180,30 @@ public class CartServiceImpl implements CartService {
                             java.util.Map<String, Object> prodDetail = new java.util.HashMap<>();
                             prodDetail.put("productId", product.getId());
                             prodDetail.put("title", product.getTitle());
-                            prodDetail.put("stockAffected", item.getQuantity());
-                            prodDetail.put("stockAfter", product.getStock());
-                            products.add(prodDetail);
+                            prodDetail.put("quantity", item.getQuantity());
+                            prodDetail.put("price", product.getPrice());
+                            items.add(prodDetail);
                         }
                     }
                 }
+                // Armar cart
+                java.util.Map<String, Object> cartMap = new java.util.HashMap<>();
+                cartMap.put("cartId", cart.getId());
+                cartMap.put("items", items);
+                cartMap.put("finalPrice", cart.getFinalPrice());
+                // Armar payload
+                java.util.Map<String, Object> payloadMap = new java.util.HashMap<>();
+                payloadMap.put("purchaseId", purchase != null ? purchase.getId() : null);
+                payloadMap.put("user", userMap);
+                payloadMap.put("cart", cartMap);
+                payloadMap.put("status", purchase != null ? purchase.getStatus() : null);
+                // Armar evento final
                 java.util.Map<String, Object> eventDetail = new java.util.HashMap<>();
-                eventDetail.put("event", eventName);
-                eventDetail.put("cartId", cart.getId());
-                eventDetail.put("products", products);
+                eventDetail.put("type", eventName);
+                eventDetail.put("payload", payloadMap);
+                eventDetail.put("timestamp", java.time.ZonedDateTime.now().toString());
                 String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(eventDetail);
+                System.out.println("Evento enviado por Kafka: " + json); // Imprime el JSON por pantalla
                 kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(eventName, json));
                 return;
             }
