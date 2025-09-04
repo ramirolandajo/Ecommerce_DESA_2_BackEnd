@@ -13,6 +13,39 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+//@Configuration
+//public class SecurityConfig {
+//    @Autowired
+//    private JwtAuthenticationFilter jwtAuthenticationFilter;
+//    @Autowired
+//    private UserDetailsService userDetailsService;
+//
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http.csrf(csrf -> csrf.disable())
+//            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//            .authorizeHttpRequests(auth -> auth
+//                .requestMatchers("/purchase/**", "/cart/**", "/cart-items/**","/user/**").authenticated()
+//                .anyRequest().permitAll()
+//            );
+//        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+//        return http.build();
+//    }
+//
+//    @Bean
+//    public PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
+//
+//    @Bean
+//    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+//        AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);
+//        builder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+//        return builder.build();
+//    }
+//}
+
+
 @Configuration
 public class SecurityConfig {
     @Autowired
@@ -23,11 +56,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/purchase/**", "/cart/**", "/cart-items/**","/user/**").authenticated()
-                .anyRequest().permitAll()
-            );
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/purchase/**", "/cart/**", "/cart-items/**","/user/**").authenticated()
+                        .anyRequest().permitAll()
+                );
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

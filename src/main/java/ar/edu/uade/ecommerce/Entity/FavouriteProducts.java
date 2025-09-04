@@ -22,4 +22,7 @@ public class FavouriteProducts {
     @JoinColumn(name = "user_id", nullable = false)
     @JsonBackReference("favourite-user")
     private User user;
+
+    @Column(name = "product_code", nullable = false)
+    private Integer productCode;
 }

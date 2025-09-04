@@ -36,6 +36,10 @@ public class ProductController {
     ar.edu.uade.ecommerce.Repository.BrandRepository brandRepository;
     @Autowired
     ar.edu.uade.ecommerce.Repository.CategoryRepository categoryRepository;
+    @Autowired
+    ar.edu.uade.ecommerce.Repository.FavouriteProductsRepository favouriteProductsRepository;
+    @Autowired
+    ar.edu.uade.ecommerce.Repository.UserRepository userRepository;
     @PersistenceContext
     EntityManager entityManager;
 
@@ -471,5 +475,51 @@ public class ProductController {
                 || (p.getDiscount() != null && p.getDiscount() > 0))
             .map(this::toDTO)
             .collect(Collectors.toList());
+    }
+
+    // Agrega un producto a favoritos
+    @PostMapping("/favourite/{productCode}")
+    public String addFavouriteProduct(@PathVariable Integer productCode) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);
+        if (user == null) return "Usuario no encontrado.";
+        Product product = productRepository.findByProductCode(productCode);
+        if (product == null) return "Producto no encontrado.";
+        // Verificar si ya es favorito
+        if (favouriteProductsRepository.findByUserAndProduct(user, product).isPresent()) {
+            return "El producto ya está en favoritos.";
+        }
+        // Guardar favorito
+        ar.edu.uade.ecommerce.Entity.FavouriteProducts fav = new ar.edu.uade.ecommerce.Entity.FavouriteProducts();
+        fav.setUser(user);
+        fav.setProduct(product);
+        fav.setProductCode(productCode); // Guardar el productCode en la entidad
+        favouriteProductsRepository.save(fav);
+        // Enviar evento mock
+        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(
+            "ADD_FAVOURITE_PRODUCT",
+            String.format("{productCode: '%s', id: %d, nombre: '%s'}", productCode, product.getId(), product.getTitle())
+        ));
+        return "El producto con código " + productCode + " se agregó a favoritos correctamente.";
+    }
+
+    // Quita un producto de favoritos
+    @DeleteMapping("/favourite/{productCode}")
+    public String removeFavouriteProduct(@PathVariable Integer productCode) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);
+        if (user == null) return "Usuario no encontrado.";
+        Product product = productRepository.findByProductCode(productCode);
+        if (product == null) return "Producto no encontrado.";
+        // Eliminar favorito si existe
+        favouriteProductsRepository.deleteByUserAndProduct(user, product);
+        // Enviar evento mock
+        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(
+            "REMOVE_FAVOURITE_PRODUCT",
+            String.format("{productCode: '%s', id: %d, nombre: '%s'}", productCode, product.getId(), product.getTitle())
+        ));
+        return "El producto con código " + productCode + " ya no es favorito.";
     }
 }
