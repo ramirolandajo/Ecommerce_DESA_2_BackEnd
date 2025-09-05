@@ -29,6 +29,9 @@ public class Purchase {
     @Column(name = "reservation_time")
     private LocalDateTime reservationTime;
 
+    @Column
+    private String direction;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private Status status;

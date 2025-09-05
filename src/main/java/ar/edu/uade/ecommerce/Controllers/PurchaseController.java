@@ -1,5 +1,6 @@
 package ar.edu.uade.ecommerce.Controllers;
 
+import ar.edu.uade.ecommerce.Entity.Address;
 import ar.edu.uade.ecommerce.Entity.DTO.PurchaseInvoiceDTO;
 import ar.edu.uade.ecommerce.Entity.Purchase;
 import ar.edu.uade.ecommerce.Entity.User;
@@ -26,6 +27,9 @@ public class PurchaseController {
 
     @Autowired
     private ar.edu.uade.ecommerce.Service.CartService cartService;
+
+    @Autowired
+    private ar.edu.uade.ecommerce.Service.AddressService addressService;
 
     @GetMapping
     public List<Purchase> getAllPurchases() {
@@ -75,8 +79,8 @@ public class PurchaseController {
         return ResponseEntity.ok("Compra eliminada correctamente. ID: " + id);
     }
 
-    @PostMapping("/{id}/confirm") //confirmo la compra y genero la factura
-    public ResponseEntity<Purchase> confirmPurchase(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+    @PostMapping("/{id}/confirm/{addressId}") //confirmo la compra y genero la factura
+    public ResponseEntity<Purchase> confirmPurchase(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id, @PathVariable Integer addressId) {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
@@ -87,6 +91,12 @@ public class PurchaseController {
         if (purchase == null) {
             return ResponseEntity.notFound().build();
         }
+        Address address = addressService.findById(addressId);
+        if (address == null) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        purchase.setDirection(address.getDescription());
+        purchaseService.save(purchase);
         if (purchase.getCart() != null) {
             // Confirmar el stock y enviar evento por Kafka
             cartService.confirmProductStock(purchase.getCart());
