@@ -518,6 +518,7 @@ public class ProductController {
     }
 
     // Quita un producto de favoritos
+    @Transactional
     @DeleteMapping("/favourite/{productCode}")
     public String removeFavouriteProduct(@PathVariable Integer productCode) {
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
