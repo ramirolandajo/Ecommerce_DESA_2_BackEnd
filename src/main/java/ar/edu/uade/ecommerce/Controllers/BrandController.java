@@ -122,3 +122,4 @@ public class BrandController {
         return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
     }
 }
+

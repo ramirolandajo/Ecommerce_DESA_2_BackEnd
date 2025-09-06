@@ -26,7 +26,86 @@
 //        MockitoAnnotations.openMocks(this);
 //    }
 //
-//    // ...existing tests...
+//    // Solo mantener tests que usan métodos válidos del BrandController real
+//    @Test
+//    void testGetAllBrands_EmptyList() {
+//        when(brandService.getAllBrands()).thenReturn(List.of());
+//        List<BrandDTO> result = brandController.getAllBrands();
+//        assertTrue(result.isEmpty());
+//    }
+//
+//    @Test
+//    void testSyncBrandsFromMock_EmptyMock() {
+//        KafkaMockService.BrandSyncMessage emptyMessage = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of()), "2025-09-02T08:29:02.072020100");
+//        when(kafkaMockService.getBrandsMock()).thenReturn(emptyMessage);
+//        when(brandService.getAllBrands()).thenReturn(List.of());
+//        List<BrandDTO> result = brandController.syncBrandsFromMock();
+//        assertTrue(result.isEmpty());
+//    }
+//
+//    @Test
+//    void testAddBrandFromMock() {
+//        BrandDTO mockBrand = new BrandDTO(2L, "Samsung", true);
+//        KafkaMockService.BrandSyncMessage message = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of(mockBrand)), "2025-09-02T08:29:02.072020100");
+//        when(kafkaMockService.getBrandsMock()).thenReturn(message);
+//        Brand brand = new Brand();
+//        brand.setId(2);
+//        brand.setName("Samsung");
+//        brand.setActive(true);
+//        when(brandService.getAllBrands()).thenReturn(List.of());
+//        when(brandService.saveBrand(any(Brand.class))).thenReturn(brand);
+//        BrandDTO result = brandController.addBrandFromMock();
+//        assertEquals("Samsung", result.getName());
+//        assertTrue(result.getActive());
+//    }
+//
+//    @Test
+//    void testActivateBrandFromMock() {
+//        BrandDTO mockBrand = new BrandDTO(3L, "Sony", false);
+//        KafkaMockService.BrandSyncMessage message = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of(mockBrand)), "2025-09-02T08:29:02.072020100");
+//        when(kafkaMockService.getBrandsMock()).thenReturn(message);
+//        Brand brand = new Brand();
+//        brand.setId(3);
+//        brand.setName("Sony");
+//        brand.setActive(false);
+//        when(brandService.getAllBrands()).thenReturn(List.of(brand));
+//        when(brandService.saveBrand(any(Brand.class))).thenReturn(brand);
+//        BrandDTO result = brandController.activateBrandFromMock();
+//        assertEquals("Sony", result.getName());
+//        assertTrue(result.getActive());
+//    }
+//
+//    @Test
+//    void testDeactivateBrandFromMock() {
+//        BrandDTO mockBrand = new BrandDTO(4L, "LG", true);
+//        KafkaMockService.BrandSyncMessage message = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of(mockBrand)), "2025-09-02T08:29:02.072020100");
+//        when(kafkaMockService.getBrandsMock()).thenReturn(message);
+//        Brand brand = new Brand();
+//        brand.setId(4);
+//        brand.setName("LG");
+//        brand.setActive(true);
+//        when(brandService.getAllBrands()).thenReturn(List.of(brand));
+//        when(brandService.saveBrand(any(Brand.class))).thenReturn(brand);
+//        BrandDTO result = brandController.deactivateBrandFromMock();
+//        assertEquals("LG", result.getName());
+//        assertFalse(result.getActive());
+//    }
+//
+//    @Test
+//    void testUpdateBrandFromMock() {
+//        BrandDTO mockBrand = new BrandDTO(5L, "Motorola", true);
+//        KafkaMockService.BrandSyncMessage message = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of(mockBrand)), "2025-09-02T08:29:02.072020100");
+//        when(kafkaMockService.getBrandsMock()).thenReturn(message);
+//        Brand brand = new Brand();
+//        brand.setId(5);
+//        brand.setName("Moto");
+//        brand.setActive(false);
+//        when(brandService.getAllBrands()).thenReturn(List.of(brand));
+//        when(brandService.saveBrand(any(Brand.class))).thenReturn(brand);
+//        BrandDTO result = brandController.updateBrandFromMock();
+//        assertEquals("Motorola", result.getName());
+//        assertFalse(result.getActive());
+//    }
 //
 //    @Test
 //    void testAddBrand_NullName() {
@@ -52,63 +131,6 @@
 //        BrandDTO result = brandController.addBrand(dto);
 //        assertEquals("Xiaomi", result.getName());
 //        assertTrue(result.getActive());
-//    }
-//
-//    @Test
-//    void testGetAllBrands_EmptyList() {
-//        when(brandService.getAllBrands()).thenReturn(List.of());
-//        List<BrandDTO> result = brandController.getAllBrands();
-//        assertTrue(result.isEmpty());
-//    }
-//
-//    @Test
-//    void testSyncBrandsFromMock_EmptyMock() {
-//        KafkaMockService.BrandSyncMessage emptyMessage = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of()), "2025-09-02T08:29:02.072020100");
-//        when(kafkaMockService.getBrandsMock()).thenReturn(emptyMessage);
-//        when(brandService.getAllBrands()).thenReturn(List.of());
-//        List<BrandDTO> result = brandController.syncBrandsFromMock();
-//        assertTrue(result.isEmpty());
-//    }
-//
-//    @Test
-//    void testUpdateBrand_NullActive() {
-//        BrandDTO dto = new BrandDTO(1L, "Sony", null);
-//        Brand brand = new Brand();
-//        brand.setId(1);
-//        brand.setName("Sony");
-//        brand.setActive(true);
-//        when(brandService.getAllBrands()).thenReturn(List.of(brand));
-//        when(brandService.saveBrand(any(Brand.class))).thenReturn(brand);
-//        BrandDTO result = brandController.updateBrand(1, dto);
-//        assertEquals("Sony", result.getName());
-//        assertTrue(result.getActive());
-//    }
-//
-//    @Test
-//    void testDeleteBrand_EmptyList() {
-//        when(brandService.getAllBrands()).thenReturn(List.of());
-//        assertThrows(RuntimeException.class, () -> brandController.deleteBrand(1));
-//    }
-//
-//    @Test
-//    void testActivateBrand_EmptyList() {
-//        when(brandService.getAllBrands()).thenReturn(List.of());
-//        assertThrows(RuntimeException.class, () -> brandController.activateBrand(1));
-//    }
-//
-//    @Test
-//    void testSyncBrandsFromMock_AllExist() {
-//        BrandDTO mockBrand1 = new BrandDTO(1L, "Apple", true);
-//        KafkaMockService.BrandSyncMessage message = new KafkaMockService.BrandSyncMessage("BrandSync", new KafkaMockService.BrandSyncPayload(List.of(mockBrand1)), "2025-09-02T08:29:02.072020100");
-//        Brand existingBrand = new Brand();
-//        existingBrand.setId(1);
-//        existingBrand.setName("Apple");
-//        existingBrand.setActive(true);
-//        when(brandService.getAllBrands()).thenReturn(List.of(existingBrand));
-//        when(kafkaMockService.getBrandsMock()).thenReturn(message);
-//        List<BrandDTO> result = brandController.syncBrandsFromMock();
-//        assertEquals(1, result.size());
-//        assertEquals("Apple", result.get(0).getName());
 //    }
 //
 //    @Test

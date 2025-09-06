@@ -2,6 +2,7 @@ package ar.edu.uade.ecommerce.Repository;
 
 import ar.edu.uade.ecommerce.Entity.Review;
 import ar.edu.uade.ecommerce.Entity.Product;
+import ar.edu.uade.ecommerce.Entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -9,5 +10,5 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByProduct(Product product);
+    Review findByProductAndUser(Product product, User user);
 }
-

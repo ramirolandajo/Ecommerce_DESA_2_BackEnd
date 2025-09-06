@@ -14,6 +14,10 @@ public class Review {
     @JoinColumn(name = "product_id")
     private Product product;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(nullable = false)
     private float calification;
 
@@ -21,4 +25,3 @@ public class Review {
     private String description;
 
 }
-

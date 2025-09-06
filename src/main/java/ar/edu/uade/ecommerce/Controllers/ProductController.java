@@ -336,8 +336,19 @@ public class ProductController {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
         Product product = productOpt.get();
+        // Obtener usuario autenticado
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);
+        if (user == null) throw new RuntimeException("Usuario no encontrado");
+        // Verificar si ya existe una review de este usuario para este producto
+        Review existingReview = reviewRepository.findByProductAndUser(product, user);
+        if (existingReview != null) {
+            throw new RuntimeException("Ya has calificado/comentado este producto.");
+        }
         Review review = new Review();
         review.setProduct(product);
+        review.setUser(user);
         review.setCalification(reviewRequest.getCalification());
         review.setDescription(reviewRequest.getDescription());
         reviewRepository.save(review);
