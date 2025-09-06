@@ -12,5 +12,5 @@ import java.util.Optional;
 public interface FavouriteProductsRepository extends JpaRepository<FavouriteProducts, Long> {
     Optional<FavouriteProducts> findByUserAndProduct(User user, Product product);
     void deleteByUserAndProduct(User user, Product product);
+    java.util.List<FavouriteProducts> findAllByUser(User user);
 }
-

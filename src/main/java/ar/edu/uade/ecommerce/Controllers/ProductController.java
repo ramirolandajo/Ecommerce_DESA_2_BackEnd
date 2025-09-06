@@ -40,6 +40,8 @@ public class ProductController {
     ar.edu.uade.ecommerce.Repository.FavouriteProductsRepository favouriteProductsRepository;
     @Autowired
     ar.edu.uade.ecommerce.Repository.UserRepository userRepository;
+    @Autowired
+    ar.edu.uade.ecommerce.Service.AuthService authService;
     @PersistenceContext
     EntityManager entityManager;
 
@@ -521,5 +523,26 @@ public class ProductController {
             String.format("{productCode: '%s', id: %d, nombre: '%s'}", productCode, product.getId(), product.getTitle())
         ));
         return "El producto con código " + productCode + " ya no es favorito.";
+    }
+
+    // Endpoint para traer productos favoritos del usuario autenticado
+    @GetMapping("/user/favourite-products")
+    public List<java.util.Map<String, Object>> getFavouriteProductsByUser(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = authService.getEmailFromToken(token);
+        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);
+        if (user == null) return java.util.Collections.emptyList();
+        return favouriteProductsRepository.findAllByUser(user).stream()
+            .map(fav -> {
+                ar.edu.uade.ecommerce.Entity.Product p = fav.getProduct();
+                java.util.Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", p.getId());
+                map.put("title", p.getTitle());
+                map.put("description", p.getDescription());
+                map.put("mediaSrc", p.getMediaSrc());
+                map.put("price", p.getPrice());
+                return map;
+            })
+            .toList();
     }
 }
