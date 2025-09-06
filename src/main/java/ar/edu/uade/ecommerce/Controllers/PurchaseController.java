@@ -37,7 +37,7 @@ public class PurchaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Purchase> getPurchaseById(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+    public ResponseEntity<ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO> getPurchaseById(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
         String token = authHeader.replace("Bearer ", "");
         String email = purchaseService.getEmailFromToken(token);
         User user = authService.getUserByEmail(email);
@@ -45,7 +45,11 @@ public class PurchaseController {
             return ResponseEntity.status(401).build();
         }
         Purchase purchase = purchaseService.findById(id);
-        return ResponseEntity.ok(purchase);
+        if (purchase == null) {
+            return ResponseEntity.notFound().build();
+        }
+        ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO dto = mapPurchaseToDTO(purchase);
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping
@@ -138,5 +142,41 @@ public class PurchaseController {
         }
         List<ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO> purchases = purchaseService.getPurchasesWithCartByUserId(user.getId());
         return ResponseEntity.ok(purchases);
+    }
+
+    private ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO mapPurchaseToDTO(Purchase purchase) {
+        if (purchase == null) return null;
+        ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO dto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO();
+        dto.setId(purchase.getId());
+        dto.setDate(purchase.getDate());
+        dto.setReservationTime(purchase.getReservationTime());
+        dto.setDirection(purchase.getDirection());
+        dto.setStatus(purchase.getStatus() != null ? purchase.getStatus().name() : null);
+        if (purchase.getCart() != null) {
+            ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartDTO cartDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartDTO();
+            cartDto.setId(purchase.getCart().getId());
+            cartDto.setFinalPrice(purchase.getCart().getFinalPrice());
+            java.util.List<ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO> itemDtos = new java.util.ArrayList<>();
+            if (purchase.getCart().getItems() != null) {
+                for (ar.edu.uade.ecommerce.Entity.CartItem item : purchase.getCart().getItems()) {
+                    ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO itemDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO();
+                    itemDto.setId(item.getId());
+                    itemDto.setQuantity(item.getQuantity());
+                    if (item.getProduct() != null) {
+                        ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.ProductDTO productDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.ProductDTO();
+                        productDto.setId(item.getProduct().getId());
+                        productDto.setTitle(item.getProduct().getTitle());
+                        productDto.setDescription(item.getProduct().getDescription());
+                        productDto.setPrice(item.getProduct().getPrice());
+                        productDto.setMediaSrc(item.getProduct().getMediaSrc());
+                        itemDto.setProduct(productDto);
+                    }
+                    itemDtos.add(itemDto);
+                }
+            }
+            cartDto.setItems(itemDtos);
+            dto.setCart(cartDto);
+        }
+        return dto;
     }
 }

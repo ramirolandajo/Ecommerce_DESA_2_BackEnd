@@ -34,6 +34,7 @@ public class PurchaseWithCartDTO {
         private String description;
         private Float price;
         private Integer stock;
+        private List<String> mediaSrc;
     }
 }
 
