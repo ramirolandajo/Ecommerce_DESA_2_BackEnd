@@ -36,6 +36,18 @@ public class PurchaseController {
         return purchaseService.findAll();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Purchase> getPurchaseById(@RequestHeader("Authorization") String authHeader, @PathVariable Integer id) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = purchaseService.getEmailFromToken(token);
+        User user = authService.getUserByEmail(email);
+        if (user == null || !user.getSessionActive()) {
+            return ResponseEntity.status(401).build();
+        }
+        Purchase purchase = purchaseService.findById(id);
+        return ResponseEntity.ok(purchase);
+    }
+
     @PostMapping
     public ResponseEntity<Purchase> createPurchase(@RequestHeader("Authorization") String authHeader, @RequestBody Purchase purchase) {
         String token = authHeader.replace("Bearer ", "");

@@ -254,7 +254,6 @@ public class PurchaseServiceImpl implements PurchaseService {
                             productDto.setDescription(item.getProduct().getDescription());
                             productDto.setPrice(item.getProduct().getPrice());
                             productDto.setStock(item.getProduct().getStock());
-                            productDto.setMediaSrc(item.getProduct().getMediaSrc());
                             itemDto.setProduct(productDto);
                         }
                         itemDtos.add(itemDto);
