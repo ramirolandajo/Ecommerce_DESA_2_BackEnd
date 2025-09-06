@@ -1,6 +1,7 @@
 package ar.edu.uade.ecommerce.Service;
 
 import ar.edu.uade.ecommerce.Entity.DTO.PurchaseInvoiceDTO;
+import ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO;
 import ar.edu.uade.ecommerce.Entity.Purchase;
 import java.util.List;
 
@@ -19,4 +20,5 @@ public interface PurchaseService {
     Purchase findLastPendingPurchaseByUserWithinHours(Integer userId, int hours);
 
     List<Purchase> findByUserId(Integer id);
+    List<PurchaseWithCartDTO> getPurchasesWithCartByUserId(Integer userId);
 }

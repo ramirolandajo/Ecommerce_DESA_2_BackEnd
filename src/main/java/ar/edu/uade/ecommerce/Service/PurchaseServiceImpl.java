@@ -224,4 +224,47 @@ public class PurchaseServiceImpl implements PurchaseService {
     public List<Purchase> findByUserId(Integer id) {
         return purchaseRepository.findByUser_Id(id);
     }
+
+    @Override
+    public List<ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO> getPurchasesWithCartByUserId(Integer userId) {
+        List<Purchase> purchases = purchaseRepository.findByUser_Id(userId);
+        List<ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO> dtos = new java.util.ArrayList<>();
+        for (Purchase purchase : purchases) {
+            if (purchase.getStatus() != Purchase.Status.CONFIRMED) continue;
+            ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO dto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO();
+            dto.setId(purchase.getId());
+            dto.setDate(purchase.getDate());
+            dto.setReservationTime(purchase.getReservationTime());
+            dto.setDirection(purchase.getDirection());
+            dto.setStatus(purchase.getStatus() != null ? purchase.getStatus().name() : null);
+            if (purchase.getCart() != null) {
+                ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartDTO cartDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartDTO();
+                cartDto.setId(purchase.getCart().getId());
+                cartDto.setFinalPrice(purchase.getCart().getFinalPrice());
+                java.util.List<ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO> itemDtos = new java.util.ArrayList<>();
+                if (purchase.getCart().getItems() != null) {
+                    for (ar.edu.uade.ecommerce.Entity.CartItem item : purchase.getCart().getItems()) {
+                        ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO itemDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO();
+                        itemDto.setId(item.getId());
+                        itemDto.setQuantity(item.getQuantity());
+                        if (item.getProduct() != null) {
+                            ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.ProductDTO productDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.ProductDTO();
+                            productDto.setId(item.getProduct().getId());
+                            productDto.setTitle(item.getProduct().getTitle());
+                            productDto.setDescription(item.getProduct().getDescription());
+                            productDto.setPrice(item.getProduct().getPrice());
+                            productDto.setStock(item.getProduct().getStock());
+                            productDto.setMediaSrc(item.getProduct().getMediaSrc());
+                            itemDto.setProduct(productDto);
+                        }
+                        itemDtos.add(itemDto);
+                    }
+                }
+                cartDto.setItems(itemDtos);
+                dto.setCart(cartDto);
+            }
+            dtos.add(dto);
+        }
+        return dtos;
+    }
 }
