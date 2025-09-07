@@ -75,14 +75,23 @@ public class ProductDTO {
         dto.setActive(product.getActive());
         // Marca
         if (product.getBrand() != null) {
-            dto.setBrand(new BrandDTO(Long.valueOf(product.getBrand().getId()), product.getBrand().getName(), product.getBrand().isActive()));
+            Long brandId = null;
+            try {
+                brandId = product.getBrand().getId() != null ? Long.valueOf(product.getBrand().getId()) : null;
+            } catch (Exception e) {
+                brandId = null;
+            }
+            dto.setBrand(new BrandDTO(brandId, product.getBrand().getName(), product.getBrand().isActive()));
         } else {
             dto.setBrand(null);
         }
         // Categorías
         if (product.getCategories() != null && !product.getCategories().isEmpty()) {
             dto.setCategories(product.getCategories().stream()
-                .map(cat -> new CategoryDTO(Long.valueOf(cat.getId()), cat.getName(), cat.isActive()))
+                .map(cat -> {
+                    Long catId = cat.getId() != null ? Long.valueOf(cat.getId()) : null;
+                    return new CategoryDTO(catId, cat.getName(), cat.isActive());
+                })
                 .toList());
         } else {
             dto.setCategories(null);

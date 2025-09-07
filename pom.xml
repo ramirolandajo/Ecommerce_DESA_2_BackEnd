@@ -35,10 +35,16 @@
     </properties>
     <dependencies>
 
+        <!-- mockito-inline was removed because the selected versions were not available in Maven Central.
+             Alternatives:
+             - rely on the mockito version packaged with spring-boot-starter-test, or
+             - add the mockito javaagent to surefire/failsafe argLine if needed.
+        -->
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.6.0</version>
+            <version>2.3.0</version>
         </dependency>
 
         <dependency>
@@ -135,15 +141,16 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.15.2</version>
+        </dependency>
+
+        <!-- H2 in-memory database for tests -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
@@ -161,6 +168,8 @@
                             <artifactId>lombok</artifactId>
                         </path>
                     </annotationProcessorPaths>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>

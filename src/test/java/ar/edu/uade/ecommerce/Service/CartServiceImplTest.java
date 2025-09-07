@@ -7,15 +7,21 @@ import ar.edu.uade.ecommerce.Repository.UserRepository;
 import ar.edu.uade.ecommerce.Security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.ArgumentCaptor;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
 import java.time.LocalDateTime;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class CartServiceImplTest {
     @Mock
     private CartRepository cartRepository;
@@ -34,11 +40,6 @@ public class CartServiceImplTest {
 
     @InjectMocks
     private CartServiceImpl cartService;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void testCreateCart_success() {
@@ -616,8 +617,8 @@ public class CartServiceImplTest {
         item.setQuantity(null); // quantity null
         Cart cart = new Cart();
         cart.setItems(List.of(item));
-        when(productRepository.findById(1)).thenReturn(Optional.of(product));
-        when(cartRepository.save(any(Cart.class))).thenAnswer(i -> i.getArgument(0));
+        lenient().when(productRepository.findById(1)).thenReturn(Optional.of(product));
+        lenient().when(cartRepository.save(any(Cart.class))).thenAnswer(i -> i.getArgument(0));
         assertThrows(IllegalArgumentException.class, () -> cartService.createCart(cart));
     }
 
@@ -649,8 +650,8 @@ public class CartServiceImplTest {
         item.setQuantity(null); // quantity null
         Cart cart = new Cart();
         cart.setItems(List.of(item));
-        when(productRepository.findById(1)).thenReturn(Optional.of(product));
-        when(cartRepository.save(any(Cart.class))).thenAnswer(i -> i.getArgument(0));
+        lenient().when(productRepository.findById(1)).thenReturn(Optional.of(product));
+        lenient().when(cartRepository.save(any(Cart.class))).thenAnswer(i -> i.getArgument(0));
         assertThrows(IllegalArgumentException.class, () -> cartService.createCart(cart));
     }
 

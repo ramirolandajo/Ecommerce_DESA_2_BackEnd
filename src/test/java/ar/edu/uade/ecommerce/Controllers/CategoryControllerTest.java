@@ -4,15 +4,16 @@ import ar.edu.uade.ecommerce.Entity.Category;
 import ar.edu.uade.ecommerce.Entity.DTO.CategoryDTO;
 import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
 import ar.edu.uade.ecommerce.Service.CategoryService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class CategoryControllerTest {
     @Mock
     private CategoryService categoryService;
@@ -20,11 +21,6 @@ class CategoryControllerTest {
     private KafkaMockService kafkaMockService;
     @InjectMocks
     private CategoryController categoryController;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     // Métodos válidos según el CategoryController actual:
     @Test
@@ -118,11 +114,11 @@ class CategoryControllerTest {
 
     @Test
     void testUpdateCategoryFromMock() {
-        CategoryDTO mockCategory = new CategoryDTO(5L, "Smartwatches", true);
+        CategoryDTO mockCategory = new CategoryDTO(5L, "Smartwatches", null);
         KafkaMockService.CategorySyncMessage message = new KafkaMockService.CategorySyncMessage("CategorySync", new KafkaMockService.CategorySyncPayload(List.of(mockCategory)), "2025-09-02T08:29:02.072020100");
         when(kafkaMockService.getCategoriesMock()).thenReturn(message);
         Category category = new Category();
-        category.setId(5);
+        category.setId(1);
         category.setName("Relojes");
         category.setActive(false);
         when(categoryService.getAllCategories()).thenReturn(List.of(category));

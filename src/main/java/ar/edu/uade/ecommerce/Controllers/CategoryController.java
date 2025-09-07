@@ -20,6 +20,11 @@ public class CategoryController {
     @Autowired
     private CategoryService categoryService;
 
+    // helper para convertir Integer id a Long manejando nulls
+    private Long toLongId(Integer id) {
+        return id == null ? null : Long.valueOf(id.longValue());
+    }
+
     @GetMapping("/sync")
     public List<CategoryDTO> syncCategoriesFromMock() {
         KafkaMockService.CategorySyncMessage message = kafkaMockService.getCategoriesMock();
@@ -45,14 +50,14 @@ public class CategoryController {
             "timestamp=" + message.timestamp +
             "}");
         return categoryService.getAllCategories().stream()
-                .map(c -> new CategoryDTO(Long.valueOf(c.getId()), c.getName(), c.isActive()))
+                .map(c -> new CategoryDTO(toLongId(c.getId()), c.getName(), c.isActive()))
                 .collect(Collectors.toList());
     }
 
     @GetMapping
     public List<CategoryDTO> getAllCategories() {
         return categoryService.getAllCategories().stream()
-                .map(c -> new CategoryDTO(Long.valueOf(c.getId()), c.getName(), c.isActive()))
+                .map(c -> new CategoryDTO(toLongId(c.getId()), c.getName(), c.isActive()))
                 .collect(Collectors.toList());
     }
 
@@ -82,14 +87,14 @@ public class CategoryController {
                 nullNameAdded = true;
                 Category existingNull = existingCategories.stream().filter(c -> c.getName() == null).findFirst().orElse(null);
                 if (existingNull != null) {
-                    resultCategories.add(new CategoryDTO(Long.valueOf(existingNull.getId()), null, existingNull.isActive()));
+                    resultCategories.add(new CategoryDTO(toLongId(existingNull.getId()), null, existingNull.isActive()));
                 } else {
                     Category c = new Category();
                     c.setName(null);
                     c.setActive(dto.getActive() != null ? dto.getActive() : true);
                     Category saved = categoryService.saveCategory(c);
                     if (saved != null) {
-                        resultCategories.add(new CategoryDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive()));
+                        resultCategories.add(new CategoryDTO(toLongId(saved.getId()), saved.getName(), saved.isActive()));
                         existingCategories.add(saved);
                     }
                 }
@@ -105,14 +110,14 @@ public class CategoryController {
                     .findFirst()
                     .orElse(null);
             if (existing != null) {
-                resultCategories.add(new CategoryDTO(Long.valueOf(existing.getId()), existing.getName(), existing.isActive()));
+                resultCategories.add(new CategoryDTO(toLongId(existing.getId()), existing.getName(), existing.isActive()));
             } else {
                 Category c = new Category();
                 c.setName(dto.getName());
                 c.setActive(dto.getActive() != null ? dto.getActive() : true);
                 Category saved = categoryService.saveCategory(c);
                 if (saved != null) {
-                    resultCategories.add(new CategoryDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive()));
+                    resultCategories.add(new CategoryDTO(toLongId(saved.getId()), saved.getName(), saved.isActive()));
                     existingCategories.add(saved);
                 }
             }
@@ -132,13 +137,13 @@ public class CategoryController {
             .findFirst()
             .orElse(null);
         if (existing != null) {
-            return new CategoryDTO(Long.valueOf(existing.getId()), existing.getName(), existing.isActive());
+            return new CategoryDTO(toLongId(existing.getId()), existing.getName(), existing.isActive());
         }
         Category category = new Category();
         category.setName(categoryDTO.getName());
         category.setActive(categoryDTO.getActive() != null ? categoryDTO.getActive() : true);
         Category saved = categoryService.saveCategory(category);
-        return new CategoryDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive());
+        return new CategoryDTO(toLongId(saved.getId()), saved.getName(), saved.isActive());
     }
 
     @PatchMapping("/mock/activate")
@@ -152,7 +157,7 @@ public class CategoryController {
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
         category.setActive(true);
         Category updated = categoryService.saveCategory(category);
-        return new CategoryDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+        return new CategoryDTO(toLongId(updated.getId()), updated.getName(), updated.isActive());
     }
 
     @PatchMapping("/mock/deactivate")
@@ -166,7 +171,7 @@ public class CategoryController {
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
         category.setActive(false);
         Category updated = categoryService.saveCategory(category);
-        return new CategoryDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+        return new CategoryDTO(toLongId(updated.getId()), updated.getName(), updated.isActive());
     }
 
     @PatchMapping("/mock/update")
@@ -174,16 +179,27 @@ public class CategoryController {
         KafkaMockService.CategorySyncMessage message = kafkaMockService.getCategoriesMock();
         // Tomar la primera categoría del mock como ejemplo
         CategoryDTO categoryDTO = message.payload.categories.get(0);
-        Category category = categoryService.getAllCategories().stream()
-                .filter(c -> c.getName() != null && c.getName().equalsIgnoreCase(categoryDTO.getName()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
+        java.util.List<Category> existingList = categoryService.getAllCategories();
+        Category category = null;
+        if (existingList != null) {
+            category = existingList.stream()
+                    .filter(c -> c.getName() != null && c.getName().equalsIgnoreCase(categoryDTO.getName()))
+                    .findFirst()
+                    .orElse(null);
+            // Si no se encuentra por nombre, usar la primera existente como fallback
+            if (category == null && !existingList.isEmpty()) {
+                category = existingList.get(0);
+            }
+        }
+        if (category == null) {
+            throw new RuntimeException("Categoría no encontrada");
+        }
         // Actualizar el nombre y el estado activo según el mock
         category.setName(categoryDTO.getName());
         if (categoryDTO.getActive() != null) {
             category.setActive(categoryDTO.getActive());
         }
         Category updated = categoryService.saveCategory(category);
-        return new CategoryDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+        return new CategoryDTO(toLongId(updated.getId()), updated.getName(), updated.isActive());
     }
 }

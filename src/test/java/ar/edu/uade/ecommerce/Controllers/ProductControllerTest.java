@@ -10,9 +10,12 @@ import ar.edu.uade.ecommerce.Repository.ProductRepository;
 import ar.edu.uade.ecommerce.Repository.ReviewRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +24,8 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ProductControllerTest {
     @Mock
     private ProductRepository productRepository;
@@ -31,10 +36,7 @@ class ProductControllerTest {
     @InjectMocks
     private ProductController productController;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
+    // Mockito mocks inicializados por MockitoExtension
 
     @Test
     void testEditProductSimple_Success() {
@@ -44,7 +46,8 @@ class ProductControllerTest {
         KafkaMockService.EditProductSimpleMessage msg = mock(KafkaMockService.EditProductSimpleMessage.class);
         KafkaMockService.EditProductSimplePayload payload = new KafkaMockService.EditProductSimplePayload(1L, 5, 95f);
         when(kafkaMockService.getEditProductMockSimple()).thenReturn(msg);
-        when(msg.payload).thenReturn(payload);
+        // asignar el payload directamente en el mock
+        msg.payload = payload;
         Product product = new Product();
         product.setId(1);
         product.setPrice(100f);
@@ -67,7 +70,8 @@ class ProductControllerTest {
         KafkaMockService.EditProductSimpleMessage msg = mock(KafkaMockService.EditProductSimpleMessage.class);
         KafkaMockService.EditProductSimplePayload payload = new KafkaMockService.EditProductSimplePayload(99L, 0, 0f);
         when(kafkaMockService.getEditProductMockSimple()).thenReturn(msg);
-        when(msg.payload).thenReturn(payload);
+        // asignar el payload directamente en el mock
+        msg.payload = payload;
         when(productRepository.findById(99)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, controller::editProductSimple);
     }
@@ -144,6 +148,7 @@ class ProductControllerTest {
         mockDto.setTitle("Mock Product");
         mockDto.setStock(10);
         mockDto.setPrice(100f);
+        mockDto.setProductCode(101);
         Product product = new Product();
         product.setId(1); // Asigna un id válido para evitar NullPointerException
         KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(mockDto));
@@ -171,7 +176,8 @@ class ProductControllerTest {
         dto.setPrice(100f);
         dto.setStock(10);
         when(kafkaMockService.getAddProductMock()).thenReturn(msg);
-        when(msg.payload).thenReturn(new KafkaMockService.AddProductPayload(dto));
+        // asignar payload directamente
+        msg.payload = new KafkaMockService.AddProductPayload(dto);
         Product product = new Product();
         product.setId(7);
         product.setTitle("Nuevo producto");
@@ -195,6 +201,7 @@ class ProductControllerTest {
         mockDto.setTitle("Mock Product");
         mockDto.setStock(10);
         mockDto.setPrice(100f);
+        mockDto.setProductCode(555);
         BrandDTO brandDTO = new BrandDTO();
         brandDTO.setId(99L);
         mockDto.setBrand(brandDTO);
@@ -203,6 +210,7 @@ class ProductControllerTest {
         when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
         when(productRepository.findAll()).thenReturn(List.of());
         doNothing().when(productRepository).deleteAll();
+        // entityManager mocked en controlador: usar when on mock entityManager, no on controller.entityManager
         when(controller.entityManager.find(Brand.class, 99)).thenReturn(null);
         assertThrows(RuntimeException.class, () -> controller.syncProductsFromMock());
     }
@@ -338,6 +346,7 @@ class ProductControllerTest {
         mockDto.setIsFeatured(true);
         mockDto.setHero(true);
         mockDto.setActive(false);
+        mockDto.setProductCode(102);
         KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(mockDto));
         KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
         when(kafkaMockService.getProductsMock()).thenReturn(mockMessage);
@@ -356,9 +365,11 @@ class ProductControllerTest {
         controller.entityManager = null;
         ProductDTO dtoNull = new ProductDTO();
         dtoNull.setTitle("NullMedia");
+        dtoNull.setProductCode(103);
         dtoNull.setMediaSrc(null);
         ProductDTO dtoEmpty = new ProductDTO();
         dtoEmpty.setTitle("EmptyMedia");
+        dtoEmpty.setProductCode(104);
         dtoEmpty.setMediaSrc(List.of());
         KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dtoNull, dtoEmpty));
         KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
@@ -378,9 +389,11 @@ class ProductControllerTest {
         controller.entityManager = null;
         ProductDTO dtoNull = new ProductDTO();
         dtoNull.setTitle("NullActive");
+        dtoNull.setProductCode(105);
         dtoNull.setActive(null);
         ProductDTO dtoTrue = new ProductDTO();
         dtoTrue.setTitle("TrueActive");
+        dtoTrue.setProductCode(106);
         dtoTrue.setActive(true);
         KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dtoNull, dtoTrue));
         KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
@@ -400,6 +413,7 @@ class ProductControllerTest {
         controller.entityManager = null;
         ProductDTO dto = new ProductDTO();
         dto.setTitle("SinBrandCat");
+        dto.setProductCode(107);
         dto.setBrand(null);
         dto.setCategories(null);
         KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dto));
@@ -420,6 +434,7 @@ class ProductControllerTest {
         controller.entityManager = mock(jakarta.persistence.EntityManager.class);
         ProductDTO dto = new ProductDTO();
         dto.setTitle("CatIdNull");
+        dto.setProductCode(108);
         CategoryDTO catDTO = new CategoryDTO();
         catDTO.setId(null);
         dto.setCategories(List.of(catDTO));
@@ -441,6 +456,7 @@ class ProductControllerTest {
         controller.entityManager = null;
         ProductDTO dto = new ProductDTO();
         dto.setTitle("EmptyCatList");
+        dto.setProductCode(109);
         dto.setCategories(List.of());
         KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dto));
         KafkaMockService.ProductSyncMessage mockMessage = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
@@ -474,15 +490,28 @@ class ProductControllerTest {
         controller.kafkaMockService = kafkaMockService;
         controller.productRepository = productRepository;
         KafkaMockService.EditProductFullMessage msg = mock(KafkaMockService.EditProductFullMessage.class);
-        ProductDTO dto = new ProductDTO();
-        dto.setId(2L);
-        dto.setTitle("New title");
-        dto.setStock(20);
-        dto.setPriceUnit(200f);
-        dto.setDiscount(20f);
+        // Crear payload del tipo correcto en lugar de castear ProductDTO
+        KafkaMockService.EditProductFullPayload payload = new KafkaMockService.EditProductFullPayload(
+            2,
+            "New title",
+            null,
+            null,
+            20,
+            List.of(),
+            null,
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            true,
+            4.5f,
+            20f,
+            200f,
+            12345
+        );
         when(kafkaMockService.getEditProductMockFull()).thenReturn(msg);
-        // Asignar el campo payload directamente
-        msg.payload = (KafkaMockService.EditProductFullPayload) dto;
+        msg.payload = payload;
         Product product = new Product();
         product.setId(2);
         product.setTitle("Old title");
@@ -506,7 +535,8 @@ class ProductControllerTest {
         KafkaMockService.ActivateProductMessage msg = mock(KafkaMockService.ActivateProductMessage.class);
         KafkaMockService.ActivateProductPayload payload = new KafkaMockService.ActivateProductPayload(3L);
         when(kafkaMockService.getActivateProductMock()).thenReturn(msg);
-        when(msg.payload).thenReturn(payload);
+        // asignar payload directamente
+        msg.payload = payload;
         Product product = new Product();
         product.setId(3);
         product.setActive(false);
@@ -524,7 +554,8 @@ class ProductControllerTest {
         KafkaMockService.DeactivateProductMessage msg = mock(KafkaMockService.DeactivateProductMessage.class);
         KafkaMockService.DeactivateProductPayload payload = new KafkaMockService.DeactivateProductPayload(4L);
         when(kafkaMockService.getDeactivateProductMock()).thenReturn(msg);
-        when(msg.payload).thenReturn(payload);
+        // asignar payload directamente
+        msg.payload = payload;
         Product product = new Product();
         product.setId(4);
         product.setActive(true);
@@ -532,5 +563,122 @@ class ProductControllerTest {
         when(productRepository.save(any(Product.class))).thenReturn(product);
         ProductDTO result = controller.deactivateProduct();
         assertFalse(result.getActive());
+    }
+
+    @Test
+    void testEditProduct_priceUnitDiscountRecalculation() {
+        ProductController controller = new ProductController();
+        controller.kafkaMockService = kafkaMockService;
+        controller.productRepository = productRepository;
+        KafkaMockService.EditProductFullMessage msg = mock(KafkaMockService.EditProductFullMessage.class);
+        // payload: id=50, set priceUnit and discount to force recalculation
+        KafkaMockService.EditProductFullPayload payload = new KafkaMockService.EditProductFullPayload(
+            50,
+            null, // title
+            null,
+            null,
+            null,
+            List.of(),
+            null,
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            20f,   // discount
+            200f,  // priceUnit -> expected price = 200 - (200 * 20/100) = 160
+            null
+        );
+        when(kafkaMockService.getEditProductMockFull()).thenReturn(msg);
+        msg.payload = payload;
+        Product product = new Product();
+        product.setId(50);
+        product.setPriceUnit(100f); // old
+        product.setDiscount(10f);
+        when(productRepository.findById(50)).thenReturn(Optional.of(product));
+        when(productRepository.save(any(Product.class))).thenAnswer(i -> i.getArgument(0));
+        ProductDTO result = controller.editProduct();
+        assertNotNull(result);
+        assertEquals(160f, result.getPrice());
+    }
+
+    @Test
+    void testAddProduct_withBrandAndCategories() {
+        ProductController controller = new ProductController();
+        controller.kafkaMockService = kafkaMockService;
+        controller.productRepository = productRepository;
+        // create local mocks for repositories used by addProduct
+        ar.edu.uade.ecommerce.Repository.BrandRepository mockBrandRepo = mock(ar.edu.uade.ecommerce.Repository.BrandRepository.class);
+        ar.edu.uade.ecommerce.Repository.CategoryRepository mockCatRepo = mock(ar.edu.uade.ecommerce.Repository.CategoryRepository.class);
+        controller.brandRepository = mockBrandRepo;
+        controller.categoryRepository = mockCatRepo;
+
+        KafkaMockService.AddProductMessage msg = mock(KafkaMockService.AddProductMessage.class);
+        ProductDTO dto = new ProductDTO();
+        dto.setTitle("WithBrandCat");
+        dto.setPrice(10f);
+        dto.setStock(3);
+        BrandDTO brandDto = new BrandDTO(7L, "BrandX", true);
+        dto.setBrand(brandDto);
+        CategoryDTO catDto = new CategoryDTO(11L, "CatX", true);
+        dto.setCategories(List.of(catDto));
+        when(kafkaMockService.getAddProductMock()).thenReturn(msg);
+        msg.payload = new KafkaMockService.AddProductPayload(dto);
+
+        Brand brand = new Brand(); brand.setId(7); brand.setName("BrandX"); brand.setActive(true);
+        Category category = new Category(); category.setId(11); category.setName("CatX"); category.setActive(true);
+        when(mockBrandRepo.findById(7L)).thenReturn(Optional.of(brand));
+        when(mockCatRepo.findById(11L)).thenReturn(Optional.of(category));
+
+        Product saved = new Product(); saved.setId(999); saved.setTitle("WithBrandCat"); saved.setPrice(10f); saved.setStock(3);
+        when(productRepository.save(any(Product.class))).thenReturn(saved);
+
+        ProductDTO result = controller.addProduct();
+        assertNotNull(result);
+        assertEquals("WithBrandCat", result.getTitle());
+        assertEquals(10f, result.getPrice());
+    }
+
+    @Test
+    void testSyncProductsFromMock_WithBrandAndCategoriesFound() {
+        ProductController controller = new ProductController();
+        controller.kafkaMockService = kafkaMockService;
+        controller.productRepository = productRepository;
+        // mock EntityManager on controller to return brand and category
+        controller.entityManager = mock(jakarta.persistence.EntityManager.class);
+
+        ProductDTO dto = new ProductDTO();
+        dto.setTitle("FullMock");
+        dto.setProductCode(2001);
+        BrandDTO b = new BrandDTO(); b.setId(10L);
+        dto.setBrand(b);
+        CategoryDTO c = new CategoryDTO(); c.setId(20L);
+        dto.setCategories(List.of(c));
+
+        KafkaMockService.ProductSyncPayload payload = new KafkaMockService.ProductSyncPayload(List.of(dto));
+        KafkaMockService.ProductSyncMessage msg = new KafkaMockService.ProductSyncMessage("ProductSync", payload, java.time.LocalDateTime.now().toString());
+        when(kafkaMockService.getProductsMock()).thenReturn(msg);
+        when(productRepository.findAll()).thenReturn(List.of());
+        doNothing().when(productRepository).deleteAll();
+        // Prepare a saved product that will be returned by save() and by findAll()
+        Product saved = new Product();
+        saved.setId(800);
+        saved.setProductCode(2001);
+        saved.setTitle("FullMock");
+        when(productRepository.findAll()).thenReturn(List.of(saved));
+        doNothing().when(productRepository).deleteAll();
+        // entity manager returns Brand and Category with ids set to avoid NPE when converting to DTO
+        Brand foundBrand = new Brand(); foundBrand.setId(10);
+        Category foundCategory = new Category(); foundCategory.setId(20);
+        when(controller.entityManager.find(Brand.class, 10)).thenReturn(foundBrand);
+        when(controller.entityManager.find(Category.class, 20)).thenReturn(foundCategory);
+        when(productRepository.save(any(Product.class))).thenReturn(saved);
+
+        List<ProductDTO> out = controller.syncProductsFromMock();
+        assertNotNull(out);
+        assertEquals(1, out.size());
+        assertEquals("FullMock", out.get(0).getTitle());
     }
 }

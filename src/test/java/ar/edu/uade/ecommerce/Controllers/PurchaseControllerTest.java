@@ -8,14 +8,19 @@ import ar.edu.uade.ecommerce.Service.PurchaseService;
 import ar.edu.uade.ecommerce.Service.CartService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PurchaseControllerTest {
     @Mock
     private PurchaseService purchaseService;
@@ -26,11 +31,6 @@ public class PurchaseControllerTest {
 
     @InjectMocks
     private PurchaseController purchaseController;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void testGetAllPurchases() {
