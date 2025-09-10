@@ -1,0 +1,60 @@
+name: Ecommerce BackEnd CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Project
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check-out your repository
+      - uses: actions/checkout@v4
+
+      # Set up JDK 17
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      # Build the application using Maven
+      - name: Build with Maven
+        run: mvn -B clean package 
+
+      # Upload the built JAR for next job
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact
+          path: target/app.jar
+
+  deploy:
+    needs: build
+    name: Deploy to Elastic Beanstalk
+    runs-on: ubuntu-latest
+
+    steps:
+      # Download the artifact from the previous job
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact
+          path: ./artifact
+
+      # Deploy the artifact to Elastic Beanstalk
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v13
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          use_existing_version_if_available: true
+          application_name: "Ecommerce Dev"
+          environment_name: Ecommerce-dev-env
+          version_label: ${{ github.sha }}
+          region: sa-east-1
+          deployment_package: ./artifact/app.jar
