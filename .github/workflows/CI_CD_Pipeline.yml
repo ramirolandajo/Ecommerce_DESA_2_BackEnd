@@ -55,6 +55,7 @@ jobs:
           use_existing_version_if_available: true
           application_name: "Ecommerce Dev"
           environment_name: Ecommerce-dev-env
+          existing_bucket_name: ecommerce-dev-backend
           version_label: ${{ github.sha }}
           region: sa-east-1
           deployment_package: ./artifact/app.jar
