@@ -8,7 +8,7 @@ on:
 # Handles multiple workflows running at the same time (queues them)
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
