@@ -75,8 +75,7 @@ public class ProductViewController {
         Pageable pageable = PageRequest.of(page, size);
         Page<ProductViewResponseDTO> views = productViewServiceImpl.getProductViewsByUser(user, pageable);
 
-        // Construir el mensaje que se enviará a la API de Comunicación como JSON
-        // Usamos el resumen transaccional para incluir productCode
+        // Construir el mensaje que se enviará a la API de Comunicación como objeto
         List<java.util.Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
         List<java.util.Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
             java.util.Map<String,Object> m = new java.util.HashMap<>();
@@ -94,8 +93,8 @@ public class ProductViewController {
             mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
             String jsonKafkaMessage = mapper.writeValueAsString(kafkaMessage);
             logger.info("Mensaje que se enviaría por Kafka (JSON):\n{}", jsonKafkaMessage);
-            // Enviar a la API de Comunicación
-            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", jsonKafkaMessage);
+            // Enviar al middleware con payload como objeto (no String)
+            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", kafkaMessage);
         } catch (JsonProcessingException e) {
             logger.error("Error al serializar el mensaje Kafka: {}", e.getMessage(), e);
         }
@@ -119,7 +118,8 @@ public class ProductViewController {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
             String json = mapper.writeValueAsString(productsForEvent);
-            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", json);
+            // Enviar como lista (objeto), no como String
+            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", productsForEvent);
             logger.info("Emisión manual de vista diaria enviada: {}", json);
             return ResponseEntity.ok("Evento enviado");
         } catch (Exception ex) {
