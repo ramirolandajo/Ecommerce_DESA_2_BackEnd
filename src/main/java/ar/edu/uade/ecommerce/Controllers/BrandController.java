@@ -1,11 +1,12 @@
 package ar.edu.uade.ecommerce.Controllers;
 
 import ar.edu.uade.ecommerce.Entity.DTO.BrandDTO;
-import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
 import ar.edu.uade.ecommerce.Entity.Brand;
 import ar.edu.uade.ecommerce.Service.BrandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,39 +16,7 @@ import java.util.stream.Collectors;
 public class BrandController {
 
     @Autowired
-    private KafkaMockService kafkaMockService;
-
-    @Autowired
     private BrandService brandService;
-
-    @GetMapping("/sync")
-    public List<BrandDTO> syncBrandsFromMock() {
-        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
-        List<BrandDTO> mockBrands = message.payload.brands;
-        List<Brand> existingBrands = brandService.getAllBrands();
-        for (BrandDTO dto : mockBrands) {
-            Brand existing = existingBrands.stream()
-                .filter(b -> b.getName() != null && b.getName().equalsIgnoreCase(dto.getName()))
-                .findFirst()
-                .orElse(null);
-            if (existing == null) {
-                Brand b = new Brand();
-                b.setName(dto.getName());
-                b.setActive(dto.getActive() != null ? dto.getActive() : true);
-                brandService.saveBrand(b);
-            }
-        }
-        // Imprimir el mensaje recibido del mock en formato core de mensajería
-        System.out.println("Mensaje recibido del core de mensajería:");
-        System.out.println("{" +
-            "type='" + message.type + "', " +
-            "payload=" + message.payload + ", " +
-            "timestamp=" + message.timestamp +
-            "}");
-        return brandService.getAllBrands().stream()
-                .map(b -> new BrandDTO(Long.valueOf(b.getId()), b.getName(), b.isActive()))
-                .collect(Collectors.toList());
-    }
 
     @GetMapping
     public List<BrandDTO> getAllBrands() {
@@ -57,90 +26,35 @@ public class BrandController {
                 .collect(Collectors.toList());
     }
 
+    // Endpoints mock deshabilitados: la sincronización de marcas debe llegar desde la API de Comunicación/Core
+    @GetMapping("/sync")
+    public List<BrandDTO> syncBrandsFromMock() {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint de sincronización mock deshabilitado. La sincronización debe venir desde la API de Comunicación (Core).");
+    }
+
     @PostMapping("/mock/add")
     public BrandDTO addBrandFromMock() {
-        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
-        // Tomar la primera marca del mock como ejemplo
-        BrandDTO brandDTO = message.payload.brands.get(0);
-        Brand existing = brandService.getAllBrands().stream()
-            .filter(b -> (b.getName() == null && brandDTO.getName() == null) ||
-                         (b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName())))
-            .findFirst()
-            .orElse(null);
-        if (existing != null) {
-            return new BrandDTO(Long.valueOf(existing.getId()), existing.getName(), existing.isActive());
-        }
-        Brand brand = new Brand();
-        brand.setName(brandDTO.getName());
-        brand.setActive(brandDTO.getActive() != null ? brandDTO.getActive() : true);
-        Brand saved = brandService.saveBrand(brand);
-        return new BrandDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive());
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use la API de Comunicación para sincronizar marcas.");
     }
 
     @PatchMapping("/mock/activate")
     public BrandDTO activateBrandFromMock() {
-        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
-        // Tomar la primera marca del mock como ejemplo
-        BrandDTO brandDTO = message.payload.brands.get(0);
-        Brand brand = brandService.getAllBrands().stream()
-                .filter(b -> b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
-        brand.setActive(true);
-        Brand updated = brandService.saveBrand(brand);
-        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use la API de Comunicación para sincronizar marcas.");
     }
 
     @PatchMapping("/mock/deactivate")
     public BrandDTO deactivateBrandFromMock() {
-        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
-        // Tomar la primera marca del mock como ejemplo
-        BrandDTO brandDTO = message.payload.brands.get(0);
-        Brand brand = brandService.getAllBrands().stream()
-                .filter(b -> b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
-        brand.setActive(false);
-        Brand updated = brandService.saveBrand(brand);
-        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use la API de Comunicación para sincronizar marcas.");
     }
 
     @PatchMapping("/mock/update")
     public BrandDTO updateBrandFromMock() {
-        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();
-        // Tomar la primera marca del mock como ejemplo
-        BrandDTO brandDTO = message.payload.brands.get(0);
-        java.util.List<Brand> existingList = brandService.getAllBrands();
-        Brand brand = null;
-        if (existingList != null) {
-            brand = existingList.stream()
-                    .filter(b -> b.getName() != null && b.getName().equalsIgnoreCase(brandDTO.getName()))
-                    .findFirst()
-                    .orElse(null);
-            // Si no se encuentra por nombre, usar la primera existente como fallback
-            if (brand == null && !existingList.isEmpty()) {
-                brand = existingList.get(0);
-            }
-        }
-        if (brand == null) {
-            throw new RuntimeException("Marca no encontrada");
-        }
-        // Actualizar el nombre y el estado activo según el mock
-        brand.setName(brandDTO.getName());
-        if (brandDTO.getActive() != null) {
-            brand.setActive(brandDTO.getActive());
-        }
-        Brand updated = brandService.saveBrand(brand);
-        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use la API de Comunicación para sincronizar marcas.");
     }
 
-    // ------------------------------------------------------------------
-    // Métodos agregados para mantener compatibilidad con los tests
-    // ------------------------------------------------------------------
-
+    // Métodos reales para CRUD de marcas
     @PostMapping("/add")
     public BrandDTO addBrand(@RequestBody BrandDTO dto) {
-        // Buscar por nombre (case-insensitive) o por null
         Brand existing = brandService.getAllBrands().stream()
                 .filter(b -> (b.getName() == null && dto.getName() == null) ||
                              (b.getName() != null && dto.getName() != null && b.getName().equalsIgnoreCase(dto.getName())))
@@ -186,7 +100,6 @@ public class BrandController {
                 .filter(b -> b.getId() == id)
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Marca no encontrada"));
-        // Actualizar solo los campos que no sean null en el DTO
         if (dto.getName() != null) {
             brand.setName(dto.getName());
         } else {

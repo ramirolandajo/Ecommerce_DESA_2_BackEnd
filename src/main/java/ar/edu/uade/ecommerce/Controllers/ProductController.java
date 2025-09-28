@@ -7,7 +7,6 @@ import ar.edu.uade.ecommerce.Entity.DTO.CategoryDTO;
 import ar.edu.uade.ecommerce.Entity.DTO.FilterProductRequest;
 import ar.edu.uade.ecommerce.Entity.Product;
 import ar.edu.uade.ecommerce.Entity.DTO.ProductDTO;
-import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
 import ar.edu.uade.ecommerce.Repository.ProductRepository;
 import ar.edu.uade.ecommerce.Entity.Review;
 import ar.edu.uade.ecommerce.Repository.ReviewRepository;
@@ -16,16 +15,17 @@ import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import ar.edu.uade.ecommerce.messaging.ECommerceEventService;
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
-    @Autowired
-    KafkaMockService kafkaMockService;
     @Autowired
     ProductRepository productRepository;
     @Autowired
@@ -45,113 +45,14 @@ public class ProductController {
     @PersistenceContext
     EntityManager entityManager;
 
-    // Sincroniza productos desde el mock
+    @Autowired
+    private ECommerceEventService ecommerceEventService;
+
+    // Sincroniza productos desde el mock -> DESACTIVADO: usar la API de Comunicación para sincronizar
     @Transactional(timeout = 60)
     @GetMapping("/sync")
     public List<ProductDTO> syncProductsFromMock() {
-        KafkaMockService.ProductSyncMessage message = kafkaMockService.getProductsMock();
-        List<ProductDTO> mockProducts = message.payload.products;
-        for (ProductDTO dto : mockProducts) {
-            if (dto.getProductCode() == null) continue;
-            Product existing = productRepository.findAll().stream()
-                .filter(p -> p.getProductCode() != null && p.getProductCode().equals(dto.getProductCode()))
-                .findFirst().orElse(null);
-            StringBuilder errorMsg = new StringBuilder();
-            Brand brandEntity = null;
-            if (dto.getBrand() != null && dto.getBrand().getId() != null) {
-                // Permitir que los tests mockeen EntityManager en el controller
-                if (entityManager != null) {
-                    try {
-                        brandEntity = entityManager.find(Brand.class, dto.getBrand().getId().intValue());
-                    } catch (Exception e) {
-                        brandEntity = null;
-                    }
-                } else {
-                    brandEntity = brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null);
-                }
-                if (brandEntity == null) {
-                    errorMsg.append("Marca no encontrada (ID: " + dto.getBrand().getId() + ") para producto: " + dto.getTitle() + " (productCode: " + dto.getProductCode() + "). ");
-                }
-            }
-            Set<Category> cats = null;
-            if (dto.getCategories() != null && !dto.getCategories().isEmpty()) {
-                java.util.Set<Category> found = new java.util.HashSet<>();
-                for (CategoryDTO catDto : dto.getCategories()) {
-                    if (catDto == null || catDto.getId() == null) {
-                        // ignorar entradas sin id
-                        continue;
-                    }
-                    Category foundCat = null;
-                    if (entityManager != null) {
-                        try {
-                            foundCat = entityManager.find(Category.class, catDto.getId().intValue());
-                        } catch (Exception e) {
-                            foundCat = null;
-                        }
-                    } else {
-                        foundCat = categoryRepository.findById((long) catDto.getId().intValue()).orElse(null);
-                    }
-                    // Si no se encuentra la categoría, la ignoramos (tolerancia esperada por tests)
-                    if (foundCat != null) {
-                        found.add(foundCat);
-                    }
-                }
-                cats = found;
-            }
-            if (errorMsg.length() > 0) {
-                throw new RuntimeException(errorMsg.toString());
-            }
-            // Al asignar mediaSrc, usar nueva lista mutable
-            List<String> mediaSrcMutable = dto.getMediaSrc() != null ? new java.util.ArrayList<>(dto.getMediaSrc()) : new java.util.ArrayList<>();
-            if (existing == null) {
-                Product product = new Product();
-                product.setTitle(dto.getTitle());
-                product.setDescription(dto.getDescription());
-                product.setPrice(dto.getPrice());
-                product.setStock(dto.getStock());
-                product.setMediaSrc(mediaSrcMutable);
-                product.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);
-                product.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);
-                product.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);
-                product.setHero(dto.getHero() != null ? dto.getHero() : false);
-                product.setActive(dto.getActive() != null ? dto.getActive() : true);
-                product.setDiscount(dto.getDiscount());
-                product.setPriceUnit(dto.getPriceUnit());
-                product.setProductCode(dto.getProductCode());
-                product.setBrand(brandEntity);
-                if (cats != null) {
-                    product.setCategories(new java.util.HashSet<>(cats.stream().filter(c -> c != null).toList()));
-                }
-                product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);
-                productRepository.save(product);
-            } else {
-                existing.setTitle(dto.getTitle());
-                existing.setDescription(dto.getDescription());
-                existing.setPrice(dto.getPrice());
-                existing.setStock(dto.getStock());
-                existing.setMediaSrc(mediaSrcMutable);
-                existing.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);
-                existing.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);
-                existing.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);
-                existing.setHero(dto.getHero() != null ? dto.getHero() : false);
-                existing.setActive(dto.getActive() != null ? dto.getActive() : true);
-                existing.setDiscount(dto.getDiscount());
-                existing.setPriceUnit(dto.getPriceUnit());
-                existing.setProductCode(dto.getProductCode());
-                existing.setBrand(brandEntity);
-                if (cats != null) {
-                    existing.setCategories(new java.util.HashSet<>(cats.stream().filter(c -> c != null).toList()));
-                } else {
-                    existing.setCategories(null);
-                }
-                existing.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);
-                productRepository.save(existing);
-            }
-        }
-        // Retornar todos los productos como DTO
-        return productRepository.findAll().stream()
-            .map(ProductDTO::fromEntity)
-            .collect(Collectors.toList());
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint de sincronización mock deshabilitado. Use la API de Comunicación para enviar eventos de producto.");
     }
 
     // Obtiene todos los productos
@@ -162,154 +63,36 @@ public class ProductController {
             .collect(Collectors.toList());
     }
 
-    // Agrega un producto específico usando mensaje mockeado
+    // Agrega un producto específico usando mensaje mockeado -> DESACTIVADO
     @PostMapping
     public ProductDTO addProduct() {
-        KafkaMockService.AddProductMessage msg = kafkaMockService.getAddProductMock();
-        ProductDTO dto = msg.payload.product;
-        Product product = new Product();
-        product.setTitle(dto.getTitle());
-        product.setDescription(dto.getDescription());
-        product.setPrice(dto.getPrice());
-        product.setStock(dto.getStock());
-        product.setMediaSrc(dto.getMediaSrc() != null ? dto.getMediaSrc() : List.of());
-        product.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);
-        product.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);
-        product.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);
-        product.setHero(dto.getHero() != null ? dto.getHero() : false);
-        product.setActive(dto.getActive() != null ? dto.getActive() : true);
-        product.setDiscount(dto.getDiscount());
-        product.setPriceUnit(dto.getPriceUnit());
-        product.setProductCode(dto.getProductCode());
-        product.setBrand(dto.getBrand() != null ? brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null) : null);
-        if (dto.getCategories() != null && !dto.getCategories().isEmpty()) {
-            Set<Category> cats = dto.getCategories().stream()
-                .map(catDto -> categoryRepository.findById((long) catDto.getId().intValue()).orElse(null))
-                .filter(c -> c != null)
-                .collect(java.util.stream.Collectors.toSet());
-            product.setCategories(new java.util.HashSet<>(cats));
-        } else {
-            product.setCategories(null);
-        }
-        product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);
-        Product saved = productRepository.save(product);
-        return toDTO(saved);
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Los productos deben agregarse a través de eventos desde el Core.");
     }
 
-    // Edita solo precio y stock usando mensaje mockeado
-    public static class EditProductSimpleRequest {
-        public Long id;
-    }
+    // Edita solo precio y stock usando mensaje mockeado -> DESACTIVADO
+    public static class EditProductSimpleRequest { public Long id; }
 
     @PatchMapping("/simple")
     public ProductDTO editProductSimple() {
-        KafkaMockService.EditProductSimpleMessage msg = kafkaMockService.getEditProductMockSimple();
-        KafkaMockService.EditProductSimplePayload dto = msg.payload;
-        Long id = dto.id;
-        Optional<Product> productOpt = productRepository.findById(id.intValue());
-        if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
-        Product product = productOpt.get();
-        if (dto.price != null) {
-            product.setPrice(dto.price);
-            Float discount = product.getDiscount() != null ? product.getDiscount() : 0f;
-            Float priceUnit = dto.price / (1 - (discount / 100f));
-            product.setPriceUnit(priceUnit);
-        }
-        if (dto.stock != null) product.setStock(dto.stock);
-        Product updated = productRepository.save(product);
-        return toDTO(updated);
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use eventos desde el Core para actualizar productos.");
     }
 
-    // Edita el producto completo usando mensaje mockeado
+    // Edita el producto completo usando mensaje mockeado -> DESACTIVADO
     @PatchMapping
     public ProductDTO editProduct() {
-        KafkaMockService.EditProductFullMessage msg = kafkaMockService.getEditProductMockFull();
-        ProductDTO dto = msg.payload;
-        Integer id = Math.toIntExact(dto.getId());
-        Optional<Product> productOpt = productRepository.findById(id);
-        if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
-        Product product = productOpt.get();
-        // Campos simples
-        if (dto.getTitle() != null) product.setTitle(dto.getTitle());
-        if (dto.getDescription() != null) product.setDescription(dto.getDescription());
-        if (dto.getStock() != null) product.setStock(dto.getStock());
-        // MediaSrc: si es null, setear lista vacía
-        if (dto.getMediaSrc() == null) {
-            product.setMediaSrc(List.of());
-        } else {
-            product.setMediaSrc(new java.util.ArrayList<>(dto.getMediaSrc()));
-        }
-        // Booleanos: solo asignar si no son null
-        if (dto.getIsNew() != null) product.setNew(dto.getIsNew());
-        if (dto.getIsBestseller() != null) product.setBestseller(dto.getIsBestseller());
-        if (dto.getIsFeatured() != null) product.setIsFeatured(dto.getIsFeatured());
-        if (dto.getHero() != null) product.setHero(dto.getHero());
-        // Active
-        if (dto.getActive() != null) product.setActive(dto.getActive());
-        // ProductCode
-        if (dto.getProductCode() == null) {
-            product.setProductCode(null);
-        } else {
-            product.setProductCode(dto.getProductCode());
-        }
-        // PriceUnit y Discount
-        if (dto.getPriceUnit() != null) product.setPriceUnit(dto.getPriceUnit());
-        if (dto.getDiscount() != null) product.setDiscount(dto.getDiscount());
-        // Recalcular price si priceUnit o discount se tocan y ambos existen
-        Float priceUnit = product.getPriceUnit();
-        Float discount = product.getDiscount();
-        if ((dto.getPriceUnit() != null || dto.getDiscount() != null) && priceUnit != null && discount != null) {
-            Float price = priceUnit - (priceUnit * (discount / 100f));
-            product.setPrice(price);
-        } else if (dto.getPrice() != null) {
-            product.setPrice(dto.getPrice());
-        }
-        // Marca
-        if (dto.getBrand() != null && dto.getBrand().getId() != null) {
-            product.setBrand(brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null));
-        } else {
-            product.setBrand(null);
-        }
-        // Categorías
-        if (dto.getCategories() != null && !dto.getCategories().isEmpty()) {
-            Set<ar.edu.uade.ecommerce.Entity.Category> cats = dto.getCategories().stream()
-                .map(catDto -> categoryRepository.findById((long) catDto.getId().intValue()).orElse(null))
-                .filter(c -> c != null)
-                .collect(java.util.stream.Collectors.toSet());
-            product.setCategories(new java.util.HashSet<>(cats));
-        } else {
-            product.setCategories(null);
-        }
-        // Calificación
-        product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);
-        Product updated = productRepository.save(product);
-        return toDTO(updated);
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use eventos desde el Core para actualizar productos.");
     }
 
-    // Activar producto usando mensaje mockeado
+    // Activar producto usando mensaje mockeado -> DESACTIVADO
     @PatchMapping("/activate")
     public ProductDTO activateProduct() {
-        KafkaMockService.ActivateProductMessage msg = kafkaMockService.getActivateProductMock();
-        Long id = msg.payload.id;
-        Optional<Product> productOpt = productRepository.findById(id.intValue());
-        if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
-        Product product = productOpt.get();
-        product.setActive(true);
-        Product updated = productRepository.save(product);
-        return toDTO(updated);
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use eventos desde el Core para activar productos.");
     }
 
-    // Desactivar producto usando mensaje mockeado
+    // Desactivar producto usando mensaje mockeado -> DESACTIVADO
     @PatchMapping("/deactivate")
     public ProductDTO deactivateProduct() {
-        KafkaMockService.DeactivateProductMessage msg = kafkaMockService.getDeactivateProductMock();
-        Long id = msg.payload.id;
-        Optional<Product> productOpt = productRepository.findById(id.intValue());
-        if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
-        Product product = productOpt.get();
-        product.setActive(false);
-        Product updated = productRepository.save(product);
-        return toDTO(updated);
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use eventos desde el Core para desactivar productos.");
     }
 
     // DTO para request de review
@@ -383,11 +166,14 @@ public class ProductController {
         // Actualizar el campo calification en Product
         product.setCalification(promedio);
         productRepository.save(product);
-        // Enviar evento simulado por Kafka
-        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(
-            "PRODUCT_REVIEW_ADDED",
-            String.format("Producto %d (%s) recibió una nueva review. Promedio actualizado: %.2f", product.getId(), product.getTitle(), promedio)
-        ));
+        // Emitir evento hacia la API de Comunicación (Core)
+        try {
+            String message = reviewRequest.getDescription() != null ? reviewRequest.getDescription() : "Nueva review creada";
+            Float rateUpdated = promedio;
+            ecommerceEventService.emitReviewCreated(message, rateUpdated);
+        } catch (Exception ex) {
+            System.err.println("Error emitiendo evento de review: " + ex.getMessage());
+        }
         List<ReviewDTO> reviewDTOs = reviews.stream()
             .map(r -> new ReviewDTO(r.getId(), r.getCalification(), r.getDescription()))
             .collect(Collectors.toList());
@@ -535,11 +321,12 @@ public class ProductController {
         fav.setProduct(product);
         fav.setProductCode(productCode); // Guardar el productCode en la entidad
         favouriteProductsRepository.save(fav);
-        // Enviar evento mock
-        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(
-            "ADD_FAVOURITE_PRODUCT",
-            String.format("{productCode: '%s', id: %d, nombre: '%s'}", productCode, product.getId(), product.getTitle())
-        ));
+        // Emitir evento hacia la API de Comunicación (Core) para agregar favorito
+        try {
+            ecommerceEventService.emitAddFavorite(String.valueOf(productCode), product.getId() != null ? Long.valueOf(product.getId()) : null, product.getTitle());
+        } catch (Exception ex) {
+            System.err.println("Error emitiendo evento add favorite: " + ex.getMessage());
+        }
         return "El producto con código " + productCode + " se agregó a favoritos correctamente.";
     }
 
@@ -555,11 +342,12 @@ public class ProductController {
         if (product == null) return "Producto no encontrado.";
         // Eliminar favorito si existe
         favouriteProductsRepository.deleteByUserAndProduct(user, product);
-        // Enviar evento mock
-        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(
-            "REMOVE_FAVOURITE_PRODUCT",
-            String.format("{productCode: '%s', id: %d, nombre: '%s'}", productCode, product.getId(), product.getTitle())
-        ));
+        // Emitir evento hacia la API de Comunicación (Core) para remover favorito
+        try {
+            ecommerceEventService.emitRemoveFavorite(String.valueOf(productCode), product.getId() != null ? Long.valueOf(product.getId()) : null, product.getTitle());
+        } catch (Exception ex) {
+            System.err.println("Error emitiendo evento remove favorite: " + ex.getMessage());
+        }
         return "El producto con código " + productCode + " ya no es favorito.";
     }
 

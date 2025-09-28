@@ -9,29 +9,32 @@ import ar.edu.uade.ecommerce.Service.AuthService;
 import ar.edu.uade.ecommerce.Service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/product-views")
 public class ProductViewController {
+    private static final Logger logger = LoggerFactory.getLogger(ProductViewController.class);
+
     @Autowired
     private ProductViewServiceImpl productViewServiceImpl;
     @Autowired
     private ProductService productService;
     @Autowired
     private AuthService authService;
+
     @Autowired
-    private ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService kafkaMockService;
+    private ar.edu.uade.ecommerce.messaging.ECommerceEventService ecommerceEventService;
 
     // POST: Registrar vista de producto
     @PostMapping("/{id}")
@@ -72,53 +75,56 @@ public class ProductViewController {
         Pageable pageable = PageRequest.of(page, size);
         Page<ProductViewResponseDTO> views = productViewServiceImpl.getProductViewsByUser(user, pageable);
 
+        // Construir el mensaje que se enviará a la API de Comunicación como JSON
+        // Usamos el resumen transaccional para incluir productCode
+        List<java.util.Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
+        List<java.util.Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
+            java.util.Map<String,Object> m = new java.util.HashMap<>();
+            m.put("id", s.get("productId"));
+            m.put("nombre", s.get("productTitle"));
+            m.put("productCode", s.get("productCode"));
+            return m;
+        }).toList();
 
-        // Construir el mensaje Kafka simulado para este usuario y página como JSON
-        List<Object> kafkaViews = Collections.singletonList(views.stream().map(view -> {
-            return new LinkedHashMap<String, Object>() {{
-                put("productId", view.getProductId());
-                put("productName", view.getProductName());
-                put("viewedAt", view.getViewedAt());
-                put("categories", view.getCategories());
-                put("brand", view.getBrand());
-            }};
-        }).toList());
         java.util.Map<String, Object> kafkaMessage = new java.util.LinkedHashMap<>();
         kafkaMessage.put("userEmail", user.getEmail());
-        kafkaMessage.put("views", kafkaViews);
+        kafkaMessage.put("views", productsForEvent);
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
             String jsonKafkaMessage = mapper.writeValueAsString(kafkaMessage);
-            System.out.println("Mensaje que se enviaría por Kafka (JSON):\n" + jsonKafkaMessage);
+            logger.info("Mensaje que se enviaría por Kafka (JSON):\n{}", jsonKafkaMessage);
+            // Enviar a la API de Comunicación
+            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", jsonKafkaMessage);
         } catch (JsonProcessingException e) {
-            System.out.println("Error al serializar el mensaje Kafka: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error al serializar el mensaje Kafka: {}", e.getMessage(), e);
         }
         return ResponseEntity.ok(views);
     }
 
-    // Evento programado cada 24 horas
-    @Scheduled(fixedRate = 86400000) // 24 horas en milisegundos
-    public void sendDailyProductViewEvent() {
-        List<ProductView> allViews = productViewServiceImpl.getAllViews();
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        for (int i = 0; i < allViews.size(); i++) {
-            ProductView view = allViews.get(i);
-            sb.append(String.format("{id: %d, nombre: '%s'}",
-                view.getProduct().getId(),
-                view.getProduct().getTitle()
-            ));
-            if (i < allViews.size() - 1) {
-                sb.append(",");
-            }
+    // Endpoint para emitir manualmente la vista diaria (útil para pruebas manuales desde Insomnia)
+    @PostMapping("/emit-daily")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> emitDailyProductViewNow() {
+        // Reutiliza la misma lógica que antes tenía la tarea programada
+        List<java.util.Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
+        List<java.util.Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
+            java.util.Map<String,Object> m = new java.util.HashMap<>();
+            m.put("id", s.get("productId"));
+            m.put("nombre", s.get("productTitle"));
+            m.put("productCode", s.get("productCode"));
+            return m;
+        }).toList();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            String json = mapper.writeValueAsString(productsForEvent);
+            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", json);
+            logger.info("Emisión manual de vista diaria enviada: {}", json);
+            return ResponseEntity.ok("Evento enviado");
+        } catch (Exception ex) {
+            logger.error("Error serializando/enviando resumen de product views: {}", ex.getMessage(), ex);
+            return ResponseEntity.status(500).body("Error enviando evento: " + ex.getMessage());
         }
-        sb.append("}");
-        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(
-            "DAILY_PRODUCT_VIEWS",
-            sb.toString()
-        ));
-        System.out.println("Mensaje enviado a Kafka (core de mensajería):\n" + sb.toString());
     }
 }

@@ -74,7 +74,7 @@ public class CartController {
                 }
             }
             try {
-                cartService.sendKafkaEvent("StockReserved_PendingPurchase", createdCart);
+                cartService.sendKafkaEvent("POST: Compra pendiente", createdCart);
             } catch (Exception e) {
                 kafkaError = true;
             }

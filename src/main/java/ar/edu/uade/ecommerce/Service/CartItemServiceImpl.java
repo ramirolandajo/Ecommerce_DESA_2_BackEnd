@@ -2,7 +2,6 @@ package ar.edu.uade.ecommerce.Service;
 
 import ar.edu.uade.ecommerce.Entity.CartItem;
 import ar.edu.uade.ecommerce.Repository.CartItemRepository;
-import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
 import ar.edu.uade.ecommerce.Entity.Event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,22 +10,25 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import ar.edu.uade.ecommerce.messaging.ECommerceEventService;
 
 @Service
 public class CartItemServiceImpl implements CartItemService {
     @Autowired
     private CartItemRepository cartItemRepository;
     @Autowired
-    private KafkaMockService kafkaMockService;
-    @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ECommerceEventService ecommerceEventService;
 
     @Override
     public CartItem addCartItem(CartItem cartItem) {
         CartItem saved = cartItemRepository.save(cartItem);
         try {
             String json = objectMapper.writeValueAsString(saved);
-            kafkaMockService.sendEvent(new Event("CartItemAdded", json));
+            Event ev = new Event("CartItemAdded", json);
+            ecommerceEventService.emitRawEvent(ev.getType(), json);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -43,7 +45,8 @@ public class CartItemServiceImpl implements CartItemService {
             CartItem updated = cartItemRepository.save(item);
             try {
                 String json = objectMapper.writeValueAsString(updated);
-                kafkaMockService.sendEvent(new Event("CartItemUpdated", json));
+                Event ev = new Event("CartItemUpdated", json);
+                ecommerceEventService.emitRawEvent(ev.getType(), json);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -58,7 +61,8 @@ public class CartItemServiceImpl implements CartItemService {
         item.ifPresent(i -> {
             try {
                 String json = objectMapper.writeValueAsString(i);
-                kafkaMockService.sendEvent(new Event("CartItemRemoved", json));
+                Event ev = new Event("CartItemRemoved", json);
+                ecommerceEventService.emitRawEvent(ev.getType(), json);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }

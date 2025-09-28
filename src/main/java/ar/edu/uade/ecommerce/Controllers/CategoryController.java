@@ -2,10 +2,11 @@ package ar.edu.uade.ecommerce.Controllers;
 
 import ar.edu.uade.ecommerce.Entity.Category;
 import ar.edu.uade.ecommerce.Entity.DTO.CategoryDTO;
-import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
 import ar.edu.uade.ecommerce.Service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,43 +16,11 @@ import java.util.stream.Collectors;
 public class CategoryController {
 
     @Autowired
-    private KafkaMockService kafkaMockService;
-
-    @Autowired
     private CategoryService categoryService;
 
     // helper para convertir Integer id a Long manejando nulls
     private Long toLongId(Integer id) {
         return id == null ? null : Long.valueOf(id.longValue());
-    }
-
-    @GetMapping("/sync")
-    public List<CategoryDTO> syncCategoriesFromMock() {
-        KafkaMockService.CategorySyncMessage message = kafkaMockService.getCategoriesMock();
-        List<CategoryDTO> mockCategories = message.payload.categories;
-        List<Category> existingCategories = categoryService.getAllCategories();
-        for (CategoryDTO dto : mockCategories) {
-            Category existing = existingCategories.stream()
-                .filter(c -> c.getName() != null && c.getName().equalsIgnoreCase(dto.getName()))
-                .findFirst()
-                .orElse(null);
-            if (existing == null) {
-                Category c = new Category();
-                c.setName(dto.getName());
-                c.setActive(dto.getActive() != null ? dto.getActive() : true);
-                categoryService.saveCategory(c);
-            }
-        }
-        // Imprimir el mensaje recibido del mock en formato core de mensajería
-        System.out.println("Mensaje recibido del core de mensajería:");
-        System.out.println("{" +
-            "type='" + message.type + "', " +
-            "payload=" + message.payload + ", " +
-            "timestamp=" + message.timestamp +
-            "}");
-        return categoryService.getAllCategories().stream()
-                .map(c -> new CategoryDTO(toLongId(c.getId()), c.getName(), c.isActive()))
-                .collect(Collectors.toList());
     }
 
     @GetMapping
@@ -61,6 +30,33 @@ public class CategoryController {
                 .collect(Collectors.toList());
     }
 
+    // Endpoints mock deshabilitados: la sincronización de categorías debe venir desde la API de Comunicación
+    @GetMapping("/sync")
+    public List<CategoryDTO> syncCategoriesFromMock() {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint de sincronización mock deshabilitado. La sincronización debe venir desde la API de Comunicación (Core).");
+    }
+
+    @PostMapping("/mock/add")
+    public CategoryDTO addCategoryFromMock() {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use la API de Comunicación para sincronizar categorías.");
+    }
+
+    @PatchMapping("/mock/activate")
+    public CategoryDTO activateCategoryFromMock() {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use la API de Comunicación para sincronizar categorías.");
+    }
+
+    @PatchMapping("/mock/deactivate")
+    public CategoryDTO deactivateCategoryFromMock() {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use la API de Comunicación para sincronizar categorías.");
+    }
+
+    @PatchMapping("/mock/update")
+    public CategoryDTO updateCategoryFromMock() {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Use la API de Comunicación para sincronizar categorías.");
+    }
+
+    // Endpoints reales
     @PostMapping("/bulk")
     public List<CategoryDTO> addBulkCategories(@RequestBody List<CategoryDTO> categoryDTOs) {
         if (categoryDTOs == null || categoryDTOs.isEmpty()) {
@@ -123,83 +119,5 @@ public class CategoryController {
             }
         }
         return resultCategories;
-    }
-
-
-    @PostMapping("/mock/add")
-    public CategoryDTO addCategoryFromMock() {
-        KafkaMockService.CategorySyncMessage message = kafkaMockService.getCategoriesMock();
-        // Tomar la primera categoría del mock como ejemplo
-        CategoryDTO categoryDTO = message.payload.categories.get(0);
-        Category existing = categoryService.getAllCategories().stream()
-            .filter(c -> (c.getName() == null && categoryDTO.getName() == null) ||
-                         (c.getName() != null && c.getName().equalsIgnoreCase(categoryDTO.getName())))
-            .findFirst()
-            .orElse(null);
-        if (existing != null) {
-            return new CategoryDTO(toLongId(existing.getId()), existing.getName(), existing.isActive());
-        }
-        Category category = new Category();
-        category.setName(categoryDTO.getName());
-        category.setActive(categoryDTO.getActive() != null ? categoryDTO.getActive() : true);
-        Category saved = categoryService.saveCategory(category);
-        return new CategoryDTO(toLongId(saved.getId()), saved.getName(), saved.isActive());
-    }
-
-    @PatchMapping("/mock/activate")
-    public CategoryDTO activateCategoryFromMock() {
-        KafkaMockService.CategorySyncMessage message = kafkaMockService.getCategoriesMock();
-        // Tomar la primera categoría del mock como ejemplo
-        CategoryDTO categoryDTO = message.payload.categories.get(0);
-        Category category = categoryService.getAllCategories().stream()
-                .filter(c -> c.getName() != null && c.getName().equalsIgnoreCase(categoryDTO.getName()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
-        category.setActive(true);
-        Category updated = categoryService.saveCategory(category);
-        return new CategoryDTO(toLongId(updated.getId()), updated.getName(), updated.isActive());
-    }
-
-    @PatchMapping("/mock/deactivate")
-    public CategoryDTO deactivateCategoryFromMock() {
-        KafkaMockService.CategorySyncMessage message = kafkaMockService.getCategoriesMock();
-        // Tomar la primera categoría del mock como ejemplo
-        CategoryDTO categoryDTO = message.payload.categories.get(0);
-        Category category = categoryService.getAllCategories().stream()
-                .filter(c -> c.getName() != null && c.getName().equalsIgnoreCase(categoryDTO.getName()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
-        category.setActive(false);
-        Category updated = categoryService.saveCategory(category);
-        return new CategoryDTO(toLongId(updated.getId()), updated.getName(), updated.isActive());
-    }
-
-    @PatchMapping("/mock/update")
-    public CategoryDTO updateCategoryFromMock() {
-        KafkaMockService.CategorySyncMessage message = kafkaMockService.getCategoriesMock();
-        // Tomar la primera categoría del mock como ejemplo
-        CategoryDTO categoryDTO = message.payload.categories.get(0);
-        java.util.List<Category> existingList = categoryService.getAllCategories();
-        Category category = null;
-        if (existingList != null) {
-            category = existingList.stream()
-                    .filter(c -> c.getName() != null && c.getName().equalsIgnoreCase(categoryDTO.getName()))
-                    .findFirst()
-                    .orElse(null);
-            // Si no se encuentra por nombre, usar la primera existente como fallback
-            if (category == null && !existingList.isEmpty()) {
-                category = existingList.get(0);
-            }
-        }
-        if (category == null) {
-            throw new RuntimeException("Categoría no encontrada");
-        }
-        // Actualizar el nombre y el estado activo según el mock
-        category.setName(categoryDTO.getName());
-        if (categoryDTO.getActive() != null) {
-            category.setActive(categoryDTO.getActive());
-        }
-        Category updated = categoryService.saveCategory(category);
-        return new CategoryDTO(toLongId(updated.getId()), updated.getName(), updated.isActive());
     }
 }

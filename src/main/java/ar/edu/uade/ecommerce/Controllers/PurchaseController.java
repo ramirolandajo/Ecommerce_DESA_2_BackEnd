@@ -7,11 +7,14 @@ import ar.edu.uade.ecommerce.Entity.User;
 import ar.edu.uade.ecommerce.Service.AuthService;
 import ar.edu.uade.ecommerce.Service.PurchaseService;
 import ar.edu.uade.ecommerce.Service.UserService;
+import ar.edu.uade.ecommerce.messaging.ECommerceEventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/purchase")
@@ -30,6 +33,9 @@ public class PurchaseController {
 
     @Autowired
     private ar.edu.uade.ecommerce.Service.AddressService addressService;
+
+    @Autowired
+    private ECommerceEventService ecommerceEventService;
 
     @GetMapping
     public List<Purchase> getAllPurchases() {
@@ -65,6 +71,17 @@ public class PurchaseController {
         purchase.setUser(user);
         purchase.setStatus(Purchase.Status.PENDING);
         Purchase created = purchaseService.save(purchase);
+
+        // Emitir evento de compra pendiente hacia la API de Comunicación
+        try {
+            Map<String, Object> userMap = mapUser(user);
+            Map<String, Object> cartMap = mapCart(created.getCart());
+            ecommerceEventService.emitPurchasePending(created.getId(), userMap, cartMap);
+        } catch (Exception ex) {
+            // Loguear pero no impedir la respuesta al cliente
+            System.err.println("Error emitiendo evento de compra pendiente: " + ex.getMessage());
+        }
+
         return ResponseEntity.ok(created);
     }
 
@@ -80,6 +97,18 @@ public class PurchaseController {
         if (purchase != null && purchase.getCart() != null) {
             cartService.revertProductStock(purchase.getCart());
         }
+
+        // Emitir evento de compra cancelada antes de eliminar
+        try {
+            if (purchase != null) {
+                Map<String, Object> userMap = mapUser(purchase.getUser());
+                Map<String, Object> cartMap = mapCart(purchase.getCart());
+                ecommerceEventService.emitPurchaseCancelled(purchase.getId(), userMap, cartMap);
+            }
+        } catch (Exception ex) {
+            System.err.println("Error emitiendo evento de compra cancelada: " + ex.getMessage());
+        }
+
         purchaseService.deleteById(id);
         return ResponseEntity.ok("Compra eliminada correctamente. ID: " + id);
     }
@@ -110,6 +139,16 @@ public class PurchaseController {
             // Confirmar el stock y enviar evento por Kafka
             cartService.confirmProductStock(purchase.getCart());
         }
+
+        // Emitir evento compra confirmada
+        try {
+            Map<String, Object> userMap = mapUser(purchase.getUser());
+            Map<String, Object> cartMap = mapCart(purchase.getCart());
+            ecommerceEventService.emitPurchaseConfirmed(purchase.getId(), userMap, cartMap);
+        } catch (Exception ex) {
+            System.err.println("Error emitiendo evento de compra confirmada: " + ex.getMessage());
+        }
+
         return ResponseEntity.ok(purchase);
     }
 
@@ -183,5 +222,33 @@ public class PurchaseController {
             dto.setCart(cartDto);
         }
         return dto;
+    }
+
+    private Map<String, Object> mapUser(User user) {
+        Map<String, Object> m = new HashMap<>();
+        if (user == null) return m;
+        m.put("id", user.getId() != null ? Long.valueOf(user.getId()) : null);
+        m.put("name", user.getName());
+        m.put("email", user.getEmail());
+        return m;
+    }
+
+    private Map<String, Object> mapCart(ar.edu.uade.ecommerce.Entity.Cart cart) {
+        Map<String, Object> m = new HashMap<>();
+        if (cart == null) return m;
+        m.put("cartId", cart.getId() != null ? Long.valueOf(cart.getId()) : null);
+        m.put("finalPrice", cart.getFinalPrice());
+        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+        if (cart.getItems() != null) {
+            for (ar.edu.uade.ecommerce.Entity.CartItem ci : cart.getItems()) {
+                Map<String, Object> it = new HashMap<>();
+                it.put("id", ci.getId() != null ? Long.valueOf(ci.getId()) : null);
+                it.put("productId", ci.getProduct() != null && ci.getProduct().getId() != null ? Long.valueOf(ci.getProduct().getId()) : null);
+                it.put("quantity", ci.getQuantity());
+                items.add(it);
+            }
+        }
+        m.put("cartItems", items);
+        return m;
     }
 }

@@ -3,7 +3,6 @@ package ar.edu.uade.ecommerce.Service;
 import ar.edu.uade.ecommerce.Entity.*;
 import ar.edu.uade.ecommerce.Entity.Purchase.Status;
 import ar.edu.uade.ecommerce.Repository.PurchaseRepository;
-import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,13 +17,13 @@ import ar.edu.uade.ecommerce.Repository.UserRepository;
 import ar.edu.uade.ecommerce.Repository.ProductRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ar.edu.uade.ecommerce.messaging.ECommerceEventService;
 
 @Service
 public class PurchaseServiceImpl implements PurchaseService {
     @Autowired
     private PurchaseRepository purchaseRepository;
-    @Autowired
-    private KafkaMockService kafkaMockService;
+
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
@@ -37,6 +36,9 @@ public class PurchaseServiceImpl implements PurchaseService {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private ECommerceEventService ecommerceEventService;
+
     private static final Logger logger = LoggerFactory.getLogger(PurchaseServiceImpl.class);
 
     @Override
@@ -44,12 +46,11 @@ public class PurchaseServiceImpl implements PurchaseService {
         // Si la compra pasa a PENDING, setear reservationTime
         if (purchase.getStatus() == Status.PENDING && purchase.getReservationTime() == null) {
             purchase.setReservationTime(LocalDateTime.now());
-            // Avisar por Kafka que se debe reservar el stock
+            // Avisar por la API de Comunicación que se debe reservar el stock
             try {
                 String json = objectMapper.writeValueAsString(purchase);
                 Event event = new Event("ReserveStock", json);
-                kafkaMockService.sendEvent(event);
-                kafkaMockService.mockListener(event); // Mock de recepción
+                ecommerceEventService.emitRawEvent(event.getType(), json);
             } catch (Exception e) {
                 logger.error("Error en reserva de stock", e);
             }
@@ -74,12 +75,11 @@ public class PurchaseServiceImpl implements PurchaseService {
         if (purchase != null && purchase.getStatus() != Status.CANCELLED) {
             purchase.setStatus(Status.CANCELLED);
             purchaseRepository.save(purchase);
-            // Avisar por Kafka que se debe liberar el stock
+            // Avisar por la API de Comunicación que se debe liberar el stock
             try {
                 String json = objectMapper.writeValueAsString(purchase);
-                Event event = new Event("ReleaseStock", json);
-                kafkaMockService.sendEvent(event);
-                kafkaMockService.mockListener(event);
+                Event event = new Event("POST: Stock rollback - compra cancelada", json);
+                ecommerceEventService.emitRawEvent(event.getType(), json);
             } catch (Exception e) {
                 logger.error("Error al liberar reserva por cancelación manual", e);
             }
@@ -99,9 +99,8 @@ public class PurchaseServiceImpl implements PurchaseService {
         purchaseRepository.save(purchase);
         try {
             String json = objectMapper.writeValueAsString(purchase);
-            Event event = new Event("PurchaseConfirmed_GenerateInvoice", json);
-            kafkaMockService.sendEvent(event);
-            kafkaMockService.mockListener(event);
+            Event event = new Event("POST: Compra confirmada", json);
+            ecommerceEventService.emitRawEvent(event.getType(), json);
         } catch (Exception e) {
             logger.error("Error al confirmar compra y generar factura", e);
         }
@@ -114,8 +113,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         // Lógica para agregar producto al carrito
         // ...
         Event event = new Event("ProductAddedToCart", "CartId: " + cartId + ", ProductId: " + productId + ", Quantity: " + quantity);
-        kafkaMockService.sendEvent(event);
-        kafkaMockService.mockListener(event);
+        ecommerceEventService.emitRawEvent(event.getType(), event.getPayload());
     }
 
     @Override
@@ -123,8 +121,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         // Lógica para editar cantidad de producto en el carrito
         // ...
         Event event = new Event("CartItemEdited", "CartItemId: " + cartItemId + ", NewQuantity: " + newQuantity);
-        kafkaMockService.sendEvent(event);
-        kafkaMockService.mockListener(event);
+        ecommerceEventService.emitRawEvent(event.getType(), event.getPayload());
     }
 
     @Override
@@ -132,29 +129,35 @@ public class PurchaseServiceImpl implements PurchaseService {
         // Lógica para eliminar producto del carrito
         // ...
         Event event = new Event("ProductRemovedFromCart", "CartItemId: " + cartItemId);
-        kafkaMockService.sendEvent(event);
-        kafkaMockService.mockListener(event);
+        ecommerceEventService.emitRawEvent(event.getType(), event.getPayload());
     }
 
     @Scheduled(fixedRate = 60000) // Cada 1 minuto
+    @org.springframework.transaction.annotation.Transactional
     public void releaseExpiredReservations() {
-        List<Purchase> pendingPurchases = purchaseRepository.findAll().stream()
-                .filter(p -> p.getStatus() == Status.PENDING && p.getReservationTime() != null)
-                .toList();
-        for (Purchase purchase : pendingPurchases) {
-            if (purchase.getReservationTime().plusHours(4).isBefore(LocalDateTime.now())) {
-                // Avisar por Kafka que se debe liberar el stock
-                try {
-                    String json = objectMapper.writeValueAsString(purchase);
-                    Event event = new Event("ReleaseStock", json);
-                    kafkaMockService.sendEvent(event);
-                    kafkaMockService.mockListener(event); // Mock de recepción
-                } catch (Exception e) {
-                    logger.error("Error al liberar reserva", e);
+        // Buscar compras PENDING cuya reservationTime sea anterior a ahora-4h
+        java.time.LocalDateTime cutoff = LocalDateTime.now().minusHours(4);
+        // Usar la consulta con JOIN FETCH para evitar consultas adicionales al acceder a cart/user
+        List<Purchase> expired = purchaseRepository.findExpiredWithCartAndUser(Status.PENDING, cutoff);
+        for (Purchase purchase : expired) {
+            try {
+                // Armar un payload seguro a partir de la purchase cargada (cart + user ya están fetch)
+                java.util.Map<String, Object> payload = new java.util.HashMap<>();
+                payload.put("purchaseId", purchase.getId());
+                payload.put("cartId", purchase.getCart() != null ? purchase.getCart().getId() : null);
+                if (purchase.getCart() != null && purchase.getCart().getUser() != null) {
+                    java.util.Map<String, Object> userMap = new java.util.HashMap<>();
+                    userMap.put("id", purchase.getCart().getUser().getId());
+                    userMap.put("email", purchase.getCart().getUser().getEmail());
+                    payload.put("user", userMap);
                 }
-                purchase.setStatus(Status.CANCELLED);
-                purchaseRepository.save(purchase);
+                String json = objectMapper.writeValueAsString(payload);
+                ecommerceEventService.emitRawEvent("ReleaseStock", json);
+            } catch (Exception e) {
+                logger.error("Error al liberar reserva", e);
             }
+            purchase.setStatus(Status.CANCELLED);
+            purchaseRepository.save(purchase);
         }
     }
 
@@ -253,7 +256,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                             productDto.setTitle(item.getProduct().getTitle());
                             productDto.setDescription(item.getProduct().getDescription());
                             productDto.setPrice(item.getProduct().getPrice());
-                            productDto.setStock(item.getProduct().getStock());
+                            productDto.setMediaSrc(item.getProduct().getMediaSrc());
                             itemDto.setProduct(productDto);
                         }
                         itemDtos.add(itemDto);
