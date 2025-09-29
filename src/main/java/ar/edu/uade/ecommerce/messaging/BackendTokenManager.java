@@ -3,6 +3,7 @@ package ar.edu.uade.ecommerce.messaging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,10 @@ public class BackendTokenManager {
 
     // Seconds before expiry to proactively refresh
     private final long refreshBeforeSeconds = 30;
+
+    // Controlar si se intenta refresh programado (para evitar reintentos constantes en entornos sin Keycloak)
+    @Value("${keycloak.refresh.enabled:false}")
+    private boolean refreshEnabled;
 
     @Autowired
     public BackendTokenManager(KeycloakClient keycloakClient) {
@@ -68,10 +73,10 @@ public class BackendTokenManager {
         }
     }
 
-    // Precargar token al iniciar la aplicación
+    // Precargar token al iniciar la aplicación (un solo intento, sin reintentos constantes)
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        logger.info("BackendTokenManager: Application ready, precargando token backend...");
+        logger.info("BackendTokenManager: Application ready, precargando token backend (1 intento)...");
         String t = getToken();
         if (t == null) {
             logger.warn("BackendTokenManager: No se pudo precargar token al iniciar; se intentará en primer uso");
@@ -80,9 +85,13 @@ public class BackendTokenManager {
         }
     }
 
-    // Tarea periódica para refrescar token antes de expirar (ejecuta cada minuto)
+    // Tarea periódica para refrescar token antes de expirar (opcional)
     @Scheduled(fixedDelayString = "PT60S")
     public void refreshIfNearExpiry() {
+        if (!refreshEnabled) {
+            // Evitar reintentos constantes si Keycloak no está disponible
+            return;
+        }
         try {
             Instant now = Instant.now();
             if (expiry.minusSeconds(60).isBefore(now)) {

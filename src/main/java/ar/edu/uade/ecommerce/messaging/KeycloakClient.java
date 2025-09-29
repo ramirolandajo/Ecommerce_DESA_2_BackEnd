@@ -29,24 +29,45 @@ public class KeycloakClient {
     private String cachedToken;
     private Instant tokenExpiry = Instant.EPOCH;
 
+    private Map<String, Object> requestToken() {
+        if (tokenUrl == null || tokenUrl.isBlank() || clientId == null || clientId.isBlank()) {
+            logger.warn("KeycloakClient no configurado (keycloak.token.url / client-id faltan). No se solicitará token.");
+            return null;
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "client_credentials");
+        body.add("client_id", clientId);
+        if (clientSecret != null && !clientSecret.isBlank()) body.add("client_secret", clientSecret);
+        HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(body, headers);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> resp = (Map<String, Object>) restTemplate.postForObject(tokenUrl, req, Map.class);
+        return resp;
+    }
+
+    private Map<String, Object> requestTokenWithRetries(int maxAttempts) {
+        int attempt = 0;
+        while (attempt < maxAttempts) {
+            attempt++;
+            try {
+                Map<String, Object> resp = requestToken();
+                if (resp != null) return resp;
+            } catch (Exception ex) {
+                logger.warn("Intento {} obtener token desde Keycloak falló: {}", attempt, ex.getMessage());
+            }
+            // backoff simple entre intentos (200ms)
+            try { Thread.sleep(200L); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+        }
+        return null;
+    }
+
     public synchronized String getClientAccessToken() {
         try {
             if (cachedToken != null && Instant.now().isBefore(tokenExpiry.minusSeconds(10))) {
                 return cachedToken;
             }
-            if (tokenUrl == null || tokenUrl.isBlank() || clientId == null || clientId.isBlank()) {
-                logger.warn("KeycloakClient no configurado (keycloak.token.url / client-id faltan). No se solicitará token.");
-                return null;
-            }
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("grant_type", "client_credentials");
-            body.add("client_id", clientId);
-            if (clientSecret != null && !clientSecret.isBlank()) body.add("client_secret", clientSecret);
-            HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(body, headers);
-            @SuppressWarnings("unchecked")
-            Map<String, Object> resp = (Map<String, Object>) restTemplate.postForObject(tokenUrl, req, Map.class);
+            Map<String, Object> resp = requestTokenWithRetries(2);
             if (resp == null) return null;
             Object tokenObj = resp.get("access_token");
             Object expiresObj = resp.get("expires_in");
@@ -74,20 +95,7 @@ public class KeycloakClient {
                 long remaining = tokenExpiry.getEpochSecond() - Instant.now().getEpochSecond();
                 return new TokenInfo(cachedToken, remaining);
             }
-            // Si no está configurado, no intentamos solicitar
-            if (tokenUrl == null || tokenUrl.isBlank() || clientId == null || clientId.isBlank()) {
-                logger.warn("KeycloakClient no configurado (keycloak.token.url / client-id faltan). No se solicitará token.");
-                return null;
-            }
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("grant_type", "client_credentials");
-            body.add("client_id", clientId);
-            if (clientSecret != null && !clientSecret.isBlank()) body.add("client_secret", clientSecret);
-            HttpEntity<MultiValueMap<String, String>> req = new HttpEntity<>(body, headers);
-            @SuppressWarnings("unchecked")
-            Map<String, Object> resp = (Map<String, Object>) restTemplate.postForObject(tokenUrl, req, Map.class);
+            Map<String, Object> resp = requestTokenWithRetries(2);
             if (resp == null) return null;
             Object tokenObj = resp.get("access_token");
             Object expiresObj = resp.get("expires_in");
