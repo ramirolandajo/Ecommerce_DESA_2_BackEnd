@@ -1,0 +1,101 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PurchaseService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Service</a>
+</div>
+
+<h1>Coverage Summary for Class: PurchaseService (ar.edu.uade.ecommerce.Service)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">PurchaseService$MockitoMock$ZR1hf7aa</td>
+  </tr>
+  <tr>
+    <td class="name">PurchaseService$MockitoMock$ZR1hf7aa$auxiliary$sQp9kV2S</td>
+  </tr>
+  <tr>
+    <td class="name">PurchaseService$MockitoMock$ZR1hf7aa$auxiliary$yyWuHY0W</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Service;
+&nbsp;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.PurchaseInvoiceDTO;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Purchase;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;public interface PurchaseService {
+&nbsp;    Purchase save(Purchase purchase);
+&nbsp;    Purchase findById(Integer id);
+&nbsp;    List&lt;Purchase&gt; findAll();
+&nbsp;    void deleteById(Integer id);
+&nbsp;    Purchase confirmPurchase(Integer id);
+&nbsp;    void addProductToCart(Integer cartId, Integer productId, int quantity);
+&nbsp;    void editCartItem(Integer cartItemId, int newQuantity);
+&nbsp;    void removeProductFromCart(Integer cartItemId);
+&nbsp;    String getEmailFromToken(String token);
+&nbsp;    List&lt;PurchaseInvoiceDTO&gt; getPurchasesByUserEmail(String email);
+&nbsp;
+&nbsp;    Purchase findLastPendingPurchaseByUserWithinHours(Integer userId, int hours);
+&nbsp;
+&nbsp;    List&lt;Purchase&gt; findByUserId(Integer id);
+&nbsp;    List&lt;PurchaseWithCartDTO&gt; getPurchasesWithCartByUserId(Integer userId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

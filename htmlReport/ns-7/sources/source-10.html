@@ -1,0 +1,88 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > CartItemService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Service</a>
+</div>
+
+<h1>Coverage Summary for Class: CartItemService (ar.edu.uade.ecommerce.Service)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">CartItemService$MockitoMock$BkJcIrOS</td>
+  </tr>
+  <tr>
+    <td class="name">CartItemService$MockitoMock$BkJcIrOS$auxiliary$AOKUGMSM</td>
+  </tr>
+  <tr>
+    <td class="name">CartItemService$MockitoMock$BkJcIrOS$auxiliary$GDd6vAJd</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Service;
+&nbsp;
+&nbsp;import ar.edu.uade.ecommerce.Entity.CartItem;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;public interface CartItemService {
+&nbsp;    CartItem addCartItem(CartItem cartItem);
+&nbsp;    CartItem updateCartItem(Integer id, CartItem cartItem);
+&nbsp;    void removeCartItem(Integer id);
+&nbsp;    List&lt;CartItem&gt; getCartItemsByCartId(Integer cartId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

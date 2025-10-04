@@ -78,10 +78,10 @@ public class CartServiceImpl implements CartService {
         cart.setFinalPrice(finalPrice);
         Cart created = cartRepository.save(cart);
         try {
-            // Evitar serializar la entidad JPA completa: usar el helper que arma un payload seguro
-            sendKafkaEvent("CartCreated_ReserveStock", created);
+            // Emitir únicamente el evento de compra pendiente al crear el carrito
+            sendKafkaEvent("POST: Compra pendiente", created);
         } catch (Exception e) {
-            org.slf4j.LoggerFactory.getLogger(CartServiceImpl.class).error("Error enviando evento de reserva de stock", e);
+            org.slf4j.LoggerFactory.getLogger(CartServiceImpl.class).error("Error enviando evento de compra pendiente al crear carrito", e);
         }
         return created;
     }
@@ -176,7 +176,8 @@ public class CartServiceImpl implements CartService {
                         Product product = item.getProduct();
                         if (product != null) {
                             java.util.Map<String, Object> prodDetail = new java.util.HashMap<>();
-                            prodDetail.put("productId", product.getId());
+                            // Usar productCode en lugar de id
+                            prodDetail.put("productCode", product.getProductCode());
                             prodDetail.put("title", product.getTitle());
                             prodDetail.put("quantity", item.getQuantity());
                             prodDetail.put("price", product.getPrice());
@@ -197,7 +198,12 @@ public class CartServiceImpl implements CartService {
                 payloadMap.put("status", purchase != null ? purchase.getStatus() : null);
                 // Armar evento final
                 java.util.Map<String, Object> eventDetail = new java.util.HashMap<>();
-                eventDetail.put("type", eventName);
+                // Ajuste: para rollback, el type interno debe ser "POST: Stock rollback - compra cancelada"
+                String innerType = eventName;
+                if ("StockRollback_CartCancelled".equals(eventName)) {
+                    innerType = "POST: Stock rollback - compra cancelada";
+                }
+                eventDetail.put("type", innerType);
                 eventDetail.put("payload", payloadMap);
                 eventDetail.put("timestamp", java.time.ZonedDateTime.now().toString());
                 String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(eventDetail);
@@ -234,7 +240,8 @@ public class CartServiceImpl implements CartService {
                 Product product = item.getProduct();
                 if (product != null) {
                     java.util.Map<String, Object> prodDetail = new java.util.HashMap<>();
-                    prodDetail.put("productId", product.getId());
+                    // Usar productCode en lugar de id
+                    prodDetail.put("productCode", product.getProductCode());
                     prodDetail.put("title", product.getTitle());
                     prodDetail.put("quantity", item.getQuantity());
                     prodDetail.put("price", product.getPrice());
@@ -256,12 +263,11 @@ public class CartServiceImpl implements CartService {
         payloadMap.put("cart", cartMap);
         payloadMap.put("status", purchase.getStatus());
 
-        java.util.Map<String, Object> eventDetail = new java.util.HashMap<>();
-        eventDetail.put("type", eventName);
-        eventDetail.put("payload", payloadMap);
-        eventDetail.put("timestamp", java.time.ZonedDateTime.now().toString());
-
         try {
+            java.util.Map<String, Object> eventDetail = new java.util.HashMap<>();
+            eventDetail.put("type", eventName);
+            eventDetail.put("payload", payloadMap);
+            eventDetail.put("timestamp", java.time.ZonedDateTime.now().toString());
             String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(eventDetail);
             ecommerceEventService.emitRawEvent(eventName, json);
         } catch (Exception ex) {

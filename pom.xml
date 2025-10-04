@@ -146,11 +146,10 @@
             <version>2.15.2</version>
         </dependency>
 
-        <!-- H2 in-memory database for tests -->
+        <!-- H2 database para entornos de desarrollo (profile dev) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
         </dependency>
 
     </dependencies>

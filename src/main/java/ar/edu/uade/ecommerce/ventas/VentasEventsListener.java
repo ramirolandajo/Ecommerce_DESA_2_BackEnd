@@ -2,19 +2,23 @@ package ar.edu.uade.ecommerce.ventas;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(prefix = "ventas.kafka", name = "listen-ventas", havingValue = "true", matchIfMissing = false)
 public class VentasEventsListener {
 
     private static final Logger log = LoggerFactory.getLogger(VentasEventsListener.class);
 
     private final EventIdempotencyService idempotencyService;
+    private final VentasConsumerMonitorService monitor;
 
-    public VentasEventsListener(EventIdempotencyService idempotencyService) {
+    public VentasEventsListener(EventIdempotencyService idempotencyService, VentasConsumerMonitorService monitor) {
         this.idempotencyService = idempotencyService;
+        this.monitor = monitor;
     }
 
     @KafkaListener(
@@ -32,6 +36,7 @@ public class VentasEventsListener {
 
         if (idempotencyService.alreadyProcessed(eventId)) {
             log.info("[Ventas][Kafka] Evento ya procesado. eventId={} eventType={}", eventId, eventType);
+            monitor.recordDuplicate(eventId);
             return;
         }
 
@@ -41,8 +46,10 @@ public class VentasEventsListener {
         try {
             dispatch(t, msg);
             idempotencyService.markProcessed(eventId);
+            monitor.recordProcessed(eventType, eventId);
             log.info("[Ventas][Kafka] Procesado OK eventId={} type={}", eventId, eventType);
         } catch (Exception ex) {
+            monitor.recordError(eventType, eventId);
             log.error("[Ventas][Kafka] Error procesando eventId={} type={} - {}", eventId, eventType, ex.getMessage(), ex);
             // No marcamos como procesado para permitir reintentos
             throw ex; // dejar que el contenedor maneje el retry/backoff
@@ -95,4 +102,3 @@ public class VentasEventsListener {
         // TODO: lógica de persistencia/acciones
     }
 }
-

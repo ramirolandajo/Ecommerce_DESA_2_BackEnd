@@ -1,0 +1,183 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > SecurityConfig</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Security</a>
+</div>
+
+<h1>Coverage Summary for Class: SecurityConfig (ar.edu.uade.ecommerce.Security)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SecurityConfig</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/12)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Security;
+&nbsp;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.context.annotation.Bean;
+&nbsp;import org.springframework.context.annotation.Configuration;
+&nbsp;import org.springframework.security.authentication.AuthenticationManager;
+&nbsp;import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+&nbsp;import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+&nbsp;import org.springframework.security.config.http.SessionCreationPolicy;
+&nbsp;import org.springframework.security.core.userdetails.UserDetailsService;
+&nbsp;import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+&nbsp;import org.springframework.security.crypto.password.PasswordEncoder;
+&nbsp;import org.springframework.security.web.SecurityFilterChain;
+&nbsp;import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+&nbsp;
+&nbsp;//@Configuration
+&nbsp;//public class SecurityConfig {
+&nbsp;//    @Autowired
+&nbsp;//    private JwtAuthenticationFilter jwtAuthenticationFilter;
+&nbsp;//    @Autowired
+&nbsp;//    private UserDetailsService userDetailsService;
+&nbsp;//
+&nbsp;//    @Bean
+&nbsp;//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+&nbsp;//        http.csrf(csrf -&gt; csrf.disable())
+&nbsp;//            .sessionManagement(session -&gt; session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+&nbsp;//            .authorizeHttpRequests(auth -&gt; auth
+&nbsp;//                .requestMatchers(&quot;/purchase/**&quot;, &quot;/cart/**&quot;, &quot;/cart-items/**&quot;,&quot;/user/**&quot;).authenticated()
+&nbsp;//                .anyRequest().permitAll()
+&nbsp;//            );
+&nbsp;//        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+&nbsp;//        return http.build();
+&nbsp;//    }
+&nbsp;//
+&nbsp;//    @Bean
+&nbsp;//    public PasswordEncoder passwordEncoder() {
+&nbsp;//        return new BCryptPasswordEncoder();
+&nbsp;//    }
+&nbsp;//
+&nbsp;//    @Bean
+&nbsp;//    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+&nbsp;//        AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);
+&nbsp;//        builder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+&nbsp;//        return builder.build();
+&nbsp;//    }
+&nbsp;//}
+&nbsp;
+&nbsp;
+&nbsp;@Configuration
+<b class="nc">&nbsp;public class SecurityConfig {</b>
+&nbsp;    @Autowired
+&nbsp;    private JwtAuthenticationFilter jwtAuthenticationFilter;
+&nbsp;    @Autowired
+&nbsp;    private UserDetailsService userDetailsService;
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+<b class="nc">&nbsp;        http.csrf(csrf -&gt; csrf.disable())</b>
+<b class="nc">&nbsp;                .sessionManagement(session -&gt; session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</b>
+<b class="nc">&nbsp;                .authorizeHttpRequests(auth -&gt; auth</b>
+<b class="nc">&nbsp;                        .requestMatchers(&quot;/purchase/**&quot;, &quot;/cart/**&quot;, &quot;/cart-items/**&quot;,&quot;/user/**&quot;).authenticated()</b>
+<b class="nc">&nbsp;                        .anyRequest().permitAll()</b>
+&nbsp;                );
+<b class="nc">&nbsp;        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);</b>
+<b class="nc">&nbsp;        return http.build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public PasswordEncoder passwordEncoder() {
+<b class="nc">&nbsp;        return new BCryptPasswordEncoder();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+<b class="nc">&nbsp;        AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);</b>
+<b class="nc">&nbsp;        builder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());</b>
+<b class="nc">&nbsp;        return builder.build();</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

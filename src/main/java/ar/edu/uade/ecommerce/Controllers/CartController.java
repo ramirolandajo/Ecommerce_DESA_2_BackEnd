@@ -54,8 +54,7 @@ public class CartController {
         cart.setFinalPrice(finalPrice);
         Cart createdCart = cartService.createCart(cart);
         boolean stockError = false;
-        boolean kafkaError = false;
-        // Solo si createdCart no es null, realizar lógica de stock y Kafka
+        // Eliminamos kafkaError y la emisión duplicada; la emisión se hace en CartServiceImpl.createCart()
         if (createdCart != null && createdCart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem item : createdCart.getItems()) {
                 ar.edu.uade.ecommerce.Entity.Product product = item.getProduct();
@@ -73,11 +72,7 @@ public class CartController {
                     }
                 }
             }
-            try {
-                cartService.sendKafkaEvent("POST: Compra pendiente", createdCart);
-            } catch (Exception e) {
-                kafkaError = true;
-            }
+            // No emitir evento aquí (se emite en el servicio)
         }
         ar.edu.uade.ecommerce.Entity.Purchase purchase = new ar.edu.uade.ecommerce.Entity.Purchase();
         purchase.setUser(user);
@@ -86,9 +81,8 @@ public class CartController {
         purchase.setDate(java.time.LocalDateTime.now());
         purchase.setReservationTime(java.time.LocalDateTime.now());
         ar.edu.uade.ecommerce.Entity.Purchase createdPurchase = cartService.createPurchase(purchase);
-        // Si hubo error de stock o kafka, incluir info en el header
-        if (stockError || kafkaError) {
-            return ResponseEntity.ok().header("X-Stock-Error", String.valueOf(stockError)).header("X-Kafka-Error", String.valueOf(kafkaError)).body(createdPurchase);
+        if (stockError) {
+            return ResponseEntity.ok().header("X-Stock-Error", String.valueOf(stockError)).body(createdPurchase);
         }
         return ResponseEntity.ok(createdPurchase);
     }

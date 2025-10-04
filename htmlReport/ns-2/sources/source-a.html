@@ -1,0 +1,179 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ProductSearchController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Controllers</a>
+</div>
+
+<h1>Coverage Summary for Class: ProductSearchController (ar.edu.uade.ecommerce.Controllers)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ProductSearchController</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/22)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Controllers;
+&nbsp;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.ProductDTO;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.SearchProductDTO;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Product;
+&nbsp;import ar.edu.uade.ecommerce.Repository.ProductRepository;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.web.bind.annotation.GetMapping;
+&nbsp;import org.springframework.web.bind.annotation.RequestMapping;
+&nbsp;import org.springframework.web.bind.annotation.RequestParam;
+&nbsp;import org.springframework.web.bind.annotation.RestController;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;import java.nio.file.Files;
+&nbsp;import java.nio.file.Paths;
+&nbsp;import java.util.*;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/products/search&quot;)
+&nbsp;public class ProductSearchController {
+&nbsp;    @Autowired
+&nbsp;    private ProductRepository productRepository;
+&nbsp;
+&nbsp;    private Map&lt;String, List&lt;String&gt;&gt; synonyms;
+&nbsp;
+<b class="nc">&nbsp;    public ProductSearchController() {</b>
+<b class="nc">&nbsp;        loadSynonyms();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void loadSynonyms() {
+<b class="nc">&nbsp;        ObjectMapper mapper = new ObjectMapper();</b>
+&nbsp;        try {
+<b class="nc">&nbsp;            String path = &quot;src/main/resources/synonyms.json&quot;;</b>
+<b class="nc">&nbsp;            String json = new String(Files.readAllBytes(Paths.get(path)));</b>
+<b class="nc">&nbsp;            synonyms = mapper.readValue(json, Map.class);</b>
+&nbsp;        } catch (IOException e) {
+<b class="nc">&nbsp;            synonyms = new HashMap&lt;&gt;();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping
+&nbsp;    public List&lt;SearchProductDTO&gt; searchProducts(@RequestParam(&quot;query&quot;) String query) {
+<b class="nc">&nbsp;        String lowerQuery = query.toLowerCase();</b>
+<b class="nc">&nbsp;        Set&lt;String&gt; relatedTypes = new HashSet&lt;&gt;();</b>
+<b class="nc">&nbsp;        if (synonyms.containsKey(lowerQuery)) {</b>
+<b class="nc">&nbsp;            relatedTypes.addAll(synonyms.get(lowerQuery));</b>
+&nbsp;        }
+<b class="nc">&nbsp;        List&lt;Product&gt; products = productRepository.findAll();</b>
+<b class="nc">&nbsp;        List&lt;SearchProductDTO&gt; result = products.stream()</b>
+<b class="nc">&nbsp;            .filter(p -&gt; p.getTitle().toLowerCase().contains(lowerQuery)</b>
+<b class="nc">&nbsp;                || relatedTypes.stream().anyMatch(type -&gt; p.getTitle().toLowerCase().contains(type)))</b>
+<b class="nc">&nbsp;            .map(p -&gt; new SearchProductDTO(</b>
+<b class="nc">&nbsp;                p.getId() != null ? Long.valueOf(p.getId()) : null,</b>
+<b class="nc">&nbsp;                p.getTitle(),</b>
+<b class="nc">&nbsp;                p.getDescription(),</b>
+<b class="nc">&nbsp;                p.getMediaSrc()</b>
+&nbsp;            ))
+<b class="nc">&nbsp;            .collect(Collectors.toList());</b>
+<b class="nc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

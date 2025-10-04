@@ -1,0 +1,317 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > BrandController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Controllers</a>
+</div>
+
+<h1>Coverage Summary for Class: BrandController (ar.edu.uade.ecommerce.Controllers)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">BrandController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92,3%
+  </span>
+  <span class="absValue">
+    (12/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    66,1%
+  </span>
+  <span class="absValue">
+    (37/56)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    96,4%
+  </span>
+  <span class="absValue">
+    (107/111)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Controllers;
+&nbsp;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.BrandDTO;
+&nbsp;import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Brand;
+&nbsp;import ar.edu.uade.ecommerce.Service.BrandService;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/brands&quot;)
+<b class="fc">&nbsp;public class BrandController {</b>
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private KafkaMockService kafkaMockService;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private BrandService brandService;
+&nbsp;
+&nbsp;    @GetMapping(&quot;/sync&quot;)
+&nbsp;    public List&lt;BrandDTO&gt; syncBrandsFromMock() {
+<b class="fc">&nbsp;        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();</b>
+<b class="fc">&nbsp;        List&lt;BrandDTO&gt; mockBrands = message.payload.brands;</b>
+<b class="fc">&nbsp;        List&lt;Brand&gt; existingBrands = brandService.getAllBrands();</b>
+<b class="fc">&nbsp;        for (BrandDTO dto : mockBrands) {</b>
+<b class="fc">&nbsp;            Brand existing = existingBrands.stream()</b>
+<b class="fc">&nbsp;                .filter(b -&gt; b.getName() != null &amp;&amp; b.getName().equalsIgnoreCase(dto.getName()))</b>
+<b class="fc">&nbsp;                .findFirst()</b>
+<b class="fc">&nbsp;                .orElse(null);</b>
+<b class="fc">&nbsp;            if (existing == null) {</b>
+<b class="fc">&nbsp;                Brand b = new Brand();</b>
+<b class="fc">&nbsp;                b.setName(dto.getName());</b>
+<b class="pc">&nbsp;                b.setActive(dto.getActive() != null ? dto.getActive() : true);</b>
+<b class="fc">&nbsp;                brandService.saveBrand(b);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;        // Imprimir el mensaje recibido del mock en formato core de mensajería
+<b class="fc">&nbsp;        System.out.println(&quot;Mensaje recibido del core de mensajería:&quot;);</b>
+<b class="fc">&nbsp;        System.out.println(&quot;{&quot; +</b>
+&nbsp;            &quot;type=&#39;&quot; + message.type + &quot;&#39;, &quot; +
+&nbsp;            &quot;payload=&quot; + message.payload + &quot;, &quot; +
+&nbsp;            &quot;timestamp=&quot; + message.timestamp +
+&nbsp;            &quot;}&quot;);
+<b class="fc">&nbsp;        return brandService.getAllBrands().stream()</b>
+<b class="fc">&nbsp;                .map(b -&gt; new BrandDTO(Long.valueOf(b.getId()), b.getName(), b.isActive()))</b>
+<b class="fc">&nbsp;                .collect(Collectors.toList());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping
+&nbsp;    public List&lt;BrandDTO&gt; getAllBrands() {
+&nbsp;        // Ajustado para incluir el campo active en los DTOs (los tests lo esperan)
+<b class="fc">&nbsp;        return brandService.getAllBrands().stream()</b>
+<b class="fc">&nbsp;                .map(b -&gt; new BrandDTO(Long.valueOf(b.getId()), b.getName(), b.isActive()))</b>
+<b class="fc">&nbsp;                .collect(Collectors.toList());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/mock/add&quot;)
+&nbsp;    public BrandDTO addBrandFromMock() {
+<b class="fc">&nbsp;        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();</b>
+&nbsp;        // Tomar la primera marca del mock como ejemplo
+<b class="fc">&nbsp;        BrandDTO brandDTO = message.payload.brands.get(0);</b>
+<b class="fc">&nbsp;        Brand existing = brandService.getAllBrands().stream()</b>
+<b class="pc">&nbsp;            .filter(b -&gt; (b.getName() == null &amp;&amp; brandDTO.getName() == null) ||</b>
+<b class="nc">&nbsp;                         (b.getName() != null &amp;&amp; b.getName().equalsIgnoreCase(brandDTO.getName())))</b>
+<b class="fc">&nbsp;            .findFirst()</b>
+<b class="fc">&nbsp;            .orElse(null);</b>
+<b class="pc">&nbsp;        if (existing != null) {</b>
+<b class="nc">&nbsp;            return new BrandDTO(Long.valueOf(existing.getId()), existing.getName(), existing.isActive());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Brand brand = new Brand();</b>
+<b class="fc">&nbsp;        brand.setName(brandDTO.getName());</b>
+<b class="pc">&nbsp;        brand.setActive(brandDTO.getActive() != null ? brandDTO.getActive() : true);</b>
+<b class="fc">&nbsp;        Brand saved = brandService.saveBrand(brand);</b>
+<b class="fc">&nbsp;        return new BrandDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PatchMapping(&quot;/mock/activate&quot;)
+&nbsp;    public BrandDTO activateBrandFromMock() {
+<b class="fc">&nbsp;        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();</b>
+&nbsp;        // Tomar la primera marca del mock como ejemplo
+<b class="fc">&nbsp;        BrandDTO brandDTO = message.payload.brands.get(0);</b>
+<b class="fc">&nbsp;        Brand brand = brandService.getAllBrands().stream()</b>
+<b class="pc">&nbsp;                .filter(b -&gt; b.getName() != null &amp;&amp; b.getName().equalsIgnoreCase(brandDTO.getName()))</b>
+<b class="fc">&nbsp;                .findFirst()</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Marca no encontrada&quot;));</b>
+<b class="fc">&nbsp;        brand.setActive(true);</b>
+<b class="fc">&nbsp;        Brand updated = brandService.saveBrand(brand);</b>
+<b class="fc">&nbsp;        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PatchMapping(&quot;/mock/deactivate&quot;)
+&nbsp;    public BrandDTO deactivateBrandFromMock() {
+<b class="fc">&nbsp;        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();</b>
+&nbsp;        // Tomar la primera marca del mock como ejemplo
+<b class="fc">&nbsp;        BrandDTO brandDTO = message.payload.brands.get(0);</b>
+<b class="fc">&nbsp;        Brand brand = brandService.getAllBrands().stream()</b>
+<b class="pc">&nbsp;                .filter(b -&gt; b.getName() != null &amp;&amp; b.getName().equalsIgnoreCase(brandDTO.getName()))</b>
+<b class="fc">&nbsp;                .findFirst()</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Marca no encontrada&quot;));</b>
+<b class="fc">&nbsp;        brand.setActive(false);</b>
+<b class="fc">&nbsp;        Brand updated = brandService.saveBrand(brand);</b>
+<b class="fc">&nbsp;        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PatchMapping(&quot;/mock/update&quot;)
+&nbsp;    public BrandDTO updateBrandFromMock() {
+<b class="fc">&nbsp;        KafkaMockService.BrandSyncMessage message = kafkaMockService.getBrandsMock();</b>
+&nbsp;        // Tomar la primera marca del mock como ejemplo
+<b class="fc">&nbsp;        BrandDTO brandDTO = message.payload.brands.get(0);</b>
+<b class="fc">&nbsp;        java.util.List&lt;Brand&gt; existingList = brandService.getAllBrands();</b>
+<b class="fc">&nbsp;        Brand brand = null;</b>
+<b class="pc">&nbsp;        if (existingList != null) {</b>
+<b class="fc">&nbsp;            brand = existingList.stream()</b>
+<b class="pc">&nbsp;                    .filter(b -&gt; b.getName() != null &amp;&amp; b.getName().equalsIgnoreCase(brandDTO.getName()))</b>
+<b class="fc">&nbsp;                    .findFirst()</b>
+<b class="fc">&nbsp;                    .orElse(null);</b>
+&nbsp;            // Si no se encuentra por nombre, usar la primera existente como fallback
+<b class="pc">&nbsp;            if (brand == null &amp;&amp; !existingList.isEmpty()) {</b>
+<b class="fc">&nbsp;                brand = existingList.get(0);</b>
+&nbsp;            }
+&nbsp;        }
+<b class="pc">&nbsp;        if (brand == null) {</b>
+<b class="nc">&nbsp;            throw new RuntimeException(&quot;Marca no encontrada&quot;);</b>
+&nbsp;        }
+&nbsp;        // Actualizar el nombre y el estado activo según el mock
+<b class="fc">&nbsp;        brand.setName(brandDTO.getName());</b>
+<b class="pc">&nbsp;        if (brandDTO.getActive() != null) {</b>
+<b class="nc">&nbsp;            brand.setActive(brandDTO.getActive());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Brand updated = brandService.saveBrand(brand);</b>
+<b class="fc">&nbsp;        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // ------------------------------------------------------------------
+&nbsp;    // Métodos agregados para mantener compatibilidad con los tests
+&nbsp;    // ------------------------------------------------------------------
+&nbsp;
+&nbsp;    @PostMapping(&quot;/add&quot;)
+&nbsp;    public BrandDTO addBrand(@RequestBody BrandDTO dto) {
+&nbsp;        // Buscar por nombre (case-insensitive) o por null
+<b class="fc">&nbsp;        Brand existing = brandService.getAllBrands().stream()</b>
+<b class="fc">&nbsp;                .filter(b -&gt; (b.getName() == null &amp;&amp; dto.getName() == null) ||</b>
+<b class="fc">&nbsp;                             (b.getName() != null &amp;&amp; dto.getName() != null &amp;&amp; b.getName().equalsIgnoreCase(dto.getName())))</b>
+<b class="fc">&nbsp;                .findFirst()</b>
+<b class="fc">&nbsp;                .orElse(null);</b>
+<b class="fc">&nbsp;        if (existing != null) {</b>
+<b class="fc">&nbsp;            return new BrandDTO(Long.valueOf(existing.getId()), existing.getName(), existing.isActive());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Brand brand = new Brand();</b>
+<b class="fc">&nbsp;        brand.setName(dto.getName());</b>
+<b class="fc">&nbsp;        brand.setActive(dto.getActive() != null ? dto.getActive() : true);</b>
+<b class="fc">&nbsp;        Brand saved = brandService.saveBrand(brand);</b>
+<b class="fc">&nbsp;        return new BrandDTO(Long.valueOf(saved.getId()), saved.getName(), saved.isActive());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PatchMapping(&quot;/activate/{id}&quot;)
+&nbsp;    public BrandDTO activateBrand(@PathVariable int id) {
+<b class="fc">&nbsp;        Brand brand = brandService.getAllBrands().stream()</b>
+<b class="pc">&nbsp;                .filter(b -&gt; b.getId() == id)</b>
+<b class="fc">&nbsp;                .findFirst()</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Marca no encontrada&quot;));</b>
+<b class="fc">&nbsp;        brand.setActive(true);</b>
+<b class="fc">&nbsp;        Brand updated = brandService.saveBrand(brand);</b>
+<b class="fc">&nbsp;        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @DeleteMapping(&quot;/{id}&quot;)
+&nbsp;    public List&lt;BrandDTO&gt; deleteBrand(@PathVariable int id) {
+<b class="fc">&nbsp;        Brand brand = brandService.getAllBrands().stream()</b>
+<b class="pc">&nbsp;                .filter(b -&gt; b.getId() == id)</b>
+<b class="fc">&nbsp;                .findFirst()</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Marca no encontrada&quot;));</b>
+<b class="fc">&nbsp;        brand.setActive(false);</b>
+<b class="fc">&nbsp;        brandService.saveBrand(brand);</b>
+<b class="fc">&nbsp;        return brandService.getAllBrands().stream()</b>
+<b class="fc">&nbsp;                .map(b -&gt; new BrandDTO(Long.valueOf(b.getId()), b.getName(), b.isActive()))</b>
+<b class="fc">&nbsp;                .collect(Collectors.toList());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PatchMapping(&quot;/{id}&quot;)
+&nbsp;    public BrandDTO updateBrand(@PathVariable int id, @RequestBody BrandDTO dto) {
+<b class="fc">&nbsp;        Brand brand = brandService.getAllBrands().stream()</b>
+<b class="fc">&nbsp;                .filter(b -&gt; b.getId() == id)</b>
+<b class="fc">&nbsp;                .findFirst()</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new RuntimeException(&quot;Marca no encontrada&quot;));</b>
+&nbsp;        // Actualizar solo los campos que no sean null en el DTO
+<b class="fc">&nbsp;        if (dto.getName() != null) {</b>
+<b class="fc">&nbsp;            brand.setName(dto.getName());</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            brand.setName(null);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (dto.getActive() != null) {</b>
+<b class="fc">&nbsp;            brand.setActive(dto.getActive());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Brand updated = brandService.saveBrand(brand);</b>
+<b class="fc">&nbsp;        return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

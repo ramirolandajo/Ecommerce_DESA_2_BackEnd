@@ -72,15 +72,8 @@ public class PurchaseController {
         purchase.setStatus(Purchase.Status.PENDING);
         Purchase created = purchaseService.save(purchase);
 
-        // Emitir evento de compra pendiente hacia la API de Comunicación
-        try {
-            Map<String, Object> userMap = mapUser(user);
-            Map<String, Object> cartMap = mapCart(created.getCart());
-            ecommerceEventService.emitPurchasePending(created.getId(), userMap, cartMap);
-        } catch (Exception ex) {
-            // Loguear pero no impedir la respuesta al cliente
-            System.err.println("Error emitiendo evento de compra pendiente: " + ex.getMessage());
-        }
+        // Ya no emitimos aquí "POST: Compra pendiente" para evitar duplicados.
+        // La emisión se realiza únicamente al crear el carrito en CartServiceImpl.createCart().
 
         return ResponseEntity.ok(created);
     }
@@ -95,18 +88,8 @@ public class PurchaseController {
         }
         Purchase purchase = purchaseService.findById(id);
         if (purchase != null && purchase.getCart() != null) {
+            // Realizar solamente el rollback de inventario (no emitir evento de "Compra cancelada")
             cartService.revertProductStock(purchase.getCart());
-        }
-
-        // Emitir evento de compra cancelada antes de eliminar
-        try {
-            if (purchase != null) {
-                Map<String, Object> userMap = mapUser(purchase.getUser());
-                Map<String, Object> cartMap = mapCart(purchase.getCart());
-                ecommerceEventService.emitPurchaseCancelled(purchase.getId(), userMap, cartMap);
-            }
-        } catch (Exception ex) {
-            System.err.println("Error emitiendo evento de compra cancelada: " + ex.getMessage());
         }
 
         purchaseService.deleteById(id);
@@ -243,12 +226,19 @@ public class PurchaseController {
             for (ar.edu.uade.ecommerce.Entity.CartItem ci : cart.getItems()) {
                 Map<String, Object> it = new HashMap<>();
                 it.put("id", ci.getId() != null ? Long.valueOf(ci.getId()) : null);
-                it.put("productId", ci.getProduct() != null && ci.getProduct().getId() != null ? Long.valueOf(ci.getProduct().getId()) : null);
+                if (ci.getProduct() != null) {
+                    it.put("productCode", ci.getProduct().getProductCode());
+                    it.put("title", ci.getProduct().getTitle());
+                    it.put("price", ci.getProduct().getPrice());
+                } else {
+                    it.put("productCode", null);
+                }
                 it.put("quantity", ci.getQuantity());
                 items.add(it);
             }
         }
-        m.put("cartItems", items);
+        // Unificar clave de items como 'items'
+        m.put("items", items);
         return m;
     }
 }

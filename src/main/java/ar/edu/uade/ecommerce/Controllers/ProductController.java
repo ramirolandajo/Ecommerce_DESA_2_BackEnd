@@ -137,11 +137,10 @@ public class ProductController {
     }
 
     // Califica un producto (ahora crea una review)
-    @PostMapping("/{id}/review")
-    public ReviewResponse addReview(@PathVariable Integer id, @RequestBody ReviewRequest reviewRequest) {
-        Optional<Product> productOpt = productRepository.findById(id);
-        if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
-        Product product = productOpt.get();
+    @PostMapping("/code/{productCode}/review")
+    public ReviewResponse addReview(@PathVariable Integer productCode, @RequestBody ReviewRequest reviewRequest) {
+        Product product = productRepository.findByProductCode(productCode);
+        if (product == null) throw new RuntimeException("Producto no encontrado por productCode=" + productCode);
         // Obtener usuario autenticado
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         ar.edu.uade.ecommerce.Entity.User user = null;
@@ -170,7 +169,7 @@ public class ProductController {
         try {
             String message = reviewRequest.getDescription() != null ? reviewRequest.getDescription() : "Nueva review creada";
             Float rateUpdated = promedio;
-            ecommerceEventService.emitReviewCreated(message, rateUpdated);
+            ecommerceEventService.emitReviewCreated(product.getProductCode(), message, rateUpdated);
         } catch (Exception ex) {
             System.err.println("Error emitiendo evento de review: " + ex.getMessage());
         }

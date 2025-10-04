@@ -1,0 +1,248 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > User</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Entity</a>
+</div>
+
+<h1>Coverage Summary for Class: User (ar.edu.uade.ecommerce.Entity)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">User</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (20/20)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (12/12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (23/23)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Entity;
+&nbsp;
+&nbsp;import com.fasterxml.jackson.annotation.JsonIgnore;
+&nbsp;import com.fasterxml.jackson.annotation.JsonManagedReference;
+&nbsp;import jakarta.persistence.*;
+&nbsp;import lombok.Setter;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@Entity
+&nbsp;@Table(name = &quot;users&quot;)
+<b class="fc">&nbsp;public class User {</b>
+&nbsp;    @Id
+&nbsp;    @GeneratedValue(strategy = GenerationType.IDENTITY)
+&nbsp;    private Integer id;
+&nbsp;
+&nbsp;    @Column(name = &quot;name&quot;)
+&nbsp;    private String name;
+&nbsp;    @Column(name = &quot;lastname&quot;)
+&nbsp;    private String lastname;
+&nbsp;    @Column(name = &quot;email&quot;, unique = true)
+&nbsp;    private String email;
+&nbsp;
+&nbsp;    @JsonIgnore
+&nbsp;    @Column(name = &quot;password&quot;)
+&nbsp;    private String password;
+&nbsp;    @Column(name = &quot;role&quot;)
+&nbsp;    private String role;
+<b class="fc">&nbsp;    @Column(name = &quot;account_active&quot;)</b>
+&nbsp;    private boolean accountActive = false;
+&nbsp;
+<b class="fc">&nbsp;    @Column</b>
+<b class="fc">&nbsp;    private Boolean sessionActive = false;</b>
+&nbsp;
+&nbsp;    @OneToMany(mappedBy = &quot;user&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+&nbsp;    @JsonManagedReference(&quot;address-user&quot;)
+&nbsp;    private List&lt;Address&gt; addresses;
+&nbsp;
+&nbsp;    @OneToMany(mappedBy = &quot;user&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+&nbsp;    @JsonManagedReference(&quot;cart-user&quot;)
+&nbsp;    private List&lt;Cart&gt; carts;
+&nbsp;
+&nbsp;    @Setter
+&nbsp;    @OneToMany(mappedBy = &quot;user&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+&nbsp;    @JsonManagedReference(&quot;purchase-user&quot;)
+&nbsp;    private List&lt;Purchase&gt; purchases;
+&nbsp;
+&nbsp;    @OneToMany(mappedBy = &quot;user&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+&nbsp;    @JsonManagedReference(&quot;token-user&quot;)
+&nbsp;    @JsonIgnore
+&nbsp;    private List&lt;Token&gt; tokens;
+&nbsp;
+&nbsp;    @OneToMany(mappedBy = &quot;user&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+&nbsp;    @JsonManagedReference(&quot;favourite-user&quot;)
+&nbsp;    private List&lt;FavouriteProducts&gt; favouriteProducts;
+&nbsp;
+&nbsp;    public boolean isEmpty() {
+<b class="fc">&nbsp;        return this.id == null &amp;&amp; this.name == null &amp;&amp; this.lastname == null &amp;&amp; this.email == null &amp;&amp; this.password == null &amp;&amp; this.role == null;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Boolean getSessionActive() {
+<b class="fc">&nbsp;        return sessionActive;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setSessionActive(Boolean sessionActive) {
+<b class="fc">&nbsp;        this.sessionActive = sessionActive;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public Integer getId() {
+<b class="fc">&nbsp;        return id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setId(Integer id) {
+<b class="fc">&nbsp;        this.id = id;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getName() {
+<b class="fc">&nbsp;        return name;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setName(String name) {
+<b class="fc">&nbsp;        this.name = name;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getLastname() {
+<b class="fc">&nbsp;        return lastname;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setLastname(String lastname) {
+<b class="fc">&nbsp;        this.lastname = lastname;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getEmail() {
+<b class="fc">&nbsp;        return email;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setEmail(String email) {
+<b class="fc">&nbsp;        this.email = email;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getPassword() {
+<b class="fc">&nbsp;        return password;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setPassword(String password) {
+<b class="fc">&nbsp;        this.password = password;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public String getRole() {
+<b class="fc">&nbsp;        return role;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setRole(String role) {
+<b class="fc">&nbsp;        this.role = role;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public boolean isAccountActive() {
+<b class="fc">&nbsp;        return accountActive;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAccountActive(boolean accountActive) {
+<b class="fc">&nbsp;        this.accountActive = accountActive;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;Address&gt; getAddresses() {
+<b class="fc">&nbsp;        return addresses;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public void setAddresses(List&lt;Address&gt; addresses) {
+<b class="fc">&nbsp;        this.addresses = addresses;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

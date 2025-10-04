@@ -8,9 +8,14 @@ import lombok.Data;
 import jakarta.persistence.OneToMany;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 
 @Entity
 @Data
+@Table(indexes = {
+        @Index(name = "idx_brand_code", columnList = "brand_code", unique = true)
+})
 public class Brand {
 
     @Id
@@ -22,6 +27,10 @@ public class Brand {
 
     @Column(nullable = false)
     private boolean active;
+
+    // Nuevo: código estable entre microservicios (único). Nullable temporalmente para backfill
+    @Column(name = "brand_code", unique = true)
+    private Integer brandCode;
 
     @OneToMany(mappedBy = "brand")
     @JsonManagedReference("brand-product")

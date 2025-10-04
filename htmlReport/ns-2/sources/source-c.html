@@ -1,0 +1,303 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PurchaseController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Controllers</a>
+</div>
+
+<h1>Coverage Summary for Class: PurchaseController (ar.edu.uade.ecommerce.Controllers)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PurchaseController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (10/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    76,9%
+  </span>
+  <span class="absValue">
+    (40/52)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    75,3%
+  </span>
+  <span class="absValue">
+    (73/97)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Controllers;
+&nbsp;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Address;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.PurchaseInvoiceDTO;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Purchase;
+&nbsp;import ar.edu.uade.ecommerce.Entity.User;
+&nbsp;import ar.edu.uade.ecommerce.Service.AuthService;
+&nbsp;import ar.edu.uade.ecommerce.Service.PurchaseService;
+&nbsp;import ar.edu.uade.ecommerce.Service.UserService;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/purchase&quot;)
+<b class="fc">&nbsp;public class PurchaseController {</b>
+&nbsp;    @Autowired
+&nbsp;    private PurchaseService purchaseService;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private UserService userService;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private AuthService authService;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private ar.edu.uade.ecommerce.Service.CartService cartService;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    private ar.edu.uade.ecommerce.Service.AddressService addressService;
+&nbsp;
+&nbsp;    @GetMapping
+&nbsp;    public List&lt;Purchase&gt; getAllPurchases() {
+<b class="fc">&nbsp;        return purchaseService.findAll();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/{id}&quot;)
+&nbsp;    public ResponseEntity&lt;ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO&gt; getPurchaseById(@RequestHeader(&quot;Authorization&quot;) String authHeader, @PathVariable Integer id) {
+<b class="fc">&nbsp;        String token = authHeader.replace(&quot;Bearer &quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;        String email = purchaseService.getEmailFromToken(token);</b>
+<b class="fc">&nbsp;        User user = authService.getUserByEmail(email);</b>
+<b class="fc">&nbsp;        if (user == null || !user.getSessionActive()) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.status(401).build();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Purchase purchase = purchaseService.findById(id);</b>
+<b class="fc">&nbsp;        if (purchase == null) {</b>
+&nbsp;            // Según los tests actuales, debe devolver 200 con body null cuando no existe la compra
+<b class="fc">&nbsp;            return ResponseEntity.ok(null);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO dto = mapPurchaseToDTO(purchase);</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(dto);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping
+&nbsp;    public ResponseEntity&lt;Purchase&gt; createPurchase(@RequestHeader(&quot;Authorization&quot;) String authHeader, @RequestBody Purchase purchase) {
+<b class="fc">&nbsp;        String token = authHeader.replace(&quot;Bearer &quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;        String email = purchaseService.getEmailFromToken(token);</b>
+<b class="fc">&nbsp;        User user = authService.getUserByEmail(email);</b>
+<b class="fc">&nbsp;        if (user == null || !user.getSessionActive()) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.status(401).build();</b>
+&nbsp;        }
+&nbsp;        // Setear el usuario y el estado PENDING automáticamente
+<b class="fc">&nbsp;        purchase.setUser(user);</b>
+<b class="fc">&nbsp;        purchase.setStatus(Purchase.Status.PENDING);</b>
+<b class="fc">&nbsp;        Purchase created = purchaseService.save(purchase);</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(created);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @DeleteMapping(&quot;/{id}&quot;) //cancelo la compra por tiempo de vida de la compra (4 horas) o manualmente se cancela
+&nbsp;    public ResponseEntity&lt;?&gt; deletePurchase(@RequestHeader(&quot;Authorization&quot;) String authHeader, @PathVariable Integer id) {
+<b class="fc">&nbsp;        String token = authHeader.replace(&quot;Bearer &quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;        String email = purchaseService.getEmailFromToken(token);</b>
+<b class="fc">&nbsp;        User user = authService.getUserByEmail(email);</b>
+<b class="fc">&nbsp;        if (user == null || !user.getSessionActive()) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.status(401).build();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Purchase purchase = purchaseService.findById(id);</b>
+<b class="fc">&nbsp;        if (purchase != null &amp;&amp; purchase.getCart() != null) {</b>
+<b class="fc">&nbsp;            cartService.revertProductStock(purchase.getCart());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        purchaseService.deleteById(id);</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(&quot;Compra eliminada correctamente. ID: &quot; + id);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/{id}/confirm/{addressId}&quot;) //confirmo la compra y genero la factura
+&nbsp;    public ResponseEntity&lt;Purchase&gt; confirmPurchase(@RequestHeader(&quot;Authorization&quot;) String authHeader, @PathVariable Integer id, @PathVariable(required = false) Integer addressId) {
+<b class="fc">&nbsp;        String token = authHeader.replace(&quot;Bearer &quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;        String email = purchaseService.getEmailFromToken(token);</b>
+<b class="fc">&nbsp;        User user = authService.getUserByEmail(email);</b>
+<b class="fc">&nbsp;        if (user == null || !user.getSessionActive()) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.status(401).build();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Purchase purchase = purchaseService.confirmPurchase(id);</b>
+<b class="fc">&nbsp;        if (purchase == null) {</b>
+&nbsp;            // Según los tests deben recibir 200 con body null cuando la compra no existe
+<b class="fc">&nbsp;            return ResponseEntity.ok(null);</b>
+&nbsp;        }
+&nbsp;        // Si no se pasó addressId, no intentar buscar la dirección
+<b class="pc">&nbsp;        if (addressId != null) {</b>
+<b class="nc">&nbsp;            Address address = addressService.findById(addressId);</b>
+<b class="nc">&nbsp;            if (address == null) {</b>
+<b class="nc">&nbsp;                return ResponseEntity.badRequest().body(null);</b>
+&nbsp;            }
+<b class="nc">&nbsp;            purchase.setDirection(address.getDescription());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        purchaseService.save(purchase);</b>
+<b class="fc">&nbsp;        if (purchase.getCart() != null) {</b>
+&nbsp;            // Confirmar el stock y enviar evento por Kafka
+<b class="fc">&nbsp;            cartService.confirmProductStock(purchase.getCart());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return ResponseEntity.ok(purchase);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/my-purchases&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;PurchaseInvoiceDTO&gt;&gt; getMyPurchases(@RequestHeader(&quot;Authorization&quot;) String authHeader) {
+<b class="fc">&nbsp;        String token = authHeader.replace(&quot;Bearer &quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;        String email = purchaseService.getEmailFromToken(token);</b>
+<b class="fc">&nbsp;        List&lt;PurchaseInvoiceDTO&gt; invoices = purchaseService.getPurchasesByUserEmail(email);</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(invoices);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/pending-cart&quot;)
+&nbsp;    public ResponseEntity&lt;Purchase&gt; getPendingCart(@RequestHeader(&quot;Authorization&quot;) String authHeader) {
+<b class="fc">&nbsp;        String token = authHeader.replace(&quot;Bearer &quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;        String email = purchaseService.getEmailFromToken(token);</b>
+<b class="fc">&nbsp;        User user = authService.getUserByEmail(email);</b>
+<b class="fc">&nbsp;        if (user == null || !user.getSessionActive()) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.status(401).build();</b>
+&nbsp;        }
+&nbsp;        // Buscar la última compra pendiente del usuario cuyo tiempo de vida sea menor a 4 horas
+<b class="fc">&nbsp;        Purchase pending = purchaseService.findLastPendingPurchaseByUserWithinHours(user.getId(), 4);</b>
+<b class="fc">&nbsp;        if (pending == null) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.notFound().build();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return ResponseEntity.ok(pending);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/user-purchases&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO&gt;&gt; getPurchasesByUser(@RequestHeader(&quot;Authorization&quot;) String authHeader) {
+<b class="fc">&nbsp;        String token = authHeader.replace(&quot;Bearer &quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;        String email = purchaseService.getEmailFromToken(token);</b>
+<b class="fc">&nbsp;        User user = authService.getUserByEmail(email);</b>
+<b class="fc">&nbsp;        if (user == null || !user.getSessionActive()) {</b>
+<b class="fc">&nbsp;            return ResponseEntity.status(401).build();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        List&lt;ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO&gt; purchases = purchaseService.getPurchasesWithCartByUserId(user.getId());</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(purchases);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO mapPurchaseToDTO(Purchase purchase) {
+<b class="pc">&nbsp;        if (purchase == null) return null;</b>
+<b class="fc">&nbsp;        ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO dto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO();</b>
+<b class="fc">&nbsp;        dto.setId(purchase.getId());</b>
+<b class="fc">&nbsp;        dto.setDate(purchase.getDate());</b>
+<b class="fc">&nbsp;        dto.setReservationTime(purchase.getReservationTime());</b>
+<b class="fc">&nbsp;        dto.setDirection(purchase.getDirection());</b>
+<b class="pc">&nbsp;        dto.setStatus(purchase.getStatus() != null ? purchase.getStatus().name() : null);</b>
+<b class="pc">&nbsp;        if (purchase.getCart() != null) {</b>
+<b class="nc">&nbsp;            ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartDTO cartDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartDTO();</b>
+<b class="nc">&nbsp;            cartDto.setId(purchase.getCart().getId());</b>
+<b class="nc">&nbsp;            cartDto.setFinalPrice(purchase.getCart().getFinalPrice());</b>
+<b class="nc">&nbsp;            java.util.List&lt;ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO&gt; itemDtos = new java.util.ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;            if (purchase.getCart().getItems() != null) {</b>
+<b class="nc">&nbsp;                for (ar.edu.uade.ecommerce.Entity.CartItem item : purchase.getCart().getItems()) {</b>
+<b class="nc">&nbsp;                    ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO itemDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO();</b>
+<b class="nc">&nbsp;                    itemDto.setId(item.getId());</b>
+<b class="nc">&nbsp;                    itemDto.setQuantity(item.getQuantity());</b>
+<b class="nc">&nbsp;                    if (item.getProduct() != null) {</b>
+<b class="nc">&nbsp;                        ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.ProductDTO productDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.ProductDTO();</b>
+<b class="nc">&nbsp;                        productDto.setId(item.getProduct().getId());</b>
+<b class="nc">&nbsp;                        productDto.setTitle(item.getProduct().getTitle());</b>
+<b class="nc">&nbsp;                        productDto.setDescription(item.getProduct().getDescription());</b>
+<b class="nc">&nbsp;                        productDto.setPrice(item.getProduct().getPrice());</b>
+<b class="nc">&nbsp;                        productDto.setMediaSrc(item.getProduct().getMediaSrc());</b>
+<b class="nc">&nbsp;                        itemDto.setProduct(productDto);</b>
+&nbsp;                    }
+<b class="nc">&nbsp;                    itemDtos.add(itemDto);</b>
+&nbsp;                }
+&nbsp;            }
+<b class="nc">&nbsp;            cartDto.setItems(itemDtos);</b>
+<b class="nc">&nbsp;            dto.setCart(cartDto);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return dto;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

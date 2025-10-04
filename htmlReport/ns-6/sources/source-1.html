@@ -1,0 +1,148 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > CorsConfig</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Security</a>
+</div>
+
+<h1>Coverage Summary for Class: CorsConfig (ar.edu.uade.ecommerce.Security)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">CorsConfig</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/10)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Security;
+&nbsp;
+&nbsp;import org.springframework.context.annotation.Bean;
+&nbsp;import org.springframework.context.annotation.Configuration;
+&nbsp;import org.springframework.web.cors.CorsConfiguration;
+&nbsp;import org.springframework.web.cors.CorsConfigurationSource;
+&nbsp;import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+&nbsp;import org.springframework.web.servlet.config.annotation.CorsRegistry;
+&nbsp;import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;//@Configuration
+&nbsp;//public class CorsConfig implements WebMvcConfigurer {
+&nbsp;//    @Override
+&nbsp;//    public void addCorsMappings(CorsRegistry registry) {
+&nbsp;//        registry.addMapping(&quot;/**&quot;)
+&nbsp;//                .allowedOrigins(&quot;http://localhost:5173&quot;, &quot;http://181.90.202.211:5173&quot;, &quot;https://desa2-front-desarrollo.onrender.com&quot;)
+&nbsp;//                .allowedMethods(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;)
+&nbsp;//                .allowedHeaders(&quot;*&quot;)
+&nbsp;//                .allowCredentials(true);
+&nbsp;//    }
+&nbsp;//}
+&nbsp;
+&nbsp;
+&nbsp;@Configuration
+<b class="nc">&nbsp;public class CorsConfig {</b>
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public CorsConfigurationSource corsConfigurationSource() {
+<b class="nc">&nbsp;        CorsConfiguration cors = new CorsConfiguration();</b>
+<b class="nc">&nbsp;        cors.addAllowedOriginPattern(&quot;*&quot;); // permite todos los orígenes</b>
+<b class="nc">&nbsp;        cors.setAllowedMethods(List.of(&quot;GET&quot;,&quot;POST&quot;,&quot;PUT&quot;,&quot;PATCH&quot;,&quot;DELETE&quot;,&quot;OPTIONS&quot;));</b>
+<b class="nc">&nbsp;        cors.addAllowedHeader(&quot;*&quot;);        // permite todos los headers</b>
+<b class="nc">&nbsp;        cors.setAllowCredentials(false);   // debe ser false si usas &quot;*&quot; en origins</b>
+<b class="nc">&nbsp;        cors.setMaxAge(3600L);</b>
+&nbsp;
+<b class="nc">&nbsp;        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</b>
+<b class="nc">&nbsp;        source.registerCorsConfiguration(&quot;/**&quot;, cors);</b>
+<b class="nc">&nbsp;        return source;</b>
+&nbsp;    }
+&nbsp;}
+&nbsp;
+&nbsp;//commit
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

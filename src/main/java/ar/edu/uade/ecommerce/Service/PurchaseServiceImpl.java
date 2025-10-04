@@ -75,14 +75,8 @@ public class PurchaseServiceImpl implements PurchaseService {
         if (purchase != null && purchase.getStatus() != Status.CANCELLED) {
             purchase.setStatus(Status.CANCELLED);
             purchaseRepository.save(purchase);
-            // Avisar por la API de Comunicación que se debe liberar el stock
-            try {
-                String json = objectMapper.writeValueAsString(purchase);
-                Event event = new Event("POST: Stock rollback - compra cancelada", json);
-                ecommerceEventService.emitRawEvent(event.getType(), json);
-            } catch (Exception e) {
-                logger.error("Error al liberar reserva por cancelación manual", e);
-            }
+            // Eliminado: no emitir aquí evento de rollback para evitar duplicado.
+            // La emisión única se realiza desde CartServiceImpl.revertProductStock (invocado en el controlador).
         }
     }
 

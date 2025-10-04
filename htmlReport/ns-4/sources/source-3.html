@@ -1,0 +1,221 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ProductDTO</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Entity.DTO</a>
+</div>
+
+<h1>Coverage Summary for Class: ProductDTO (ar.edu.uade.ecommerce.Entity.DTO)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ProductDTO</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (13/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    75%
+  </span>
+  <span class="absValue">
+    (9/12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    98,3%
+  </span>
+  <span class="absValue">
+    (57/58)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Entity.DTO;
+&nbsp;
+&nbsp;import lombok.Data;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@Data
+&nbsp;public class ProductDTO {
+&nbsp;    private Long id;
+&nbsp;    private String title;
+&nbsp;    private String description;
+&nbsp;    private Float price;
+&nbsp;    private Integer stock;
+&nbsp;    private List&lt;String&gt; mediaSrc;
+&nbsp;    private BrandDTO brand;
+&nbsp;    private List&lt;CategoryDTO&gt; categories;
+&nbsp;    private Boolean isNew;
+&nbsp;    private Boolean isBestseller;
+&nbsp;    private Boolean isFeatured;
+&nbsp;    private Boolean hero;
+&nbsp;    private Float calification;
+&nbsp;    private Float discount;
+&nbsp;    private Float priceUnit;
+&nbsp;    private Integer productCode;
+&nbsp;
+&nbsp;    private Boolean active;
+&nbsp;
+<b class="fc">&nbsp;    public ProductDTO() {</b>
+&nbsp;        // No inicializar active aquí, debe ser null por defecto
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    public ProductDTO(Long id, String title, String description, Float price, Integer stock, List&lt;String&gt; mediaSrc, BrandDTO brand, List&lt;CategoryDTO&gt; categories, Boolean isNew, Boolean isBestseller, Boolean isFeatured, Boolean hero, Boolean active, Float calification, Float discount, Float priceUnit, Integer productCode) {</b>
+<b class="fc">&nbsp;        this.id = id;</b>
+<b class="fc">&nbsp;        this.title = title;</b>
+<b class="fc">&nbsp;        this.description = description;</b>
+<b class="fc">&nbsp;        this.price = price;</b>
+<b class="fc">&nbsp;        this.stock = stock;</b>
+<b class="fc">&nbsp;        this.mediaSrc = mediaSrc;</b>
+<b class="fc">&nbsp;        this.brand = brand;</b>
+<b class="fc">&nbsp;        this.categories = categories;</b>
+<b class="fc">&nbsp;        this.isNew = isNew;</b>
+<b class="fc">&nbsp;        this.isBestseller = isBestseller;</b>
+<b class="fc">&nbsp;        this.isFeatured = isFeatured;</b>
+<b class="fc">&nbsp;        this.hero = hero;</b>
+<b class="fc">&nbsp;        this.active = active;</b>
+<b class="fc">&nbsp;        this.calification = calification;</b>
+<b class="fc">&nbsp;        this.discount = discount;</b>
+<b class="fc">&nbsp;        this.priceUnit = priceUnit;</b>
+<b class="fc">&nbsp;        this.productCode = productCode;</b>
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    public Float getCalification() { return calification; }</b>
+<b class="fc">&nbsp;    public void setCalification(Float calification) { this.calification = calification; }</b>
+<b class="fc">&nbsp;    public Float getDiscount() { return discount; }</b>
+<b class="fc">&nbsp;    public void setDiscount(Float discount) { this.discount = discount; }</b>
+<b class="fc">&nbsp;    public Float getPriceUnit() { return priceUnit; }</b>
+<b class="fc">&nbsp;    public void setPriceUnit(Float priceUnit) { this.priceUnit = priceUnit; }</b>
+<b class="fc">&nbsp;    public Integer getProductCode() { return productCode; }</b>
+<b class="fc">&nbsp;    public void setProductCode(Integer productCode) { this.productCode = productCode; }</b>
+&nbsp;    public void setActive(Boolean active) {
+<b class="fc">&nbsp;        this.active = active;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static ProductDTO fromEntity(ar.edu.uade.ecommerce.Entity.Product product) {
+<b class="fc">&nbsp;        ProductDTO dto = new ProductDTO();</b>
+<b class="fc">&nbsp;        dto.setId(product.getId() != null ? Long.valueOf(product.getId()) : null);</b>
+<b class="fc">&nbsp;        dto.setTitle(product.getTitle());</b>
+<b class="fc">&nbsp;        dto.setDescription(product.getDescription());</b>
+<b class="fc">&nbsp;        dto.setPrice(product.getPrice());</b>
+<b class="fc">&nbsp;        dto.setStock(product.getStock());</b>
+<b class="fc">&nbsp;        dto.setMediaSrc(product.getMediaSrc());</b>
+<b class="fc">&nbsp;        dto.setCalification(product.getCalification());</b>
+<b class="fc">&nbsp;        dto.setDiscount(product.getDiscount());</b>
+<b class="fc">&nbsp;        dto.setPriceUnit(product.getPriceUnit());</b>
+<b class="fc">&nbsp;        dto.setProductCode(product.getProductCode());</b>
+<b class="fc">&nbsp;        dto.setActive(product.getActive());</b>
+&nbsp;        // Marca
+<b class="fc">&nbsp;        if (product.getBrand() != null) {</b>
+<b class="fc">&nbsp;            Long brandId = null;</b>
+&nbsp;            try {
+<b class="pc">&nbsp;                brandId = product.getBrand().getId() != null ? Long.valueOf(product.getBrand().getId()) : null;</b>
+&nbsp;            } catch (Exception e) {
+<b class="nc">&nbsp;                brandId = null;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            dto.setBrand(new BrandDTO(brandId, product.getBrand().getName(), product.getBrand().isActive()));</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            dto.setBrand(null);</b>
+&nbsp;        }
+&nbsp;        // Categorías
+<b class="pc">&nbsp;        if (product.getCategories() != null &amp;&amp; !product.getCategories().isEmpty()) {</b>
+<b class="fc">&nbsp;            dto.setCategories(product.getCategories().stream()</b>
+<b class="fc">&nbsp;                .map(cat -&gt; {</b>
+<b class="pc">&nbsp;                    Long catId = cat.getId() != null ? Long.valueOf(cat.getId()) : null;</b>
+<b class="fc">&nbsp;                    return new CategoryDTO(catId, cat.getName(), cat.isActive());</b>
+&nbsp;                })
+<b class="fc">&nbsp;                .toList());</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            dto.setCategories(null);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        dto.setIsNew(product.getIsNew());</b>
+<b class="fc">&nbsp;        dto.setIsBestseller(product.isIsBestseller());</b>
+<b class="fc">&nbsp;        dto.setIsFeatured(product.isIsFeatured());</b>
+<b class="fc">&nbsp;        dto.setHero(product.isHero());</b>
+<b class="fc">&nbsp;        return dto;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

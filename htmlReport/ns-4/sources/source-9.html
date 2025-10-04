@@ -1,0 +1,117 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PurchaseWithCartDTO</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Entity.DTO</a>
+</div>
+
+<h1>Coverage Summary for Class: PurchaseWithCartDTO (ar.edu.uade.ecommerce.Entity.DTO)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">PurchaseWithCartDTO$CartDTO</td>
+  </tr>
+  <tr>
+    <td class="name">PurchaseWithCartDTO$CartItemDTO</td>
+  </tr>
+  <tr>
+    <td class="name">PurchaseWithCartDTO$ProductDTO</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Entity.DTO;
+&nbsp;
+&nbsp;import lombok.Data;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@Data
+&nbsp;public class PurchaseWithCartDTO {
+&nbsp;    private Integer id;
+&nbsp;    private LocalDateTime date;
+&nbsp;    private LocalDateTime reservationTime;
+&nbsp;    private String direction;
+&nbsp;    private String status;
+&nbsp;    private CartDTO cart;
+&nbsp;
+&nbsp;    @Data
+&nbsp;    public static class CartDTO {
+&nbsp;        private Integer id;
+&nbsp;        private Float finalPrice;
+&nbsp;        private List&lt;CartItemDTO&gt; items;
+&nbsp;    }
+&nbsp;
+&nbsp;    @Data
+&nbsp;    public static class CartItemDTO {
+&nbsp;        private Integer id;
+&nbsp;        private Integer quantity;
+&nbsp;        private ProductDTO product;
+&nbsp;    }
+&nbsp;
+&nbsp;    @Data
+&nbsp;    public static class ProductDTO {
+&nbsp;        private Integer id;
+&nbsp;        private String title;
+&nbsp;        private String description;
+&nbsp;        private Float price;
+&nbsp;        private Integer stock;
+&nbsp;        private List&lt;String&gt; mediaSrc;
+&nbsp;    }
+&nbsp;}
+&nbsp;
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

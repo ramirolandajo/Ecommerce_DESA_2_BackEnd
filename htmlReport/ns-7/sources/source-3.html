@@ -1,0 +1,187 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > BrandServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Service</a>
+</div>
+
+<h1>Coverage Summary for Class: BrandServiceImpl (ar.edu.uade.ecommerce.Service)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">BrandServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (12/12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (24/24)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Service;
+&nbsp;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Brand;
+&nbsp;import ar.edu.uade.ecommerce.Repository.BrandRepository;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;public class BrandServiceImpl implements BrandService {</b>
+&nbsp;    @Autowired
+&nbsp;    private BrandRepository brandRepository;
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;Brand&gt; saveAllBrands(List&lt;Brand&gt; brands) {
+<b class="fc">&nbsp;        List&lt;Brand&gt; existingBrands = brandRepository.findAll();</b>
+&nbsp;        // Eliminar marcas que ya no están en el mock
+<b class="fc">&nbsp;        List&lt;String&gt; incomingNames = brands.stream().map(Brand::getName).collect(Collectors.toList());</b>
+<b class="fc">&nbsp;        existingBrands.stream()</b>
+<b class="fc">&nbsp;            .filter(b -&gt; !incomingNames.contains(b.getName()))</b>
+<b class="fc">&nbsp;            .forEach(brandRepository::delete);</b>
+&nbsp;        // Actualizar o crear marcas
+<b class="fc">&nbsp;        for (Brand incoming : brands) {</b>
+<b class="fc">&nbsp;            Optional&lt;Brand&gt; existing = brandRepository.findByName(incoming.getName());</b>
+<b class="fc">&nbsp;            if (existing.isPresent()) {</b>
+<b class="fc">&nbsp;                Brand b = existing.get();</b>
+<b class="fc">&nbsp;                b.setName(incoming.getName());</b>
+<b class="fc">&nbsp;                b.setActive(true); // Siempre true al actualizar</b>
+<b class="fc">&nbsp;                brandRepository.save(b);</b>
+&nbsp;            } else {
+<b class="fc">&nbsp;                incoming.setActive(true); // Siempre true al crear</b>
+<b class="fc">&nbsp;                brandRepository.save(incoming);</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;        return brandRepository.findAll();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;Brand&gt; getAllBrands() {
+<b class="fc">&nbsp;        return brandRepository.findAll();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void deleteAllBrands() {
+<b class="fc">&nbsp;        brandRepository.deleteAll();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Brand saveBrand(Brand brand) {
+&nbsp;        // Si el valor es null, setear true
+<b class="fc">&nbsp;        if (brand == null || brand.getName() == null) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;        // Si el valor es null (por conversión de DTO), setear true
+&nbsp;        // El boolean primitivo nunca puede ser null
+&nbsp;        // Si el valor es false, mantenerlo (baja lógica)
+&nbsp;        // Si el valor es true, mantenerlo
+&nbsp;        // Si el valor es null (no debería pasar), setear true
+&nbsp;        // Esto es redundante pero asegura que nunca se asigne null
+&nbsp;        // Si el valor es null, setear true
+<b class="fc">&nbsp;        if (!brand.isActive() &amp;&amp; brand.getId() != null) {</b>
+<b class="fc">&nbsp;            brand.setActive(false);</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            brand.setActive(true);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return brandRepository.save(brand);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>

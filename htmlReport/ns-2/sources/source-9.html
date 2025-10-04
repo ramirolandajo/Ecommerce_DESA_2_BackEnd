@@ -1,0 +1,813 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ProductController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">ar.edu.uade.ecommerce.Controllers</a>
+</div>
+
+<h1>Coverage Summary for Class: ProductController (ar.edu.uade.ecommerce.Controllers)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ProductController</td>
+<td class="coverageStat">
+  <span class="percent">
+    95,2%
+  </span>
+  <span class="absValue">
+    (20/21)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    65,9%
+  </span>
+  <span class="absValue">
+    (153/232)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92,2%
+  </span>
+  <span class="absValue">
+    (295/320)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">ProductController$EditProductSimpleRequest</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ProductController$ProductWithRelatedDTO</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (3/3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ProductController$ReviewDTO</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (7/7)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ProductController$ReviewRequest</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">ProductController$ReviewResponse</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (9/9)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    94,9%
+  </span>
+  <span class="absValue">
+    (37/39)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    65,9%
+  </span>
+  <span class="absValue">
+    (153/232)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    92,5%
+  </span>
+  <span class="absValue">
+    (321/347)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package ar.edu.uade.ecommerce.Controllers;
+&nbsp;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Brand;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Category;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.BrandDTO;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.CategoryDTO;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.FilterProductRequest;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Product;
+&nbsp;import ar.edu.uade.ecommerce.Entity.DTO.ProductDTO;
+&nbsp;import ar.edu.uade.ecommerce.KafkaCommunication.KafkaMockService;
+&nbsp;import ar.edu.uade.ecommerce.Repository.ProductRepository;
+&nbsp;import ar.edu.uade.ecommerce.Entity.Review;
+&nbsp;import ar.edu.uade.ecommerce.Repository.ReviewRepository;
+&nbsp;import jakarta.persistence.PersistenceContext;
+&nbsp;import jakarta.persistence.EntityManager;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.Set;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/products&quot;)
+<b class="fc">&nbsp;public class ProductController {</b>
+&nbsp;    @Autowired
+&nbsp;    KafkaMockService kafkaMockService;
+&nbsp;    @Autowired
+&nbsp;    ProductRepository productRepository;
+&nbsp;    @Autowired
+&nbsp;    private ReviewRepository reviewRepository;
+&nbsp;    @Autowired
+&nbsp;    ar.edu.uade.ecommerce.Repository.CartItemRepository cartItemRepository;
+&nbsp;    @Autowired
+&nbsp;    ar.edu.uade.ecommerce.Repository.BrandRepository brandRepository;
+&nbsp;    @Autowired
+&nbsp;    ar.edu.uade.ecommerce.Repository.CategoryRepository categoryRepository;
+&nbsp;    @Autowired
+&nbsp;    ar.edu.uade.ecommerce.Repository.FavouriteProductsRepository favouriteProductsRepository;
+&nbsp;    @Autowired
+&nbsp;    ar.edu.uade.ecommerce.Repository.UserRepository userRepository;
+&nbsp;    @Autowired
+&nbsp;    ar.edu.uade.ecommerce.Service.AuthService authService;
+&nbsp;    @PersistenceContext
+&nbsp;    EntityManager entityManager;
+&nbsp;
+&nbsp;    // Sincroniza productos desde el mock
+&nbsp;    @Transactional(timeout = 60)
+&nbsp;    @GetMapping(&quot;/sync&quot;)
+&nbsp;    public List&lt;ProductDTO&gt; syncProductsFromMock() {
+<b class="fc">&nbsp;        KafkaMockService.ProductSyncMessage message = kafkaMockService.getProductsMock();</b>
+<b class="fc">&nbsp;        List&lt;ProductDTO&gt; mockProducts = message.payload.products;</b>
+<b class="fc">&nbsp;        for (ProductDTO dto : mockProducts) {</b>
+<b class="fc">&nbsp;            if (dto.getProductCode() == null) continue;</b>
+<b class="fc">&nbsp;            Product existing = productRepository.findAll().stream()</b>
+<b class="fc">&nbsp;                .filter(p -&gt; p.getProductCode() != null &amp;&amp; p.getProductCode().equals(dto.getProductCode()))</b>
+<b class="fc">&nbsp;                .findFirst().orElse(null);</b>
+<b class="fc">&nbsp;            StringBuilder errorMsg = new StringBuilder();</b>
+<b class="fc">&nbsp;            Brand brandEntity = null;</b>
+<b class="pc">&nbsp;            if (dto.getBrand() != null &amp;&amp; dto.getBrand().getId() != null) {</b>
+&nbsp;                // Permitir que los tests mockeen EntityManager en el controller
+<b class="pc">&nbsp;                if (entityManager != null) {</b>
+&nbsp;                    try {
+<b class="fc">&nbsp;                        brandEntity = entityManager.find(Brand.class, dto.getBrand().getId().intValue());</b>
+&nbsp;                    } catch (Exception e) {
+<b class="nc">&nbsp;                        brandEntity = null;</b>
+&nbsp;                    }
+&nbsp;                } else {
+<b class="nc">&nbsp;                    brandEntity = brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null);</b>
+&nbsp;                }
+<b class="fc">&nbsp;                if (brandEntity == null) {</b>
+<b class="fc">&nbsp;                    errorMsg.append(&quot;Marca no encontrada (ID: &quot; + dto.getBrand().getId() + &quot;) para producto: &quot; + dto.getTitle() + &quot; (productCode: &quot; + dto.getProductCode() + &quot;). &quot;);</b>
+&nbsp;                }
+&nbsp;            }
+<b class="fc">&nbsp;            Set&lt;Category&gt; cats = null;</b>
+<b class="fc">&nbsp;            if (dto.getCategories() != null &amp;&amp; !dto.getCategories().isEmpty()) {</b>
+<b class="fc">&nbsp;                java.util.Set&lt;Category&gt; found = new java.util.HashSet&lt;&gt;();</b>
+<b class="fc">&nbsp;                for (CategoryDTO catDto : dto.getCategories()) {</b>
+<b class="pc">&nbsp;                    if (catDto == null || catDto.getId() == null) {</b>
+&nbsp;                        // ignorar entradas sin id
+&nbsp;                        continue;
+&nbsp;                    }
+<b class="fc">&nbsp;                    Category foundCat = null;</b>
+<b class="pc">&nbsp;                    if (entityManager != null) {</b>
+&nbsp;                        try {
+<b class="fc">&nbsp;                            foundCat = entityManager.find(Category.class, catDto.getId().intValue());</b>
+&nbsp;                        } catch (Exception e) {
+<b class="nc">&nbsp;                            foundCat = null;</b>
+&nbsp;                        }
+&nbsp;                    } else {
+<b class="nc">&nbsp;                        foundCat = categoryRepository.findById((long) catDto.getId().intValue()).orElse(null);</b>
+&nbsp;                    }
+&nbsp;                    // Si no se encuentra la categoría, la ignoramos (tolerancia esperada por tests)
+<b class="pc">&nbsp;                    if (foundCat != null) {</b>
+<b class="fc">&nbsp;                        found.add(foundCat);</b>
+&nbsp;                    }
+&nbsp;                }
+<b class="fc">&nbsp;                cats = found;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (errorMsg.length() &gt; 0) {</b>
+<b class="fc">&nbsp;                throw new RuntimeException(errorMsg.toString());</b>
+&nbsp;            }
+&nbsp;            // Al asignar mediaSrc, usar nueva lista mutable
+<b class="fc">&nbsp;            List&lt;String&gt; mediaSrcMutable = dto.getMediaSrc() != null ? new java.util.ArrayList&lt;&gt;(dto.getMediaSrc()) : new java.util.ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;            if (existing == null) {</b>
+<b class="fc">&nbsp;                Product product = new Product();</b>
+<b class="fc">&nbsp;                product.setTitle(dto.getTitle());</b>
+<b class="fc">&nbsp;                product.setDescription(dto.getDescription());</b>
+<b class="fc">&nbsp;                product.setPrice(dto.getPrice());</b>
+<b class="fc">&nbsp;                product.setStock(dto.getStock());</b>
+<b class="fc">&nbsp;                product.setMediaSrc(mediaSrcMutable);</b>
+<b class="fc">&nbsp;                product.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);</b>
+<b class="fc">&nbsp;                product.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);</b>
+<b class="fc">&nbsp;                product.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);</b>
+<b class="fc">&nbsp;                product.setHero(dto.getHero() != null ? dto.getHero() : false);</b>
+<b class="fc">&nbsp;                product.setActive(dto.getActive() != null ? dto.getActive() : true);</b>
+<b class="fc">&nbsp;                product.setDiscount(dto.getDiscount());</b>
+<b class="fc">&nbsp;                product.setPriceUnit(dto.getPriceUnit());</b>
+<b class="fc">&nbsp;                product.setProductCode(dto.getProductCode());</b>
+<b class="fc">&nbsp;                product.setBrand(brandEntity);</b>
+<b class="fc">&nbsp;                if (cats != null) {</b>
+<b class="pc">&nbsp;                    product.setCategories(new java.util.HashSet&lt;&gt;(cats.stream().filter(c -&gt; c != null).toList()));</b>
+&nbsp;                }
+<b class="pc">&nbsp;                product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);</b>
+<b class="fc">&nbsp;                productRepository.save(product);</b>
+&nbsp;            } else {
+<b class="fc">&nbsp;                existing.setTitle(dto.getTitle());</b>
+<b class="fc">&nbsp;                existing.setDescription(dto.getDescription());</b>
+<b class="fc">&nbsp;                existing.setPrice(dto.getPrice());</b>
+<b class="fc">&nbsp;                existing.setStock(dto.getStock());</b>
+<b class="fc">&nbsp;                existing.setMediaSrc(mediaSrcMutable);</b>
+<b class="pc">&nbsp;                existing.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);</b>
+<b class="pc">&nbsp;                existing.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);</b>
+<b class="pc">&nbsp;                existing.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);</b>
+<b class="pc">&nbsp;                existing.setHero(dto.getHero() != null ? dto.getHero() : false);</b>
+<b class="pc">&nbsp;                existing.setActive(dto.getActive() != null ? dto.getActive() : true);</b>
+<b class="fc">&nbsp;                existing.setDiscount(dto.getDiscount());</b>
+<b class="fc">&nbsp;                existing.setPriceUnit(dto.getPriceUnit());</b>
+<b class="fc">&nbsp;                existing.setProductCode(dto.getProductCode());</b>
+<b class="fc">&nbsp;                existing.setBrand(brandEntity);</b>
+<b class="fc">&nbsp;                if (cats != null) {</b>
+<b class="pc">&nbsp;                    existing.setCategories(new java.util.HashSet&lt;&gt;(cats.stream().filter(c -&gt; c != null).toList()));</b>
+&nbsp;                } else {
+<b class="fc">&nbsp;                    existing.setCategories(null);</b>
+&nbsp;                }
+<b class="pc">&nbsp;                existing.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);</b>
+<b class="fc">&nbsp;                productRepository.save(existing);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;        // Retornar todos los productos como DTO
+<b class="fc">&nbsp;        return productRepository.findAll().stream()</b>
+<b class="fc">&nbsp;            .map(ProductDTO::fromEntity)</b>
+<b class="fc">&nbsp;            .collect(Collectors.toList());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Obtiene todos los productos
+&nbsp;    @GetMapping
+&nbsp;    public List&lt;ProductDTO&gt; getAllProducts() {
+<b class="nc">&nbsp;        return productRepository.findAll().stream()</b>
+<b class="nc">&nbsp;            .map(this::toDTO)</b>
+<b class="nc">&nbsp;            .collect(Collectors.toList());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Agrega un producto específico usando mensaje mockeado
+&nbsp;    @PostMapping
+&nbsp;    public ProductDTO addProduct() {
+<b class="fc">&nbsp;        KafkaMockService.AddProductMessage msg = kafkaMockService.getAddProductMock();</b>
+<b class="fc">&nbsp;        ProductDTO dto = msg.payload.product;</b>
+<b class="fc">&nbsp;        Product product = new Product();</b>
+<b class="fc">&nbsp;        product.setTitle(dto.getTitle());</b>
+<b class="fc">&nbsp;        product.setDescription(dto.getDescription());</b>
+<b class="fc">&nbsp;        product.setPrice(dto.getPrice());</b>
+<b class="fc">&nbsp;        product.setStock(dto.getStock());</b>
+<b class="pc">&nbsp;        product.setMediaSrc(dto.getMediaSrc() != null ? dto.getMediaSrc() : List.of());</b>
+<b class="pc">&nbsp;        product.setNew(dto.getIsNew() != null ? dto.getIsNew() : false);</b>
+<b class="pc">&nbsp;        product.setBestseller(dto.getIsBestseller() != null ? dto.getIsBestseller() : false);</b>
+<b class="pc">&nbsp;        product.setFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : false);</b>
+<b class="pc">&nbsp;        product.setHero(dto.getHero() != null ? dto.getHero() : false);</b>
+<b class="pc">&nbsp;        product.setActive(dto.getActive() != null ? dto.getActive() : true);</b>
+<b class="fc">&nbsp;        product.setDiscount(dto.getDiscount());</b>
+<b class="fc">&nbsp;        product.setPriceUnit(dto.getPriceUnit());</b>
+<b class="fc">&nbsp;        product.setProductCode(dto.getProductCode());</b>
+<b class="fc">&nbsp;        product.setBrand(dto.getBrand() != null ? brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null) : null);</b>
+<b class="pc">&nbsp;        if (dto.getCategories() != null &amp;&amp; !dto.getCategories().isEmpty()) {</b>
+<b class="fc">&nbsp;            Set&lt;Category&gt; cats = dto.getCategories().stream()</b>
+<b class="fc">&nbsp;                .map(catDto -&gt; categoryRepository.findById((long) catDto.getId().intValue()).orElse(null))</b>
+<b class="pc">&nbsp;                .filter(c -&gt; c != null)</b>
+<b class="fc">&nbsp;                .collect(java.util.stream.Collectors.toSet());</b>
+<b class="fc">&nbsp;            product.setCategories(new java.util.HashSet&lt;&gt;(cats));</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            product.setCategories(null);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);</b>
+<b class="fc">&nbsp;        Product saved = productRepository.save(product);</b>
+<b class="fc">&nbsp;        return toDTO(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Edita solo precio y stock usando mensaje mockeado
+<b class="nc">&nbsp;    public static class EditProductSimpleRequest {</b>
+&nbsp;        public Long id;
+&nbsp;    }
+&nbsp;
+&nbsp;    @PatchMapping(&quot;/simple&quot;)
+&nbsp;    public ProductDTO editProductSimple() {
+<b class="fc">&nbsp;        KafkaMockService.EditProductSimpleMessage msg = kafkaMockService.getEditProductMockSimple();</b>
+<b class="fc">&nbsp;        KafkaMockService.EditProductSimplePayload dto = msg.payload;</b>
+<b class="fc">&nbsp;        Long id = dto.id;</b>
+<b class="fc">&nbsp;        Optional&lt;Product&gt; productOpt = productRepository.findById(id.intValue());</b>
+<b class="fc">&nbsp;        if (productOpt.isEmpty()) throw new RuntimeException(&quot;Producto no encontrado&quot;);</b>
+<b class="fc">&nbsp;        Product product = productOpt.get();</b>
+<b class="pc">&nbsp;        if (dto.price != null) {</b>
+<b class="fc">&nbsp;            product.setPrice(dto.price);</b>
+<b class="pc">&nbsp;            Float discount = product.getDiscount() != null ? product.getDiscount() : 0f;</b>
+<b class="fc">&nbsp;            Float priceUnit = dto.price / (1 - (discount / 100f));</b>
+<b class="fc">&nbsp;            product.setPriceUnit(priceUnit);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (dto.stock != null) product.setStock(dto.stock);</b>
+<b class="fc">&nbsp;        Product updated = productRepository.save(product);</b>
+<b class="fc">&nbsp;        return toDTO(updated);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Edita el producto completo usando mensaje mockeado
+&nbsp;    @PatchMapping
+&nbsp;    public ProductDTO editProduct() {
+<b class="fc">&nbsp;        KafkaMockService.EditProductFullMessage msg = kafkaMockService.getEditProductMockFull();</b>
+<b class="fc">&nbsp;        ProductDTO dto = msg.payload;</b>
+<b class="fc">&nbsp;        Integer id = Math.toIntExact(dto.getId());</b>
+<b class="fc">&nbsp;        Optional&lt;Product&gt; productOpt = productRepository.findById(id);</b>
+<b class="pc">&nbsp;        if (productOpt.isEmpty()) throw new RuntimeException(&quot;Producto no encontrado&quot;);</b>
+<b class="fc">&nbsp;        Product product = productOpt.get();</b>
+&nbsp;        // Campos simples
+<b class="fc">&nbsp;        if (dto.getTitle() != null) product.setTitle(dto.getTitle());</b>
+<b class="pc">&nbsp;        if (dto.getDescription() != null) product.setDescription(dto.getDescription());</b>
+<b class="fc">&nbsp;        if (dto.getStock() != null) product.setStock(dto.getStock());</b>
+&nbsp;        // MediaSrc: si es null, setear lista vacía
+<b class="pc">&nbsp;        if (dto.getMediaSrc() == null) {</b>
+<b class="nc">&nbsp;            product.setMediaSrc(List.of());</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            product.setMediaSrc(new java.util.ArrayList&lt;&gt;(dto.getMediaSrc()));</b>
+&nbsp;        }
+&nbsp;        // Booleanos: solo asignar si no son null
+<b class="pc">&nbsp;        if (dto.getIsNew() != null) product.setNew(dto.getIsNew());</b>
+<b class="pc">&nbsp;        if (dto.getIsBestseller() != null) product.setBestseller(dto.getIsBestseller());</b>
+<b class="pc">&nbsp;        if (dto.getIsFeatured() != null) product.setIsFeatured(dto.getIsFeatured());</b>
+<b class="pc">&nbsp;        if (dto.getHero() != null) product.setHero(dto.getHero());</b>
+&nbsp;        // Active
+<b class="fc">&nbsp;        if (dto.getActive() != null) product.setActive(dto.getActive());</b>
+&nbsp;        // ProductCode
+<b class="fc">&nbsp;        if (dto.getProductCode() == null) {</b>
+<b class="fc">&nbsp;            product.setProductCode(null);</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            product.setProductCode(dto.getProductCode());</b>
+&nbsp;        }
+&nbsp;        // PriceUnit y Discount
+<b class="fc">&nbsp;        if (dto.getPriceUnit() != null) product.setPriceUnit(dto.getPriceUnit());</b>
+<b class="fc">&nbsp;        if (dto.getDiscount() != null) product.setDiscount(dto.getDiscount());</b>
+&nbsp;        // Recalcular price si priceUnit o discount se tocan y ambos existen
+<b class="fc">&nbsp;        Float priceUnit = product.getPriceUnit();</b>
+<b class="fc">&nbsp;        Float discount = product.getDiscount();</b>
+<b class="pc">&nbsp;        if ((dto.getPriceUnit() != null || dto.getDiscount() != null) &amp;&amp; priceUnit != null &amp;&amp; discount != null) {</b>
+<b class="fc">&nbsp;            Float price = priceUnit - (priceUnit * (discount / 100f));</b>
+<b class="fc">&nbsp;            product.setPrice(price);</b>
+<b class="pc">&nbsp;        } else if (dto.getPrice() != null) {</b>
+<b class="nc">&nbsp;            product.setPrice(dto.getPrice());</b>
+&nbsp;        }
+&nbsp;        // Marca
+<b class="pc">&nbsp;        if (dto.getBrand() != null &amp;&amp; dto.getBrand().getId() != null) {</b>
+<b class="nc">&nbsp;            product.setBrand(brandRepository.findById((long) dto.getBrand().getId().intValue()).orElse(null));</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            product.setBrand(null);</b>
+&nbsp;        }
+&nbsp;        // Categorías
+<b class="pc">&nbsp;        if (dto.getCategories() != null &amp;&amp; !dto.getCategories().isEmpty()) {</b>
+<b class="nc">&nbsp;            Set&lt;ar.edu.uade.ecommerce.Entity.Category&gt; cats = dto.getCategories().stream()</b>
+<b class="nc">&nbsp;                .map(catDto -&gt; categoryRepository.findById((long) catDto.getId().intValue()).orElse(null))</b>
+<b class="nc">&nbsp;                .filter(c -&gt; c != null)</b>
+<b class="nc">&nbsp;                .collect(java.util.stream.Collectors.toSet());</b>
+<b class="nc">&nbsp;            product.setCategories(new java.util.HashSet&lt;&gt;(cats));</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            product.setCategories(null);</b>
+&nbsp;        }
+&nbsp;        // Calificación
+<b class="fc">&nbsp;        product.setCalification(dto.getCalification() != null ? dto.getCalification() : 0f);</b>
+<b class="fc">&nbsp;        Product updated = productRepository.save(product);</b>
+<b class="fc">&nbsp;        return toDTO(updated);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Activar producto usando mensaje mockeado
+&nbsp;    @PatchMapping(&quot;/activate&quot;)
+&nbsp;    public ProductDTO activateProduct() {
+<b class="fc">&nbsp;        KafkaMockService.ActivateProductMessage msg = kafkaMockService.getActivateProductMock();</b>
+<b class="fc">&nbsp;        Long id = msg.payload.id;</b>
+<b class="fc">&nbsp;        Optional&lt;Product&gt; productOpt = productRepository.findById(id.intValue());</b>
+<b class="pc">&nbsp;        if (productOpt.isEmpty()) throw new RuntimeException(&quot;Producto no encontrado&quot;);</b>
+<b class="fc">&nbsp;        Product product = productOpt.get();</b>
+<b class="fc">&nbsp;        product.setActive(true);</b>
+<b class="fc">&nbsp;        Product updated = productRepository.save(product);</b>
+<b class="fc">&nbsp;        return toDTO(updated);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Desactivar producto usando mensaje mockeado
+&nbsp;    @PatchMapping(&quot;/deactivate&quot;)
+&nbsp;    public ProductDTO deactivateProduct() {
+<b class="fc">&nbsp;        KafkaMockService.DeactivateProductMessage msg = kafkaMockService.getDeactivateProductMock();</b>
+<b class="fc">&nbsp;        Long id = msg.payload.id;</b>
+<b class="fc">&nbsp;        Optional&lt;Product&gt; productOpt = productRepository.findById(id.intValue());</b>
+<b class="pc">&nbsp;        if (productOpt.isEmpty()) throw new RuntimeException(&quot;Producto no encontrado&quot;);</b>
+<b class="fc">&nbsp;        Product product = productOpt.get();</b>
+<b class="fc">&nbsp;        product.setActive(false);</b>
+<b class="fc">&nbsp;        Product updated = productRepository.save(product);</b>
+<b class="fc">&nbsp;        return toDTO(updated);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // DTO para request de review
+<b class="fc">&nbsp;    public static class ReviewRequest {</b>
+&nbsp;        private float calification;
+&nbsp;        private String description;
+<b class="fc">&nbsp;        public float getCalification() { return calification; }</b>
+<b class="fc">&nbsp;        public void setCalification(float calification) { this.calification = calification; }</b>
+<b class="fc">&nbsp;        public String getDescription() { return description; }</b>
+<b class="fc">&nbsp;        public void setDescription(String description) { this.description = description; }</b>
+&nbsp;    }
+&nbsp;    // DTO para response de reviews
+&nbsp;    public static class ReviewDTO {
+&nbsp;        private Long id;
+&nbsp;        private float calification;
+&nbsp;        private String description;
+<b class="fc">&nbsp;        public ReviewDTO(Long id, float calification, String description) {</b>
+<b class="fc">&nbsp;            this.id = id;</b>
+<b class="fc">&nbsp;            this.calification = calification;</b>
+<b class="fc">&nbsp;            this.description = description;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        public Long getId() { return id; }</b>
+<b class="fc">&nbsp;        public float getCalification() { return calification; }</b>
+<b class="fc">&nbsp;        public String getDescription() { return description; }</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public static class ReviewResponse {
+&nbsp;        private Integer productId;
+&nbsp;        private String productTitle;
+&nbsp;        private float promedio;
+&nbsp;        private List&lt;ReviewDTO&gt; reviews;
+<b class="fc">&nbsp;        public ReviewResponse(Integer productId, String productTitle, float promedio, List&lt;ReviewDTO&gt; reviews) {</b>
+<b class="fc">&nbsp;            this.productId = productId;</b>
+<b class="fc">&nbsp;            this.productTitle = productTitle;</b>
+<b class="fc">&nbsp;            this.promedio = promedio;</b>
+<b class="fc">&nbsp;            this.reviews = reviews;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        public Integer getProductId() { return productId; }</b>
+<b class="fc">&nbsp;        public String getProductTitle() { return productTitle; }</b>
+<b class="fc">&nbsp;        public float getPromedio() { return promedio; }</b>
+<b class="fc">&nbsp;        public List&lt;ReviewDTO&gt; getReviews() { return reviews; }</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Califica un producto (ahora crea una review)
+&nbsp;    @PostMapping(&quot;/{id}/review&quot;)
+&nbsp;    public ReviewResponse addReview(@PathVariable Integer id, @RequestBody ReviewRequest reviewRequest) {
+<b class="fc">&nbsp;        Optional&lt;Product&gt; productOpt = productRepository.findById(id);</b>
+<b class="fc">&nbsp;        if (productOpt.isEmpty()) throw new RuntimeException(&quot;Producto no encontrado&quot;);</b>
+<b class="fc">&nbsp;        Product product = productOpt.get();</b>
+&nbsp;        // Obtener usuario autenticado
+<b class="fc">&nbsp;        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();</b>
+<b class="fc">&nbsp;        ar.edu.uade.ecommerce.Entity.User user = null;</b>
+<b class="pc">&nbsp;        if (auth != null) {</b>
+<b class="nc">&nbsp;            String email = auth.getName();</b>
+<b class="nc">&nbsp;            user = userRepository.findByEmail(email);</b>
+<b class="nc">&nbsp;            if (user == null) throw new RuntimeException(&quot;Usuario no encontrado&quot;);</b>
+&nbsp;            // Verificar si ya existe una review de este usuario para este producto
+<b class="nc">&nbsp;            Review existingReview = reviewRepository.findByProductAndUser(product, user);</b>
+<b class="nc">&nbsp;            if (existingReview != null) {</b>
+<b class="nc">&nbsp;                throw new RuntimeException(&quot;Ya has calificado/comentado este producto.&quot;);</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;        Review review = new Review();</b>
+<b class="fc">&nbsp;        review.setProduct(product);</b>
+<b class="pc">&nbsp;        if (user != null) review.setUser(user);</b>
+<b class="fc">&nbsp;        review.setCalification(reviewRequest.getCalification());</b>
+<b class="fc">&nbsp;        review.setDescription(reviewRequest.getDescription());</b>
+<b class="fc">&nbsp;        reviewRepository.save(review);</b>
+<b class="fc">&nbsp;        List&lt;Review&gt; reviews = reviewRepository.findByProduct(product);</b>
+<b class="fc">&nbsp;        float promedio = (float) reviews.stream().mapToDouble(Review::getCalification).average().orElse(0.0);</b>
+&nbsp;        // Actualizar el campo calification en Product
+<b class="fc">&nbsp;        product.setCalification(promedio);</b>
+<b class="fc">&nbsp;        productRepository.save(product);</b>
+&nbsp;        // Enviar evento simulado por Kafka
+<b class="fc">&nbsp;        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(</b>
+&nbsp;            &quot;PRODUCT_REVIEW_ADDED&quot;,
+<b class="fc">&nbsp;            String.format(&quot;Producto %d (%s) recibió una nueva review. Promedio actualizado: %.2f&quot;, product.getId(), product.getTitle(), promedio)</b>
+&nbsp;        ));
+<b class="fc">&nbsp;        List&lt;ReviewDTO&gt; reviewDTOs = reviews.stream()</b>
+<b class="fc">&nbsp;            .map(r -&gt; new ReviewDTO(r.getId(), r.getCalification(), r.getDescription()))</b>
+<b class="fc">&nbsp;            .collect(Collectors.toList());</b>
+<b class="fc">&nbsp;        return new ReviewResponse(product.getId(), product.getTitle(), promedio, reviewDTOs);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Obtiene el promedio y listado de reviews de un producto
+&nbsp;    @GetMapping(&quot;/{id}/reviews&quot;)
+&nbsp;    public ReviewResponse getReviews(@PathVariable Integer id) {
+<b class="fc">&nbsp;        Optional&lt;Product&gt; productOpt = productRepository.findById(id);</b>
+<b class="fc">&nbsp;        if (productOpt.isEmpty()) throw new RuntimeException(&quot;Producto no encontrado&quot;);</b>
+<b class="fc">&nbsp;        Product product = productOpt.get();</b>
+<b class="fc">&nbsp;        List&lt;Review&gt; reviews = reviewRepository.findByProduct(product);</b>
+<b class="fc">&nbsp;        float promedio = (float) reviews.stream().mapToDouble(Review::getCalification).average().orElse(0.0);</b>
+<b class="fc">&nbsp;        List&lt;ReviewDTO&gt; reviewDTOs = reviews.stream()</b>
+<b class="fc">&nbsp;            .map(r -&gt; new ReviewDTO(r.getId(), r.getCalification(), r.getDescription()))</b>
+<b class="fc">&nbsp;            .collect(Collectors.toList());</b>
+<b class="fc">&nbsp;        return new ReviewResponse(product.getId(), product.getTitle(), promedio, reviewDTOs);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Filtrado de productos por categoría, marca y rango de precio
+&nbsp;    @PostMapping(&quot;/filter&quot;)
+&nbsp;    public List&lt;ProductDTO&gt; filterProducts(@RequestBody FilterProductRequest filterRequest) {
+<b class="fc">&nbsp;        List&lt;Product&gt; products = productRepository.findAll();</b>
+<b class="fc">&nbsp;        Long categoryId = filterRequest.getCategoryId();</b>
+<b class="fc">&nbsp;        Long brandId = filterRequest.getBrandId();</b>
+<b class="fc">&nbsp;        Float priceMin = filterRequest.getPriceMin();</b>
+<b class="fc">&nbsp;        Float priceMax = filterRequest.getPriceMax();</b>
+<b class="fc">&nbsp;        return products.stream()</b>
+<b class="fc">&nbsp;            .filter(p -&gt; {</b>
+<b class="fc">&nbsp;                boolean matches = true;</b>
+<b class="pc">&nbsp;                if (categoryId != null &amp;&amp; (p.getCategories() == null || p.getCategories().stream().noneMatch(c -&gt; c.getId().equals(categoryId.intValue())))) {</b>
+<b class="nc">&nbsp;                    matches = false;</b>
+&nbsp;                }
+<b class="pc">&nbsp;                if (brandId != null &amp;&amp; (p.getBrand() == null || !p.getBrand().getId().equals(brandId.intValue()))) {</b>
+<b class="nc">&nbsp;                    matches = false;</b>
+&nbsp;                }
+<b class="pc">&nbsp;                if (priceMin != null &amp;&amp; (p.getPrice() == null || p.getPrice() &lt; priceMin)) {</b>
+<b class="nc">&nbsp;                    matches = false;</b>
+&nbsp;                }
+<b class="pc">&nbsp;                if (priceMax != null &amp;&amp; (p.getPrice() == null || p.getPrice() &gt; priceMax)) {</b>
+<b class="fc">&nbsp;                    matches = false;</b>
+&nbsp;                }
+<b class="fc">&nbsp;                return matches;</b>
+&nbsp;            })
+<b class="fc">&nbsp;            .map(this::toDTO)</b>
+<b class="fc">&nbsp;            .collect(Collectors.toList());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Obtener producto por id y productos relacionados
+&nbsp;    @GetMapping(&quot;/{id}&quot;)
+&nbsp;    public ProductWithRelatedDTO getProductById(@PathVariable(&quot;id&quot;) Long id) {
+<b class="fc">&nbsp;        Optional&lt;Product&gt; productOpt = productRepository.findById(id.intValue());</b>
+<b class="pc">&nbsp;        if (productOpt.isEmpty()) throw new RuntimeException(&quot;Producto no encontrado&quot;);</b>
+<b class="fc">&nbsp;        Product product = productOpt.get();</b>
+<b class="fc">&nbsp;        ProductDTO mainProduct = toDTO(product);</b>
+<b class="fc">&nbsp;        List&lt;Product&gt; allProducts = productRepository.findAll();</b>
+&nbsp;        // Filtrar productos relacionados por marca o categoría (excluyendo el mismo producto)
+<b class="fc">&nbsp;        List&lt;ProductDTO&gt; related = allProducts.stream()</b>
+<b class="fc">&nbsp;            .filter(p -&gt; !p.getId().equals(product.getId()) &amp;&amp; (</b>
+<b class="pc">&nbsp;                (product.getBrand() != null &amp;&amp; p.getBrand() != null &amp;&amp; p.getBrand().getId().equals(product.getBrand().getId())) ||</b>
+<b class="pc">&nbsp;                (product.getCategories() != null &amp;&amp; p.getCategories() != null &amp;&amp; p.getCategories().stream().anyMatch(cat -&gt; product.getCategories().stream().anyMatch(pc -&gt; pc.getId().equals(cat.getId()))) )</b>
+&nbsp;            ))
+<b class="fc">&nbsp;            .map(this::toDTO)</b>
+<b class="fc">&nbsp;            .collect(Collectors.toList());</b>
+<b class="fc">&nbsp;        return new ProductWithRelatedDTO(mainProduct, related);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // DTO para producto con relacionados
+&nbsp;    public static class ProductWithRelatedDTO {
+&nbsp;        public ProductDTO product;
+&nbsp;        public List&lt;ProductDTO&gt; relatedProducts;
+<b class="fc">&nbsp;        public ProductWithRelatedDTO(ProductDTO product, List&lt;ProductDTO&gt; relatedProducts) {</b>
+<b class="fc">&nbsp;            this.product = product;</b>
+<b class="fc">&nbsp;            this.relatedProducts = relatedProducts;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        public ProductDTO getProduct() { return product; }</b>
+<b class="fc">&nbsp;        public List&lt;ProductDTO&gt; getRelatedProducts() { return relatedProducts; }</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Conversión a DTO
+&nbsp;    ProductDTO toDTO(Product product) {
+<b class="fc">&nbsp;        ProductDTO dto = new ProductDTO();</b>
+<b class="pc">&nbsp;        dto.setId(product.getId() != null ? Long.valueOf(product.getId()) : null);</b>
+<b class="fc">&nbsp;        dto.setTitle(product.getTitle());</b>
+<b class="fc">&nbsp;        dto.setDescription(product.getDescription());</b>
+<b class="fc">&nbsp;        dto.setPrice(product.getPrice());</b>
+<b class="fc">&nbsp;        dto.setStock(product.getStock());</b>
+<b class="fc">&nbsp;        dto.setMediaSrc(product.getMediaSrc());</b>
+<b class="fc">&nbsp;        dto.setCalification(product.getCalification());</b>
+<b class="fc">&nbsp;        dto.setDiscount(product.getDiscount());</b>
+<b class="fc">&nbsp;        dto.setPriceUnit(product.getPriceUnit());</b>
+<b class="fc">&nbsp;        dto.setProductCode(product.getProductCode());</b>
+&nbsp;        // Si el campo active es null, setear null en el DTO
+<b class="fc">&nbsp;        dto.setActive(product.getActive() != null ? product.getActive() : null);</b>
+&nbsp;        // Devuelve el nombre de la marca y categorías
+<b class="fc">&nbsp;        if (product.getBrand() != null) {</b>
+<b class="fc">&nbsp;            dto.setBrand(new BrandDTO(Long.valueOf(product.getBrand().getId()), product.getBrand().getName(), product.getBrand().isActive()));</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            dto.setBrand(null);</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (product.getCategories() != null &amp;&amp; !product.getCategories().isEmpty()) {</b>
+<b class="fc">&nbsp;            dto.setCategories(product.getCategories().stream()</b>
+<b class="fc">&nbsp;                .map(cat -&gt; new CategoryDTO(Long.valueOf(cat.getId()), cat.getName(), cat.isActive()))</b>
+<b class="fc">&nbsp;                .collect(Collectors.toList()));</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            dto.setCategories(null);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        dto.setIsNew(product.getIsNew());</b>
+<b class="fc">&nbsp;        dto.setIsBestseller(product.isIsBestseller());</b>
+<b class="fc">&nbsp;        dto.setIsFeatured(product.isIsFeatured());</b>
+<b class="fc">&nbsp;        dto.setHero(product.isHero());</b>
+<b class="fc">&nbsp;        return dto;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Obtener productos destacados para el home screen
+&nbsp;    @GetMapping(&quot;/homescreen&quot;)
+&nbsp;    public List&lt;ProductDTO&gt; getHomeScreenProducts() {
+<b class="fc">&nbsp;        return productRepository.findAll().stream()</b>
+<b class="fc">&nbsp;            .filter(p -&gt; Boolean.TRUE.equals(p.isIsBestseller())</b>
+<b class="pc">&nbsp;                || Boolean.TRUE.equals(p.isHero())</b>
+<b class="pc">&nbsp;                || Boolean.TRUE.equals(p.isIsFeatured())</b>
+<b class="pc">&nbsp;                || Boolean.TRUE.equals(p.getIsNew())</b>
+<b class="pc">&nbsp;                || (p.getDiscount() != null &amp;&amp; p.getDiscount() &gt; 0))</b>
+<b class="fc">&nbsp;            .map(this::toDTO)</b>
+<b class="fc">&nbsp;            .collect(Collectors.toList());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Agrega un producto a favoritos
+&nbsp;    @PostMapping(&quot;/favourite/{productCode}&quot;)
+&nbsp;    public String addFavouriteProduct(@PathVariable Integer productCode) {
+<b class="fc">&nbsp;        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();</b>
+<b class="fc">&nbsp;        String email = auth.getName();</b>
+<b class="fc">&nbsp;        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);</b>
+<b class="pc">&nbsp;        if (user == null) return &quot;Usuario no encontrado.&quot;;</b>
+<b class="fc">&nbsp;        Product product = productRepository.findByProductCode(productCode);</b>
+<b class="fc">&nbsp;        if (product == null) return &quot;Producto no encontrado.&quot;;</b>
+&nbsp;        // Verificar si ya es favorito
+<b class="pc">&nbsp;        if (favouriteProductsRepository.findByUserAndProduct(user, product).isPresent()) {</b>
+<b class="nc">&nbsp;            return &quot;El producto ya está en favoritos.&quot;;</b>
+&nbsp;        }
+&nbsp;        // Guardar favorito
+<b class="fc">&nbsp;        ar.edu.uade.ecommerce.Entity.FavouriteProducts fav = new ar.edu.uade.ecommerce.Entity.FavouriteProducts();</b>
+<b class="fc">&nbsp;        fav.setUser(user);</b>
+<b class="fc">&nbsp;        fav.setProduct(product);</b>
+<b class="fc">&nbsp;        fav.setProductCode(productCode); // Guardar el productCode en la entidad</b>
+<b class="fc">&nbsp;        favouriteProductsRepository.save(fav);</b>
+&nbsp;        // Enviar evento mock
+<b class="fc">&nbsp;        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(</b>
+&nbsp;            &quot;ADD_FAVOURITE_PRODUCT&quot;,
+<b class="fc">&nbsp;            String.format(&quot;{productCode: &#39;%s&#39;, id: %d, nombre: &#39;%s&#39;}&quot;, productCode, product.getId(), product.getTitle())</b>
+&nbsp;        ));
+<b class="fc">&nbsp;        return &quot;El producto con código &quot; + productCode + &quot; se agregó a favoritos correctamente.&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Quita un producto de favoritos
+&nbsp;    @Transactional
+&nbsp;    @DeleteMapping(&quot;/favourite/{productCode}&quot;)
+&nbsp;    public String removeFavouriteProduct(@PathVariable Integer productCode) {
+<b class="fc">&nbsp;        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();</b>
+<b class="fc">&nbsp;        String email = auth.getName();</b>
+<b class="fc">&nbsp;        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);</b>
+<b class="pc">&nbsp;        if (user == null) return &quot;Usuario no encontrado.&quot;;</b>
+<b class="fc">&nbsp;        Product product = productRepository.findByProductCode(productCode);</b>
+<b class="pc">&nbsp;        if (product == null) return &quot;Producto no encontrado.&quot;;</b>
+&nbsp;        // Eliminar favorito si existe
+<b class="fc">&nbsp;        favouriteProductsRepository.deleteByUserAndProduct(user, product);</b>
+&nbsp;        // Enviar evento mock
+<b class="fc">&nbsp;        kafkaMockService.sendEvent(new ar.edu.uade.ecommerce.Entity.Event(</b>
+&nbsp;            &quot;REMOVE_FAVOURITE_PRODUCT&quot;,
+<b class="fc">&nbsp;            String.format(&quot;{productCode: &#39;%s&#39;, id: %d, nombre: &#39;%s&#39;}&quot;, productCode, product.getId(), product.getTitle())</b>
+&nbsp;        ));
+<b class="fc">&nbsp;        return &quot;El producto con código &quot; + productCode + &quot; ya no es favorito.&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // Endpoint para traer productos favoritos del usuario autenticado
+&nbsp;    @GetMapping(&quot;/user/favourite-products&quot;)
+&nbsp;    public List&lt;java.util.Map&lt;String, Object&gt;&gt; getFavouriteProductsByUser(@RequestHeader(&quot;Authorization&quot;) String authHeader) {
+<b class="fc">&nbsp;        String token = authHeader.replace(&quot;Bearer &quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;        String email = authService.getEmailFromToken(token);</b>
+<b class="fc">&nbsp;        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);</b>
+<b class="fc">&nbsp;        if (user == null) return java.util.Collections.emptyList();</b>
+<b class="fc">&nbsp;        return favouriteProductsRepository.findAllByUser(user).stream()</b>
+<b class="fc">&nbsp;            .map(fav -&gt; {</b>
+<b class="fc">&nbsp;                ar.edu.uade.ecommerce.Entity.Product p = fav.getProduct();</b>
+<b class="fc">&nbsp;                java.util.Map&lt;String, Object&gt; map = new java.util.HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;                map.put(&quot;id&quot;, p.getId());</b>
+<b class="fc">&nbsp;                map.put(&quot;title&quot;, p.getTitle());</b>
+<b class="fc">&nbsp;                map.put(&quot;description&quot;, p.getDescription());</b>
+<b class="fc">&nbsp;                map.put(&quot;mediaSrc&quot;, p.getMediaSrc());</b>
+<b class="fc">&nbsp;                map.put(&quot;price&quot;, p.getPrice());</b>
+<b class="fc">&nbsp;                map.put(&quot;stock&quot;, p.getStock());</b>
+<b class="fc">&nbsp;                return map;</b>
+&nbsp;            })
+<b class="fc">&nbsp;            .toList();</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2025-09-14 17:59</div>
+</div>
+</body>
+</html>
