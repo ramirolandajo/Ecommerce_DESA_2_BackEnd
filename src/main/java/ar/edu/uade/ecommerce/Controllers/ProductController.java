@@ -55,12 +55,11 @@ public class ProductController {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint de sincronización mock deshabilitado. Use la API de Comunicación para enviar eventos de producto.");
     }
 
-    // Obtiene todos los productos
+    // Obtiene todos los productos con paginación
     @GetMapping
-    public List<ProductDTO> getAllProducts() {
-        return productRepository.findAll().stream()
-            .map(this::toDTO)
-            .collect(Collectors.toList());
+    public org.springframework.data.domain.Page<ProductDTO> getAllProducts(org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Product> page = productRepository.findAll(pageable);
+        return page.map(this::toDTO);
     }
 
     // Agrega un producto específico usando mensaje mockeado -> DESACTIVADO
