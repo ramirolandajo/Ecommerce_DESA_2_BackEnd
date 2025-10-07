@@ -10,14 +10,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
 import java.time.Instant;
+import java.time.Duration;
 import java.util.Map;
 
 @Component
 public class KeycloakClient {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakClient.class);
-    private final RestTemplate restTemplate = new RestTemplate();
+
+    // RestTemplate dedicado para token (con timeouts cortos)
+    private final RestTemplate restTemplate;
 
     @Value("${keycloak.token.url:}")
     private String tokenUrl;
@@ -26,14 +30,35 @@ public class KeycloakClient {
     @Value("${keycloak.client-secret:}")
     private String clientSecret;
 
+    @Value("${keycloak.token.maxAttempts:3}")
+    private int maxAttempts;
+    @Value("${keycloak.token.connectTimeoutMs:2000}")
+    private int connectTimeoutMs;
+    @Value("${keycloak.token.readTimeoutMs:5000}")
+    private int readTimeoutMs;
+
     private String cachedToken;
     private Instant tokenExpiry = Instant.EPOCH;
+
+    public KeycloakClient() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout((int) Duration.ofMillis(2000).toMillis());
+        factory.setReadTimeout((int) Duration.ofMillis(5000).toMillis());
+        this.restTemplate = new RestTemplate(factory);
+    }
 
     private Map<String, Object> requestToken() {
         if (tokenUrl == null || tokenUrl.isBlank() || clientId == null || clientId.isBlank()) {
             logger.warn("KeycloakClient no configurado (keycloak.token.url / client-id faltan). No se solicitará token.");
             return null;
         }
+        // Asegurar timeouts actualizados si se parametrizaron por properties
+        try {
+            var rf = (SimpleClientHttpRequestFactory) restTemplate.getRequestFactory();
+            rf.setConnectTimeout(connectTimeoutMs);
+            rf.setReadTimeout(readTimeoutMs);
+        } catch (Exception ignore) {}
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
@@ -46,9 +71,9 @@ public class KeycloakClient {
         return resp;
     }
 
-    private Map<String, Object> requestTokenWithRetries(int maxAttempts) {
+    private Map<String, Object> requestTokenWithRetries(int attempts) {
         int attempt = 0;
-        while (attempt < maxAttempts) {
+        while (attempt < attempts) {
             attempt++;
             try {
                 Map<String, Object> resp = requestToken();
@@ -56,8 +81,7 @@ public class KeycloakClient {
             } catch (Exception ex) {
                 logger.warn("Intento {} obtener token desde Keycloak falló: {}", attempt, ex.getMessage());
             }
-            // backoff simple entre intentos (200ms)
-            try { Thread.sleep(200L); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+            try { Thread.sleep(200L * attempt); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
         }
         return null;
     }
@@ -67,7 +91,7 @@ public class KeycloakClient {
             if (cachedToken != null && Instant.now().isBefore(tokenExpiry.minusSeconds(10))) {
                 return cachedToken;
             }
-            Map<String, Object> resp = requestTokenWithRetries(2);
+            Map<String, Object> resp = requestTokenWithRetries(maxAttempts);
             if (resp == null) return null;
             Object tokenObj = resp.get("access_token");
             Object expiresObj = resp.get("expires_in");
@@ -90,12 +114,11 @@ public class KeycloakClient {
     // Nuevo: método que devuelve token y expiresIn para uso por BackendTokenManager
     public synchronized TokenInfo getClientAccessTokenInfo() {
         try {
-            // Si el token está cacheado y no expiró
             if (cachedToken != null && Instant.now().isBefore(tokenExpiry.minusSeconds(10))) {
                 long remaining = tokenExpiry.getEpochSecond() - Instant.now().getEpochSecond();
                 return new TokenInfo(cachedToken, remaining);
             }
-            Map<String, Object> resp = requestTokenWithRetries(2);
+            Map<String, Object> resp = requestTokenWithRetries(maxAttempts);
             if (resp == null) return null;
             Object tokenObj = resp.get("access_token");
             Object expiresObj = resp.get("expires_in");
