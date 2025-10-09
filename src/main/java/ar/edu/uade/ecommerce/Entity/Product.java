@@ -29,8 +29,9 @@ public class Product {
     @Column
     private Float price;
 
-    @Column
     @ElementCollection
+    @CollectionTable(name = "product_media_src", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "media_src")
     private List<String> mediaSrc; // solo los links de las imágenes
 
     @Column

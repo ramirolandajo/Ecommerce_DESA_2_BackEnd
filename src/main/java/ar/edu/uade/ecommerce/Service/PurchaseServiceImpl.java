@@ -91,13 +91,7 @@ public class PurchaseServiceImpl implements PurchaseService {
         purchase.setStatus(Status.CONFIRMED);
         purchase.setDate(LocalDateTime.now()); // Setea la fecha de confirmación
         purchaseRepository.save(purchase);
-        try {
-            String json = objectMapper.writeValueAsString(purchase);
-            Event event = new Event("POST: Compra confirmada", json);
-            ecommerceEventService.emitRawEvent(event.getType(), json);
-        } catch (Exception e) {
-            logger.error("Error al confirmar compra y generar factura", e);
-        }
+        // Eliminado: la emisión del evento "POST: Compra confirmada" se realiza desde el controlador.
         logger.info("Compra confirmada. Estado actual: {}", purchase.getStatus());
         return purchase;
     }
