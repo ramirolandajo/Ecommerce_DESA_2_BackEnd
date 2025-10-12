@@ -25,8 +25,9 @@ public class ProductViewsDailyScheduler {
     // Emite el evento cada 2 minutos (cron por defecto) y permite override por property ventas.views.cron
     // Ejecuta el método una vez cada 24 horas (a las 00:00)
     // @Scheduled(cron = "0 0 0 * * *")
+    // Scheduled(cron = "${ventas.views.cron:0 */2 * * * *}")
 
-    @Scheduled(cron = "${ventas.views.cron:0 */2 * * * *}")
+    @Scheduled(cron = "0 0 0 * * *")
     public void emitDailyViewsEvent() {
         try {
             // Construcción del listado: [{id, nombre, productCode}, ...]

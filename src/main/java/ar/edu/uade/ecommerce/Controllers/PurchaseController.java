@@ -196,6 +196,8 @@ public class PurchaseController {
                         productDto.setDescription(item.getProduct().getDescription());
                         productDto.setPrice(item.getProduct().getPrice());
                         productDto.setMediaSrc(item.getProduct().getMediaSrc());
+                        // Nuevo: agregar productCode en el DTO de respuesta
+                        productDto.setProductCode(item.getProduct().getProductCode());
                         itemDto.setProduct(productDto);
                     }
                     itemDtos.add(itemDto);
