@@ -35,7 +35,7 @@ public class PurchaseWithCartDTO {
         private Float price;
         private Integer stock;
         private List<String> mediaSrc;
-        // Nuevo: incluir el código lógico del producto en las respuestas
         private Integer productCode;
     }
 }
+
