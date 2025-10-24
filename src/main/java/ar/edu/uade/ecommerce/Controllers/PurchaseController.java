@@ -183,7 +183,7 @@ public class PurchaseController {
             ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartDTO cartDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartDTO();
             cartDto.setId(purchase.getCart().getId());
             cartDto.setFinalPrice(purchase.getCart().getFinalPrice());
-            java.util.List<ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO> itemDtos = new java.util.ArrayList<>();
+            List<ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO> itemDtos = new java.util.ArrayList<>();
             if (purchase.getCart().getItems() != null) {
                 for (ar.edu.uade.ecommerce.Entity.CartItem item : purchase.getCart().getItems()) {
                     ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO itemDto = new ar.edu.uade.ecommerce.Entity.DTO.PurchaseWithCartDTO.CartItemDTO();
@@ -196,6 +196,7 @@ public class PurchaseController {
                         productDto.setDescription(item.getProduct().getDescription());
                         productDto.setPrice(item.getProduct().getPrice());
                         productDto.setMediaSrc(item.getProduct().getMediaSrc());
+                        productDto.setProductCode(item.getProduct().getProductCode());
                         itemDto.setProduct(productDto);
                     }
                     itemDtos.add(itemDto);
@@ -221,7 +222,7 @@ public class PurchaseController {
         if (cart == null) return m;
         m.put("cartId", cart.getId() != null ? Long.valueOf(cart.getId()) : null);
         m.put("finalPrice", cart.getFinalPrice());
-        java.util.List<Map<String, Object>> items = new java.util.ArrayList<>();
+        List<Map<String, Object>> items = new java.util.ArrayList<>();
         if (cart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem ci : cart.getItems()) {
                 Map<String, Object> it = new HashMap<>();

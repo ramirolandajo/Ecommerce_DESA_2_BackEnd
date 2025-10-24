@@ -19,7 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/product-views")
@@ -75,26 +77,27 @@ public class ProductViewController {
         Pageable pageable = PageRequest.of(page, size);
         Page<ProductViewResponseDTO> views = productViewServiceImpl.getProductViewsByUser(user, pageable);
 
-        // Construir el mensaje que se enviará a la API de Comunicación como objeto
-        List<java.util.Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
-        List<java.util.Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
-            java.util.Map<String,Object> m = new java.util.HashMap<>();
+        // Construir el mensaje como lista de productos simple
+        List<Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
+        List<Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
+            Map<String,Object> m = new HashMap<>();
             m.put("id", s.get("productId"));
             m.put("nombre", s.get("productTitle"));
-            m.put("productCode", s.get("productCode"));
+            Object code = s.get("productCode");
+            m.put("productCode", code != null ? String.valueOf(code) : null);
             return m;
         }).toList();
 
-        java.util.Map<String, Object> kafkaMessage = new java.util.LinkedHashMap<>();
-        kafkaMessage.put("userEmail", user.getEmail());
-        kafkaMessage.put("views", productsForEvent);
+        // Envolver en objeto {"views": [...] } para cumplir con el esquema del middleware
+        Map<String,Object> payload = new HashMap<>();
+        payload.put("views", productsForEvent);
+
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-            String jsonKafkaMessage = mapper.writeValueAsString(kafkaMessage);
-            logger.info("Mensaje que se enviaría por Kafka (JSON):\n{}", jsonKafkaMessage);
-            // Enviar al middleware con payload como objeto (no String)
-            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", kafkaMessage);
+            String jsonKafkaMessage = mapper.writeValueAsString(payload);
+            logger.info("[ViewsDaily][GET] Payload que se enviará por evento (objeto):\n{}", jsonKafkaMessage);
+            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", payload);
         } catch (JsonProcessingException e) {
             logger.error("Error al serializar el mensaje Kafka: {}", e.getMessage(), e);
         }
@@ -105,22 +108,25 @@ public class ProductViewController {
     @PostMapping("/emit-daily")
     @Transactional(readOnly = true)
     public ResponseEntity<String> emitDailyProductViewNow() {
-        // Reutiliza la misma lógica que antes tenía la tarea programada
-        List<java.util.Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
-        List<java.util.Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
-            java.util.Map<String,Object> m = new java.util.HashMap<>();
+        List<Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
+        List<Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
+            Map<String,Object> m = new HashMap<>();
             m.put("id", s.get("productId"));
             m.put("nombre", s.get("productTitle"));
-            m.put("productCode", s.get("productCode"));
+            Object code = s.get("productCode");
+            m.put("productCode", code != null ? String.valueOf(code) : null);
             return m;
         }).toList();
+
+        Map<String,Object> payload = new HashMap<>();
+        payload.put("views", productsForEvent);
+
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-            String json = mapper.writeValueAsString(productsForEvent);
-            // Enviar como lista (objeto), no como String
-            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", productsForEvent);
-            logger.info("Emisión manual de vista diaria enviada: {}", json);
+            String json = mapper.writeValueAsString(payload);
+            ecommerceEventService.emitRawEvent("GET: Vista diaria de productos", payload);
+            logger.info("Emisión manual de vista diaria enviada ({} ítems)", productsForEvent.size());
             return ResponseEntity.ok("Evento enviado");
         } catch (Exception ex) {
             logger.error("Error serializando/enviando resumen de product views: {}", ex.getMessage(), ex);

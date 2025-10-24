@@ -178,6 +178,22 @@ public class ProductController {
         return new ReviewResponse(product.getId(), product.getTitle(), promedio, reviewDTOs);
     }
 
+    //obtiene los reviews de un producto de un usuario
+    @GetMapping("/code/{productCode}/review/me")
+    public ReviewDTO getMyReview(@PathVariable Integer productCode) {
+        Product product = productRepository.findByProductCode(productCode);
+        if (product == null) throw new RuntimeException("Producto no encontrado por productCode=" + productCode);
+        // Obtener usuario autenticado
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) throw new RuntimeException("Usuario no autenticado");
+        String email = auth.getName();
+        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);
+        if (user == null) throw new RuntimeException("Usuario no encontrado");
+        Review review = reviewRepository.findByProductAndUser(product, user);
+        if (review == null) throw new RuntimeException("No has calificado/comentado este producto.");
+        return new ReviewDTO(review.getId(), review.getCalification(), review.getDescription());
+    }
+
     // Obtiene el promedio y listado de reviews de un producto
     @GetMapping("/{id}/reviews")
     public ReviewResponse getReviews(@PathVariable Integer id) {
@@ -358,7 +374,7 @@ public class ProductController {
         if (user == null) return java.util.Collections.emptyList();
         return favouriteProductsRepository.findAllByUser(user).stream()
             .map(fav -> {
-                ar.edu.uade.ecommerce.Entity.Product p = fav.getProduct();
+                Product p = fav.getProduct();
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
                 map.put("id", p.getId());
                 map.put("title", p.getTitle());

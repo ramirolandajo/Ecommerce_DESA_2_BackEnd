@@ -23,6 +23,8 @@ public class VentasInventoryEventDispatcher {
         switch (normalizedType) {
             case "put: actualizar stock" -> syncService.actualizarStock(msg.getPayload());
             case "post: agregar un producto" -> syncService.crearProducto(msg.getPayload());
+            // Alias que estaba faltando y llega desde Inventario
+            case "post: producto creado" -> syncService.crearProducto(msg.getPayload());
             case "patch: modificar un producto" -> syncService.modificarProducto(msg.getPayload());
             case "patch: producto desactivado" -> syncService.desactivarProducto(msg.getPayload());
             case "patch: producto activado" -> syncService.activarProducto(msg.getPayload());

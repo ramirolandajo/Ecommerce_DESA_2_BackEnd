@@ -292,8 +292,9 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void confirmProductStock(Cart cart) {
-        // Solo enviar el mensaje detallado por la API de Comunicación, no modificar el stock en la tabla product
-        sendKafkaEvent("StockConfirmed_CartPurchase", cart);
+        // No emitir evento extra (StockConfirmed_CartPurchase). El único evento a emitir será
+        // "POST: Compra confirmada" desde el controlador/servicio centralizado.
+        // Mantener este método por compatibilidad sin efectos colaterales.
     }
 
     @Override
