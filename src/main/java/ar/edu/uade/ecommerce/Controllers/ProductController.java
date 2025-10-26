@@ -210,31 +210,64 @@ public class ProductController {
 
     // Filtrado de productos por categoría, marca y rango de precio
     @PostMapping("/filter")
-    public List<ProductDTO> filterProducts(@RequestBody FilterProductRequest filterRequest) {
+    public org.springframework.data.domain.Page<ProductDTO> filterProducts(@RequestBody FilterProductRequest filterRequest) {
         List<Product> products = productRepository.findAll();
-        Long categoryId = filterRequest.getCategoryId();
-        Long brandId = filterRequest.getBrandId();
-        Float priceMin = filterRequest.getPriceMin();
-        Float priceMax = filterRequest.getPriceMax();
-        return products.stream()
+        // Filtrado
+        List<Product> filtered = products.stream()
             .filter(p -> {
                 boolean matches = true;
-                if (categoryId != null && (p.getCategories() == null || p.getCategories().stream().noneMatch(c -> c.getId().equals(categoryId.intValue())))) {
+                if (filterRequest.getPriceMin() != null && (p.getPrice() == null || p.getPrice() < filterRequest.getPriceMin())) {
                     matches = false;
                 }
-                if (brandId != null && (p.getBrand() == null || !p.getBrand().getId().equals(brandId.intValue()))) {
+                if (filterRequest.getPriceMax() != null && (p.getPrice() == null || p.getPrice() > filterRequest.getPriceMax())) {
                     matches = false;
                 }
-                if (priceMin != null && (p.getPrice() == null || p.getPrice() < priceMin)) {
-                    matches = false;
+                // Filtrado por múltiples brandCodes
+                if (filterRequest.getBrandCodes() != null && !filterRequest.getBrandCodes().isEmpty()) {
+                    if (p.getBrand() == null || !filterRequest.getBrandCodes().contains(p.getBrand().getBrandCode())) {
+                        matches = false;
+                    }
+                } else if (filterRequest.getBrandCode() != null) {
+                    if (p.getBrand() == null || !filterRequest.getBrandCode().equals(p.getBrand().getBrandCode())) {
+                        matches = false;
+                    }
                 }
-                if (priceMax != null && (p.getPrice() == null || p.getPrice() > priceMax)) {
-                    matches = false;
+                // Filtrado por múltiples categoryCodes
+                if (filterRequest.getCategoryCodes() != null && !filterRequest.getCategoryCodes().isEmpty()) {
+                    if (p.getCategories() == null || p.getCategories().stream().noneMatch(c -> filterRequest.getCategoryCodes().contains(c.getCategoryCode()))) {
+                        matches = false;
+                    }
+                } else if (filterRequest.getCategoryCode() != null) {
+                    if (p.getCategories() == null || p.getCategories().stream().noneMatch(c -> filterRequest.getCategoryCode().equals(c.getCategoryCode()))) {
+                        matches = false;
+                    }
                 }
                 return matches;
             })
-            .map(this::toDTO)
             .collect(Collectors.toList());
+        // Ordenamiento
+        if (filterRequest.getSortBy() != null) {
+            if ("price".equalsIgnoreCase(filterRequest.getSortBy())) {
+                if ("desc".equalsIgnoreCase(filterRequest.getSortOrder())) {
+                    filtered.sort((a, b) -> Float.compare(b.getPrice(), a.getPrice()));
+                } else {
+                    filtered.sort((a, b) -> Float.compare(a.getPrice(), b.getPrice()));
+                }
+            } else if ("relevance".equalsIgnoreCase(filterRequest.getSortBy())) {
+                if ("desc".equalsIgnoreCase(filterRequest.getSortOrder())) {
+                    filtered.sort((a, b) -> Float.compare(b.getCalification(), a.getCalification()));
+                } else {
+                    filtered.sort((a, b) -> Float.compare(a.getCalification(), b.getCalification()));
+                }
+            }
+        }
+        // Paginación manual
+        int page = filterRequest.getPage() != null ? filterRequest.getPage() : 0;
+        int size = filterRequest.getSize() != null ? filterRequest.getSize() : 20;
+        int start = page * size;
+        int end = Math.min(start + size, filtered.size());
+        List<ProductDTO> pageContent = filtered.subList(start, end).stream().map(this::toDTO).collect(Collectors.toList());
+        return new org.springframework.data.domain.PageImpl<>(pageContent, org.springframework.data.domain.PageRequest.of(page, size), filtered.size());
     }
 
     // Obtener producto por id y productos relacionados

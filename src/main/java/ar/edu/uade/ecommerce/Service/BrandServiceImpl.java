@@ -5,6 +5,7 @@ import ar.edu.uade.ecommerce.Repository.BrandRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -67,5 +68,18 @@ public class BrandServiceImpl implements BrandService {
             brand.setActive(true);
         }
         return brandRepository.save(brand);
+    }
+
+    @Override
+    public Collection<Object> getAllActiveBrands() {
+        return brandRepository.findByActiveTrue().stream()
+                .map(b -> {
+                    java.util.Map<String, Object> dto = new java.util.HashMap<>();
+                    dto.put("id", b.getId());
+                    dto.put("name", b.getName());
+                    dto.put("brandCode", b.getBrandCode());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

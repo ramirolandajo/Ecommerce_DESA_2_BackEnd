@@ -8,5 +8,5 @@ public interface CategoryService {
     List<Category> getAllCategories();
     void deleteAllCategories();
     Category saveCategory(Category category);
+    List<Category> getAllActiveCategories();
 }
-
