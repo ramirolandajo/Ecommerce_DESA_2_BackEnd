@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,7 +58,7 @@ public class BrandController {
     public BrandDTO addBrand(@RequestBody BrandDTO dto) {
         Brand existing = brandService.getAllBrands().stream()
                 .filter(b -> (b.getName() == null && dto.getName() == null) ||
-                             (b.getName() != null && dto.getName() != null && b.getName().equalsIgnoreCase(dto.getName())))
+                        (b.getName() != null && dto.getName() != null && b.getName().equalsIgnoreCase(dto.getName())))
                 .findFirst()
                 .orElse(null);
         if (existing != null) {
@@ -110,5 +111,11 @@ public class BrandController {
         }
         Brand updated = brandService.saveBrand(brand);
         return new BrandDTO(Long.valueOf(updated.getId()), updated.getName(), updated.isActive());
+    }
+
+    //get de todas las brands activas devolviendo nombre id brandcode y solo las activas
+    @GetMapping("/all")
+    public List<Object> getAllActiveBrands() {
+        return new ArrayList<>(brandService.getAllActiveBrands());
     }
 }

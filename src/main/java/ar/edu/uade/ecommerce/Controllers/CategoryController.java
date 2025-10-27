@@ -25,8 +25,8 @@ public class CategoryController {
 
     @GetMapping
     public List<CategoryDTO> getAllCategories() {
-        return categoryService.getAllCategories().stream()
-                .map(c -> new CategoryDTO(toLongId(c.getId()), c.getName(), c.isActive()))
+        return categoryService.getAllActiveCategories().stream()
+                .map(c -> new CategoryDTO(toLongId(c.getId()), c.getName(), c.isActive(), c.getCategoryCode()))
                 .collect(Collectors.toList());
     }
 
