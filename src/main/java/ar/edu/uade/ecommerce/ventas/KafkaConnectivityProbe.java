@@ -1,57 +1,65 @@
 package ar.edu.uade.ecommerce.ventas;
 
+import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.stereotype.Component;
 
-import jakarta.annotation.PostConstruct;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Properties;
 
 @Component("kafkaConnectivityProbe")
+@ConditionalOnProperty(
+        value = "ventas.kafka.probe.enabled",
+        havingValue = "true",
+        matchIfMissing = true   // keep current behavior unless you turn it off
+)
 public class KafkaConnectivityProbe {
+
     private static final Logger log = LoggerFactory.getLogger(KafkaConnectivityProbe.class);
 
-    private final Environment env;
+    private final KafkaAdmin kafkaAdmin;
 
-    public KafkaConnectivityProbe(Environment env) {
-        this.env = env;
+    public KafkaConnectivityProbe(KafkaAdmin kafkaAdmin) {
+        this.kafkaAdmin = kafkaAdmin;
     }
 
     @PostConstruct
     public void probe() {
-        String bootstrap = env.getProperty("spring.kafka.bootstrap-servers", "localhost:9092");
-        int maxAttempts = 3; // fijo a 3 intentos
-        long[] backoffMs = new long[]{500L, 1000L, 1500L};
-
+        // Reuse Spring’s fully-merged admin properties (includes SASL/TLS if configured)
         Properties props = new Properties();
-        props.put("bootstrap.servers", bootstrap);
-        int attempt = 0;
+        for (Map.Entry<String, Object> e : kafkaAdmin.getConfigurationProperties().entrySet()) {
+            props.put(e.getKey(), e.getValue());
+        }
+
+        final String bootstrap = String.valueOf(props.getOrDefault("bootstrap.servers", "localhost:9092"));
+        final int maxAttempts = 3;
+        final long[] backoffMs = new long[]{500L, 1000L, 1500L};
+
         Exception last = null;
-        while (attempt < maxAttempts) {
-            attempt++;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try (AdminClient admin = AdminClient.create(props)) {
                 log.info("[KafkaConnectivityProbe] Intento {}/{} conectando a {}...", attempt, maxAttempts, bootstrap);
-                // listTopics con timeout pequeño para no bloquear
-                admin.listTopics(new ListTopicsOptions().timeoutMs((int) Duration.ofSeconds(2).toMillis()))
+                admin.listTopics(new ListTopicsOptions().timeoutMs((int) Duration.ofSeconds(3).toMillis()))
                         .names().get();
                 log.info("[KafkaConnectivityProbe] Conexión a Kafka OK en intento {}.", attempt);
-                return; // éxito
+                return;
             } catch (Exception ex) {
                 last = ex;
                 log.warn("[KafkaConnectivityProbe] Falló intento {}: {}", attempt, ex.getMessage());
                 if (attempt < maxAttempts) {
-                    try { Thread.sleep(backoffMs[Math.min(attempt - 1, backoffMs.length - 1)]); } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
+                    try { Thread.sleep(backoffMs[Math.min(attempt - 1, backoffMs.length - 1)]); }
+                    catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
                 }
             }
         }
-        String msg = String.format("No se pudo conectar a Kafka en %d intentos (bootstrap=%s). Abortando arranque.", maxAttempts, bootstrap);
+        String msg = String.format("No se pudo conectar a Kafka en %d intentos (bootstrap=%s). Abortando arranque.",
+                maxAttempts, bootstrap);
         log.error("[KafkaConnectivityProbe] {} Causa: {}", msg, last != null ? last.toString() : "desconocida");
         throw new IllegalStateException(msg, last);
     }
