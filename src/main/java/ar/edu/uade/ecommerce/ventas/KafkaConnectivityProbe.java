@@ -11,47 +11,48 @@ import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Properties;
 
-@Component
-public class KafkaConnectivytyProbe {
+@Component("kafkaConnectivityProbe")
+public class KafkaConnectivityProbe {
+    private static final Logger log = LoggerFactory.getLogger(KafkaConnectivityProbe.class);
 
-    private static final Logger log = LoggerFactory.getLogger(KafkaStartupVerifier.class);
+    private final Environment env;
 
-    private final KafkaAdmin kafkaAdmin;
-
-    // Spring Boot autowires the KafkaAdmin bean automatically using all your spring.kafka.* props
-    public KafkaStartupVerifier(KafkaAdmin kafkaAdmin) {
-        this.kafkaAdmin = kafkaAdmin;
+    public KafkaConnectivityProbe(Environment env) {
+        this.env = env;
     }
 
     @PostConstruct
-    public void verifyConnectivityOnStartup() {
-        log.info("[KafkaStartup] Verificando conexión a Kafka...");
+    public void probe() {
+        String bootstrap = env.getProperty("spring.kafka.bootstrap-servers", "localhost:9092");
+        int maxAttempts = 3; // fijo a 3 intentos
+        long[] backoffMs = new long[]{500L, 1000L, 1500L};
 
-        Map<String, Object> cfg = new HashMap<>(kafkaAdmin.getConfigurationProperties());
-        // Add short timeouts for startup check
-        cfg.put("request.timeout.ms", 5000);
-        cfg.put("retries", 0);
-
-        Exception lastEx = null;
-
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            try (AdminClient admin = AdminClient.create(cfg)) {
-                admin.describeCluster().nodes().get(5000, TimeUnit.MILLISECONDS);
-                log.info("[KafkaStartup] ✅ Conexión a Kafka OK");
-                return;
+        Properties props = new Properties();
+        props.put("bootstrap.servers", bootstrap);
+        int attempt = 0;
+        Exception last = null;
+        while (attempt < maxAttempts) {
+            attempt++;
+            try (AdminClient admin = AdminClient.create(props)) {
+                log.info("[KafkaConnectivityProbe] Intento {}/{} conectando a {}...", attempt, maxAttempts, bootstrap);
+                // listTopics con timeout pequeño para no bloquear
+                admin.listTopics(new ListTopicsOptions().timeoutMs((int) Duration.ofSeconds(2).toMillis()))
+                        .names().get();
+                log.info("[KafkaConnectivityProbe] Conexión a Kafka OK en intento {}.", attempt);
+                return; // éxito
             } catch (Exception ex) {
-                lastEx = ex;
-                log.warn("[KafkaStartup] Falló intento {}/3: {}", attempt, ex.toString());
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    break;
+                last = ex;
+                log.warn("[KafkaConnectivityProbe] Falló intento {}: {}", attempt, ex.getMessage());
+                if (attempt < maxAttempts) {
+                    try { Thread.sleep(backoffMs[Math.min(attempt - 1, backoffMs.length - 1)]); } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
                 }
             }
         }
-
-        log.error("[KafkaStartup] ❌ No se pudo conectar a Kafka tras 3 intentos", lastEx);
-        throw new IllegalStateException("Kafka no disponible al iniciar", lastEx);
+        String msg = String.format("No se pudo conectar a Kafka en %d intentos (bootstrap=%s). Abortando arranque.", maxAttempts, bootstrap);
+        log.error("[KafkaConnectivityProbe] {} Causa: {}", msg, last != null ? last.toString() : "desconocida");
+        throw new IllegalStateException(msg, last);
     }
 }
