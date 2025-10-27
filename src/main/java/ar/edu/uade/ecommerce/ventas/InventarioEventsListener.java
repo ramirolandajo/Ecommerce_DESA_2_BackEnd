@@ -44,7 +44,6 @@ public class InventarioEventsListener {
 
     @KafkaListener(
             topics = "${inventario.kafka.topic:inventario}",
-            containerFactory = "ventasKafkaListenerContainerFactory",
             concurrency = "${inventario.kafka.concurrency:1}"
     )
     public void onMessage(
