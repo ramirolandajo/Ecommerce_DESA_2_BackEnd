@@ -4,6 +4,7 @@ import ar.edu.uade.ecommerce.messaging.ECommerceEventService;
 
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,9 @@ public class TestEventController {
     @Autowired
     private ECommerceEventService ecommerceEventService;
 
+    @Value("${communication.intermediary.url}")
+    private String middlewareURI;
+
     @PostMapping("/send-event")
     public ResponseEntity<?> sendEvent(@RequestBody Map<String, Object> body) {
         String type = (String) body.getOrDefault("type", "TEST_EVENT");
@@ -32,7 +36,7 @@ public class TestEventController {
     public ResponseEntity<?>pingToMiddleware() throws IOException, InterruptedException{
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request =
-         HttpRequest.newBuilder().uri(URI.create("http://middleware-prod-env.eba-ec2cs4xf.sa-east-1.elasticbeanstalk.com/api/hello"))
+         HttpRequest.newBuilder().uri(URI.create(middlewareURI))
                     .header("Accept", "application/json")
                     .GET().build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
