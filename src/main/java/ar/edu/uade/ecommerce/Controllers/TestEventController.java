@@ -36,7 +36,7 @@ public class TestEventController {
     public ResponseEntity<?>pingToMiddleware() throws IOException, InterruptedException{
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request =
-         HttpRequest.newBuilder().uri(URI.create(middlewareURI))
+         HttpRequest.newBuilder().uri(URI.create(middlewareURI + "/api/hello"))
                     .header("Accept", "application/json")
                     .GET().build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
