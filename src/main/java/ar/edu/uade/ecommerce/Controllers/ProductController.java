@@ -415,6 +415,7 @@ public class ProductController {
                 map.put("mediaSrc", p.getMediaSrc());
                 map.put("price", p.getPrice());
                 map.put("stock", p.getStock());
+                map.put("productCode", fav.getProductCode());
                 return map;
             })
             .toList();

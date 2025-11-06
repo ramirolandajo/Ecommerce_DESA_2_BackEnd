@@ -22,8 +22,7 @@ public class VentasEventsListener {
     }
 
     @KafkaListener(
-            topics = "${ventas.kafka.topic:ventas.events}",
-            containerFactory = "ventasKafkaListenerContainerFactory"
+            topics = "${ventas.kafka.topic:ventas.events}"
     )
     public void onMessage(@Payload EventMessage msg) {
         if (msg == null) {
