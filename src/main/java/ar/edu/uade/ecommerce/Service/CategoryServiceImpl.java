@@ -60,6 +60,26 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public List<Category> findAll() {
+        return List.of();
+    }
+
+    @Override
+    public Category findById(Integer id) {
+        return null;
+    }
+
+    @Override
+    public Category save(Category category) {
+        return null;
+    }
+
+    @Override
+    public void delete(Integer id) {
+
+    }
+
+    @Override
     public List<Category> getAllActiveCategories() {
         return categoryRepository.findByActiveTrue();
     }

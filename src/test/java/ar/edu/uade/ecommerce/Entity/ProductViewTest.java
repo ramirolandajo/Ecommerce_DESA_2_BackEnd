@@ -4,31 +4,34 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ProductViewTest {
     @Test
-    void testProductViewConstructorAndGetters() {
-        User user = new User();
-        Product product = new Product();
+    void constructorAndGettersWork() {
+        User u = new User();
+        u.setId(2);
+        Product p = new Product();
+        p.setId(3);
         LocalDateTime now = LocalDateTime.now();
-        ProductView view = new ProductView(user, product, now);
-        assertEquals(user, view.getUser());
-        assertEquals(product, view.getProduct());
-        assertEquals(now, view.getViewedAt());
+        ProductView pv = new ProductView(u, p, now);
+        assertEquals(u, pv.getUser());
+        assertEquals(p, pv.getProduct());
+        assertEquals(now, pv.getViewedAt());
     }
 
     @Test
-    void testSetters() {
-        ProductView view = new ProductView();
-        User user = new User();
-        Product product = new Product();
-        LocalDateTime now = LocalDateTime.now();
-        view.setUser(user);
-        view.setProduct(product);
-        view.setViewedAt(now);
-        assertEquals(user, view.getUser());
-        assertEquals(product, view.getProduct());
-        assertEquals(now, view.getViewedAt());
+    void settersWork() {
+        ProductView pv = new ProductView();
+        User u = new User(); u.setId(9);
+        Product p = new Product(); p.setId(11);
+        LocalDateTime t = LocalDateTime.of(2020,1,1,0,0);
+        pv.setUser(u);
+        pv.setProduct(p);
+        pv.setViewedAt(t);
+        assertEquals(u, pv.getUser());
+        assertEquals(p, pv.getProduct());
+        assertEquals(t, pv.getViewedAt());
     }
 }
+

@@ -12,4 +12,7 @@ public interface AuthService {
     void saveUser(User user);
 
     void resendVerificationToken(User existingUser);
+    boolean verifyToken(String token, String email);
+    User activateAccount(String token, String email);
+    void removeTokensForUser(Integer userId);
 }

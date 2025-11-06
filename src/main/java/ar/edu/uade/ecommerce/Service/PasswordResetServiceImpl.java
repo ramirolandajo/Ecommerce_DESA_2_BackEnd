@@ -50,11 +50,17 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         Optional<Token> tokenOpt = tokenRepository.findByToken(tokenStr);
         if (tokenOpt.isEmpty()) return false;
         Token token = tokenOpt.get();
-        return token.getUser().getId().equals(user.getId()) && token.getExpirationDate().after(new Date());
+        Integer tokenUserId = token.getUser() != null ? token.getUser().getId() : null;
+        Integer userId = user.getId();
+        if (!java.util.Objects.equals(tokenUserId, userId)) {
+            return false;
+        }
+        Date exp = token.getExpirationDate();
+        return exp != null && exp.after(new Date());
     }
 
-    @Override
     @Transactional
+    @Override
     public void changePassword(String email, String tokenStr, String newPassword) {
         if (newPassword == null || newPassword.trim().isEmpty()) {
             throw new IllegalArgumentException("La nueva contraseña no puede ser nula o vacía");

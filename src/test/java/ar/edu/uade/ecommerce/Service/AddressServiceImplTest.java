@@ -70,6 +70,7 @@ public class AddressServiceImplTest {
         Address address1 = new Address();
         Address address2 = new Address();
         user.setAddresses(Arrays.asList(address1, address2));
+        when(addressRepository.findByUser(user)).thenReturn(Arrays.asList(address1, address2));
         List<Address> result = addressService.getAddressesByUser(user);
         assertEquals(2, result.size());
         assertTrue(result.contains(address1));
@@ -84,14 +85,14 @@ public class AddressServiceImplTest {
         assertTrue(result.isEmpty());
     }
 
-    @Test
+   @Test
     void testDeleteAddress_addressExistsAndBelongsToUser() {
         User user = new User();
         user.setId(1);
         Address address = new Address();
         address.setId(10);
         address.setUser(user);
-        when(addressRepository.findById(10)).thenReturn(Optional.of(address));
+        lenient().when(addressRepository.findById(10)).thenReturn(Optional.of(address));
         addressService.deleteAddress(10, user);
         verify(addressRepository).deleteById(10);
     }

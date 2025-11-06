@@ -1,6 +1,7 @@
 package ar.edu.uade.ecommerce.Service;
 
 import ar.edu.uade.ecommerce.Entity.Address;
+import ar.edu.uade.ecommerce.Entity.User;
 
 import java.util.List;
 

@@ -49,6 +49,7 @@ public class PurchaseServiceImpl implements PurchaseService {
             // Avisar por la API de Comunicación que se debe reservar el stock
             try {
                 String json = objectMapper.writeValueAsString(purchase);
+                if (json == null) json = "{}";
                 Event event = new Event("ReserveStock", json);
                 ecommerceEventService.emitRawEvent(event.getType(), json);
             } catch (Exception e) {
@@ -140,6 +141,7 @@ public class PurchaseServiceImpl implements PurchaseService {
                     payload.put("user", userMap);
                 }
                 String json = objectMapper.writeValueAsString(payload);
+                if (json == null) json = "{}";
                 ecommerceEventService.emitRawEvent("ReleaseStock", json);
             } catch (Exception e) {
                 logger.error("Error al liberar reserva", e);

@@ -32,7 +32,10 @@ public class ProductViewServiceImpl {
 
     public ProductViewResponseDTO toDTO(ProductView view) {
         Product product = view.getProduct();
-        List<String> categories = product.getCategories().stream().map(c -> c.getName()).collect(Collectors.toList());
+        // Manejar categories == null para evitar NPE
+        List<String> categories = (product.getCategories() == null)
+                ? java.util.Collections.emptyList()
+                : product.getCategories().stream().map(c -> c.getName()).collect(Collectors.toList());
         String brand = product.getBrand() != null ? product.getBrand().getName() : null;
         return new ProductViewResponseDTO(
                 view.getId(),

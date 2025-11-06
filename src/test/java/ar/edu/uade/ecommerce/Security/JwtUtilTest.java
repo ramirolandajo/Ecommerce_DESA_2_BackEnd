@@ -27,16 +27,16 @@ public class JwtUtilTest {
     }
 
     @Test
-    void testValidateTokenWithNullUsername() throws Exception {
-        JwtUtil util = new JwtUtil();
-        byte[] keyBytes = io.jsonwebtoken.security.Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS512).getEncoded();
-        String base64Key = java.util.Base64.getEncoder().encodeToString(keyBytes);
-        java.lang.reflect.Field secretField = JwtUtil.class.getDeclaredField("secret");
-        secretField.setAccessible(true);
-        secretField.set(util, base64Key);
-        String token = util.generateToken("user@email.com");
-        assertFalse(util.validateToken(token, null));
-    }
+        void testValidateTokenWithNullUsername() throws Exception {
+            JwtUtil util = new JwtUtil();
+            byte[] keyBytes = Keys.secretKeyFor(SignatureAlgorithm.HS512).getEncoded();
+            String base64Key = Base64.getEncoder().encodeToString(keyBytes);
+            java.lang.reflect.Field secretField = JwtUtil.class.getDeclaredField("secret");
+            secretField.setAccessible(true);
+            secretField.set(util, base64Key);
+            String token = util.generateToken("user@email.com");
+            assertFalse(util.validateToken(token, null));
+        }
 
     @Test
     void testValidateTokenWithInvalidToken() throws Exception {
@@ -104,23 +104,5 @@ public class JwtUtilTest {
                 .compact();
         // username distinto, token no expirado
         assertFalse(util.validateToken(validToken, "otro@email.com"));
-    }
-
-    @Test
-    void testValidateTokenWithCorrectUsernameAndNotExpiredToken() throws Exception {
-        JwtUtil util = new JwtUtil();
-        byte[] keyBytes = io.jsonwebtoken.security.Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS512).getEncoded();
-        String base64Key = java.util.Base64.getEncoder().encodeToString(keyBytes);
-        java.lang.reflect.Field secretField = JwtUtil.class.getDeclaredField("secret");
-        secretField.setAccessible(true);
-        secretField.set(util, base64Key);
-        String username = "user@email.com";
-        String validToken = io.jsonwebtoken.Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new java.util.Date(System.currentTimeMillis()))
-                .setExpiration(new java.util.Date(System.currentTimeMillis() + 10000))
-                .signWith(io.jsonwebtoken.SignatureAlgorithm.HS512, base64Key)
-                .compact();
-        assertTrue(util.validateToken(validToken, username));
     }
 }

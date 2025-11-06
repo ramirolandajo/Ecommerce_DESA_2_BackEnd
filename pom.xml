@@ -32,6 +32,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Skip tests (temporarily) to avoid compilation failures on test code that depends on removed mocks -->
         <maven.test.skip>true</maven.test.skip>
+        <!-- Version del agente de ByteBuddy utilizada por Mockito para inline-mock-maker -->
+        <bytebuddy.agent.version>1.17.6</bytebuddy.agent.version>
     </properties>
     <dependencies>
 
@@ -135,12 +137,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.15.2</version>
@@ -150,6 +146,14 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+        </dependency>
+
+        <!-- Agente de ByteBuddy para ejecutarlo como -javaagent en surefire/failsafe -->
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>${bytebuddy.agent.version}</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
@@ -171,6 +175,21 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+
+            <!-- Ejecutar tests con el agente de Mockito/ByteBuddy para evitar self-attach -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                    <argLine>
+                        -javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${bytebuddy.agent.version}/byte-buddy-agent-${bytebuddy.agent.version}.jar
+                        -XX:+EnableDynamicAgentLoading
+                    </argLine>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

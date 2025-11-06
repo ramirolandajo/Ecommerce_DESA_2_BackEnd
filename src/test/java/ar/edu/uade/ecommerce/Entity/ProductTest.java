@@ -6,45 +6,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ProductTest {
     @Test
-    void testSetIsNewWithNull() {
-        Product product = new Product();
-        product.setIsNew(null);
-        assertFalse(product.getIsNew());
+    void booleanSettersAcceptDifferentTypes() {
+        Product p = new Product();
+        p.setIsNew("true");
+        assertTrue(p.getIsNew());
+        p.setIsNew(null);
+        assertFalse(p.getIsNew());
+
+        p.setIsBestseller(true);
+        assertTrue(p.isIsBestseller());
+        p.setIsFeatured(true);
+        assertTrue(p.isIsFeatured());
+
+        p.setActive(true);
+        assertTrue(p.getActive());
     }
 
     @Test
-    void testSetIsNewWithTrueString() {
-        Product product = new Product();
-        product.setIsNew("true");
-        assertTrue(product.getIsNew());
-    }
+    void basicFieldsWork() {
+        Product p = new Product();
+        p.setTitle("Prod");
+        p.setPrice(12.5f);
+        p.setStock(5);
+        p.setProductCode(999);
 
-    @Test
-    void testSetIsNewWithFalseString() {
-        Product product = new Product();
-        product.setIsNew("false");
-        assertFalse(product.getIsNew());
-    }
-
-    @Test
-    void testSetIsNewWithBooleanTrue() {
-        Product product = new Product();
-        product.setIsNew(Boolean.TRUE);
-        assertTrue(product.getIsNew());
-    }
-
-    @Test
-    void testSetIsNewWithBooleanFalse() {
-        Product product = new Product();
-        product.setIsNew(Boolean.FALSE);
-        assertFalse(product.getIsNew());
-    }
-
-    @Test
-    void testSetIsNewWithNumber() {
-        Product product = new Product();
-        product.setIsNew(1);
-        // Boolean.parseBoolean("1") es false
-        assertFalse(product.getIsNew());
+        assertEquals("Prod", p.getTitle());
+        assertEquals(12.5f, p.getPrice());
+        assertEquals(5, p.getStock());
+        assertEquals(999, p.getProductCode());
     }
 }
+

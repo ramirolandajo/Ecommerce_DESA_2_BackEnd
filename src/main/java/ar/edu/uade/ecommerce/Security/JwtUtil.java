@@ -39,7 +39,22 @@ public class JwtUtil {
         }
     }
 
+    // Nuevo método: inicialización perezosa para soportar tests que establecen el campo `secret`
+    private synchronized void ensureInitialized() {
+        if (enabled) return;
+        if (secret != null && !secret.isBlank()) {
+            try {
+                signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+                enabled = true;
+            } catch (Exception ex) {
+                enabled = false;
+            }
+        }
+    }
+
     public String generateToken(String username) {
+        // Soportar inicialización perezosa en entornos de test donde @PostConstruct no se ejecutó
+        ensureInitialized();
         if (!enabled) throw new IllegalStateException("JWT is not configured (jwt.secret missing or invalid)");
         return Jwts.builder()
                 .setSubject(username)
@@ -59,6 +74,8 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token, String username) {
+        // permitir inicializar si es necesario
+        ensureInitialized();
         if (!enabled) return false;
         String extractedUsername = extractUsername(token);
         if (extractedUsername == null || username == null) return false;
@@ -72,6 +89,8 @@ public class JwtUtil {
     }
 
     private Claims getClaims(String token) {
+        // asegurar inicialización también aquí
+        ensureInitialized();
         if (!enabled) return null;
         try {
             return Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token).getBody();

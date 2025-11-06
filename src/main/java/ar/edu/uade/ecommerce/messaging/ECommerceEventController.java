@@ -13,8 +13,13 @@ public class ECommerceEventController {
     @PostMapping("/events")
     @ResponseStatus(HttpStatus.OK)
     public void receiveEvent(@RequestBody CoreEvent event, @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        // Evitar NPE si event es null
+        if (event == null) {
+            logger.warn("Evento inválido recibido: null");
+            return;
+        }
         logger.info("Evento recibido desde API de Comunicación/Core: type='{}' originModule='{}' authHeader='{}'", event.type, event.originModule, authHeader);
-        if (event == null || event.type == null) {
+        if (event.type == null) {
             logger.warn("Evento inválido recibido: {}", event);
             return;
         }
@@ -59,4 +64,3 @@ public class ECommerceEventController {
         // TODO: implementar lógica para sync de marcas y categorías
     }
 }
-
