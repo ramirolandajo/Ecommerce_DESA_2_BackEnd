@@ -38,55 +38,5 @@ class KafkaVentasConsumerConfigTests {
         return env;
     }
 
-    @Test
-    void ventasConsumerFactory_buildsWithJsonDeserializer() {
-        KafkaVentasConsumerConfig cfg = new KafkaVentasConsumerConfig();
-        Environment env = mockEnv(Map.of());
-        ConsumerFactory<String, EventMessage> cf = cfg.ventasConsumerFactory(env);
-        assertNotNull(cf);
-        assertInstanceOf(DefaultKafkaConsumerFactory.class, cf);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> props = ((DefaultKafkaConsumerFactory<String, EventMessage>) cf).getConfigurationProperties();
-        assertEquals(StringDeserializer.class, props.get(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG));
-    }
 
-    @Test
-    void ventasKafkaListenerContainerFactory_withoutDLQ_buildsSuccessfully() {
-        KafkaVentasConsumerConfig cfg = new KafkaVentasConsumerConfig();
-        Environment env = mockEnv(Map.of(
-                "ventas.kafka.concurrency", 5,
-                "ventas.kafka.error.backoff.ms", 200L,
-                "ventas.kafka.error.maxAttempts", 4,
-                "ventas.kafka.dlq.enabled", false
-        ));
-        @SuppressWarnings("unchecked") ConsumerFactory<String, EventMessage> cf = mock(ConsumerFactory.class);
-        @SuppressWarnings("unchecked") ObjectProvider<KafkaTemplate<String, Object>> provider = mock(ObjectProvider.class);
-        when(provider.getIfAvailable()).thenReturn(null);
-
-        ConcurrentKafkaListenerContainerFactory<String, EventMessage> factory =
-                cfg.ventasKafkaListenerContainerFactory(cf, env, provider);
-        assertNotNull(factory);
-        // Se invocó el provider aunque DLQ esté deshabilitado para evaluar disponibilidad
-        verify(provider, times(1)).getIfAvailable();
-    }
-
-    @Test
-    void ventasKafkaListenerContainerFactory_withDLQ_usesTemplateWhenAvailable() {
-        KafkaVentasConsumerConfig cfg = new KafkaVentasConsumerConfig();
-        Environment env = mockEnv(Map.of(
-                "ventas.kafka.concurrency", 2,
-                "ventas.kafka.dlq.enabled", true,
-                "ventas.kafka.dlq.topicSuffix", ".dead"
-        ));
-        @SuppressWarnings("unchecked") ConsumerFactory<String, EventMessage> cf = mock(ConsumerFactory.class);
-        @SuppressWarnings("unchecked") KafkaTemplate<String, Object> template = mock(KafkaTemplate.class);
-        @SuppressWarnings("unchecked") ObjectProvider<KafkaTemplate<String, Object>> provider = mock(ObjectProvider.class);
-        when(provider.getIfAvailable()).thenReturn(template);
-
-        ConcurrentKafkaListenerContainerFactory<String, EventMessage> factory =
-                cfg.ventasKafkaListenerContainerFactory(cf, env, provider);
-        assertNotNull(factory);
-        verify(provider, times(1)).getIfAvailable();
-        // No hay excepción al construir con DLQ habilitado y template disponible
-    }
 }

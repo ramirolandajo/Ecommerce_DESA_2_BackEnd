@@ -44,7 +44,8 @@ public class InventarioEventsListener {
 
     @KafkaListener(
             topics = "${inventario.kafka.topic:inventario}",
-            concurrency = "${inventario.kafka.concurrency:1}"
+            concurrency = "${inventario.kafka.concurrency:1}",
+            groupId = "${inventario.kafka.group-id:inventario-ms}"
     )
     public void onMessage(
             @Payload EventMessage msg,
