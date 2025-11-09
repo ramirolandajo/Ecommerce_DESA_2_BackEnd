@@ -81,7 +81,6 @@ public class ProductViewController {
         List<Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
         List<Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
             Map<String,Object> m = new HashMap<>();
-            m.put("id", s.get("productId"));
             m.put("nombre", s.get("productTitle"));
             Object code = s.get("productCode");
             m.put("productCode", code != null ? String.valueOf(code) : null);
@@ -111,7 +110,6 @@ public class ProductViewController {
         List<Map<String,Object>> summaries = productViewServiceImpl.getAllViewsSummary();
         List<Map<String,Object>> productsForEvent = summaries.stream().map(s -> {
             Map<String,Object> m = new HashMap<>();
-            m.put("id", s.get("productId"));
             m.put("nombre", s.get("productTitle"));
             Object code = s.get("productCode");
             m.put("productCode", code != null ? String.valueOf(code) : null);

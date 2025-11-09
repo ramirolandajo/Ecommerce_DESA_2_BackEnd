@@ -419,7 +419,6 @@ public class ProductController {
             .map(fav -> {
                 Product p = fav.getProduct();
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
-                map.put("id", p.getId());
                 map.put("title", p.getTitle());
                 map.put("description", p.getDescription());
                 map.put("mediaSrc", p.getMediaSrc());

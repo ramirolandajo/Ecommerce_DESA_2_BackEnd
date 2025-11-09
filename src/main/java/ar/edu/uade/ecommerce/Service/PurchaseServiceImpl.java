@@ -133,10 +133,8 @@ public class PurchaseServiceImpl implements PurchaseService {
                 // Armar un payload seguro a partir de la purchase cargada (cart + user ya están fetch)
                 java.util.Map<String, Object> payload = new java.util.HashMap<>();
                 payload.put("purchaseId", purchase.getId());
-                payload.put("cartId", purchase.getCart() != null ? purchase.getCart().getId() : null);
                 if (purchase.getCart() != null && purchase.getCart().getUser() != null) {
                     java.util.Map<String, Object> userMap = new java.util.HashMap<>();
-                    userMap.put("id", purchase.getCart().getUser().getId());
                     userMap.put("email", purchase.getCart().getUser().getEmail());
                     payload.put("user", userMap);
                 }

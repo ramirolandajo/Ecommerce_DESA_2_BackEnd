@@ -123,7 +123,6 @@ public class ECommerceEventService {
     public void emitAddFavorite(String productCode, Long id, String nombre) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("productCode", productCode);
-        payload.put("id", id);
         payload.put("nombre", nombre);
         ensureBackendTokenAvailable("POST: Producto agregado a favoritos");
         // Persistir primero
@@ -136,7 +135,6 @@ public class ECommerceEventService {
     public void emitRemoveFavorite(String productCode, Long id, String nombre) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("productCode", productCode);
-        payload.put("id", id);
         payload.put("nombre", nombre);
         ensureBackendTokenAvailable("DELETE: Producto quitado de favoritos");
         // Persistir primero

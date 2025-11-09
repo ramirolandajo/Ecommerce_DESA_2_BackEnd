@@ -211,7 +211,6 @@ public class PurchaseController {
     private Map<String, Object> mapUser(User user) {
         Map<String, Object> m = new HashMap<>();
         if (user == null) return m;
-        m.put("id", user.getId() != null ? Long.valueOf(user.getId()) : null);
         m.put("name", user.getName());
         m.put("email", user.getEmail());
         return m;
@@ -220,13 +219,11 @@ public class PurchaseController {
     private Map<String, Object> mapCart(ar.edu.uade.ecommerce.Entity.Cart cart) {
         Map<String, Object> m = new HashMap<>();
         if (cart == null) return m;
-        m.put("cartId", cart.getId() != null ? Long.valueOf(cart.getId()) : null);
         m.put("finalPrice", cart.getFinalPrice());
         List<Map<String, Object>> items = new java.util.ArrayList<>();
         if (cart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem ci : cart.getItems()) {
                 Map<String, Object> it = new HashMap<>();
-                it.put("id", ci.getId() != null ? Long.valueOf(ci.getId()) : null);
                 if (ci.getProduct() != null) {
                     it.put("productCode", ci.getProduct().getProductCode());
                     it.put("title", ci.getProduct().getTitle());

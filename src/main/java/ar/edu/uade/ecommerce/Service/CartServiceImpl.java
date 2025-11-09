@@ -165,7 +165,6 @@ public class CartServiceImpl implements CartService {
                 // Armar usuario
                 java.util.Map<String, Object> userMap = new java.util.HashMap<>();
                 if (cart.getUser() != null) {
-                    userMap.put("id", cart.getUser().getId());
                     userMap.put("name", cart.getUser().getName());
                     userMap.put("email", cart.getUser().getEmail());
                 }
@@ -187,7 +186,6 @@ public class CartServiceImpl implements CartService {
                 }
                 // Armar cart
                 java.util.Map<String, Object> cartMap = new java.util.HashMap<>();
-                cartMap.put("cartId", cart.getId());
                 cartMap.put("items", items);
                 cartMap.put("finalPrice", cart.getFinalPrice());
                 // Armar payload
@@ -225,11 +223,9 @@ public class CartServiceImpl implements CartService {
         Cart cart = purchase.getCart();
         java.util.Map<String, Object> userMap = new java.util.HashMap<>();
         if (purchase.getUser() != null) {
-            userMap.put("id", purchase.getUser().getId());
             userMap.put("name", purchase.getUser().getName());
             userMap.put("email", purchase.getUser().getEmail());
         } else if (cart != null && cart.getUser() != null) {
-            userMap.put("id", cart.getUser().getId());
             userMap.put("name", cart.getUser().getName());
             userMap.put("email", cart.getUser().getEmail());
         }
@@ -252,7 +248,6 @@ public class CartServiceImpl implements CartService {
 
         java.util.Map<String, Object> cartMap = new java.util.HashMap<>();
         if (cart != null) {
-            cartMap.put("cartId", cart.getId());
             cartMap.put("items", items);
             cartMap.put("finalPrice", cart.getFinalPrice());
         }

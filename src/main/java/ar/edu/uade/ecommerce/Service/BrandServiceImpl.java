@@ -75,7 +75,6 @@ public class BrandServiceImpl implements BrandService {
         return brandRepository.findByActiveTrue().stream()
                 .map(b -> {
                     java.util.Map<String, Object> dto = new java.util.HashMap<>();
-                    dto.put("id", b.getId());
                     dto.put("name", b.getName());
                     dto.put("brandCode", b.getBrandCode());
                     return dto;
