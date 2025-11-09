@@ -55,11 +55,15 @@ public class ProductController {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint de sincronización mock deshabilitado. Use la API de Comunicación para enviar eventos de producto.");
     }
 
-    // Obtiene todos los productos con paginación
+    // Obtiene todos los productos activos con paginación
     @GetMapping
     public org.springframework.data.domain.Page<ProductDTO> getAllProducts(org.springframework.data.domain.Pageable pageable) {
         org.springframework.data.domain.Page<Product> page = productRepository.findAll(pageable);
-        return page.map(this::toDTO);
+        java.util.List<ProductDTO> activos = page.getContent().stream()
+            .filter(p -> Boolean.TRUE.equals(p.getActive()))
+            .map(this::toDTO)
+            .toList();
+        return new org.springframework.data.domain.PageImpl<>(activos, pageable, activos.size());
     }
 
     // Agrega un producto específico usando mensaje mockeado -> DESACTIVADO
@@ -67,9 +71,6 @@ public class ProductController {
     public ProductDTO addProduct() {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Endpoint mock deshabilitado. Los productos deben agregarse a través de eventos desde el Core.");
     }
-
-    // Edita solo precio y stock usando mensaje mockeado -> DESACTIVADO
-    public static class EditProductSimpleRequest { public Long id; }
 
     @PatchMapping("/simple")
     public ProductDTO editProductSimple() {
@@ -215,6 +216,10 @@ public class ProductController {
         // Filtrado
         List<Product> filtered = products.stream()
             .filter(p -> {
+                // Solo productos activos
+                if (!Boolean.TRUE.equals(p.getActive())) {
+                    return false;
+                }
                 boolean matches = true;
                 if (filterRequest.getPriceMin() != null && (p.getPrice() == null || p.getPrice() < filterRequest.getPriceMin())) {
                     matches = false;
@@ -244,7 +249,7 @@ public class ProductController {
                 }
                 return matches;
             })
-            .collect(Collectors.toList());
+            .collect(java.util.stream.Collectors.toList());
         // Ordenamiento
         if (filterRequest.getSortBy() != null) {
             if ("price".equalsIgnoreCase(filterRequest.getSortBy())) {
@@ -266,7 +271,7 @@ public class ProductController {
         int size = filterRequest.getSize() != null ? filterRequest.getSize() : 20;
         int start = page * size;
         int end = Math.min(start + size, filtered.size());
-        List<ProductDTO> pageContent = filtered.subList(start, end).stream().map(this::toDTO).collect(Collectors.toList());
+        List<ProductDTO> pageContent = filtered.subList(start, end).stream().map(this::toDTO).collect(java.util.stream.Collectors.toList());
         return new org.springframework.data.domain.PageImpl<>(pageContent, org.springframework.data.domain.PageRequest.of(page, size), filtered.size());
     }
 
@@ -340,6 +345,7 @@ public class ProductController {
     @GetMapping("/homescreen")
     public List<ProductDTO> getHomeScreenProducts() {
         return productRepository.findAll().stream()
+            .filter(p -> !Boolean.FALSE.equals(p.getActive()))
             .filter(p -> Boolean.TRUE.equals(p.isIsBestseller())
                 || Boolean.TRUE.equals(p.isHero())
                 || Boolean.TRUE.equals(p.isIsFeatured())
@@ -406,6 +412,10 @@ public class ProductController {
         ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);
         if (user == null) return java.util.Collections.emptyList();
         return favouriteProductsRepository.findAllByUser(user).stream()
+            .filter(fav -> {
+                Product p = fav.getProduct();
+                return p != null && !Boolean.FALSE.equals(p.getActive());
+            })
             .map(fav -> {
                 Product p = fav.getProduct();
                 java.util.Map<String, Object> map = new java.util.HashMap<>();
