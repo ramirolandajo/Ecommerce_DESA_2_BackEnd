@@ -9,6 +9,7 @@ public class UserLoginResponseDTO {
     private boolean success;
     private String bearer_token;
     private UserBasicDTO user;
+    private String error; // mensaje de error cuando success=false
 
     @Data
     public static class UserBasicDTO {
