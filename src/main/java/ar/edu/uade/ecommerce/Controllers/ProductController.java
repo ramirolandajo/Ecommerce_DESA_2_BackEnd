@@ -425,7 +425,7 @@ public class ProductController {
                 map.put("price", p.getPrice());
                 map.put("stock", p.getStock());
                 map.put("productCode", fav.getProductCode());
-                map.put("id", fav.getId());
+                map.put("id", p.getId());
                 return map;
             })
             .toList();
