@@ -188,12 +188,7 @@ public class CartServiceImpl implements CartService {
                 java.util.Map<String, Object> cartMap = new java.util.HashMap<>();
                 cartMap.put("items", items);
                 cartMap.put("finalPrice", cart.getFinalPrice());
-                // Armar payload
-                java.util.Map<String, Object> payloadMap = new java.util.HashMap<>();
-                payloadMap.put("purchaseId", purchase != null ? purchase.getId() : null);
-                payloadMap.put("user", userMap);
-                payloadMap.put("cart", cartMap);
-                payloadMap.put("status", purchase != null ? purchase.getStatus() : null);
+
                 // Armar evento final
                 java.util.Map<String, Object> eventDetail = new java.util.HashMap<>();
                 // Ajuste: para rollback, el type interno debe ser "POST: Stock rollback - compra cancelada"
@@ -201,6 +196,22 @@ public class CartServiceImpl implements CartService {
                 if ("StockRollback_CartCancelled".equals(eventName)) {
                     innerType = "POST: Stock rollback - compra cancelada";
                 }
+
+                // Forzar status CANCELLED para eventos de rollback/cancelación
+                String statusValue;
+                if ("StockRollback_CartCancelled".equals(eventName) || "POST: Stock rollback - compra cancelada".equals(innerType)) {
+                    statusValue = "CANCELLED";
+                } else {
+                    statusValue = (purchase != null ? String.valueOf(purchase.getStatus()) : null);
+                }
+
+                // Armar payload
+                java.util.Map<String, Object> payloadMap = new java.util.HashMap<>();
+                payloadMap.put("purchaseId", purchase != null ? purchase.getId() : null);
+                payloadMap.put("user", userMap);
+                payloadMap.put("cart", cartMap);
+                payloadMap.put("status", statusValue);
+
                 eventDetail.put("type", innerType);
                 eventDetail.put("payload", payloadMap);
                 eventDetail.put("timestamp", java.time.ZonedDateTime.now().toString());
