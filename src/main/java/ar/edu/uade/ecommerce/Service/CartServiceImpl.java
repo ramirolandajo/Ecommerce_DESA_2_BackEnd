@@ -197,9 +197,11 @@ public class CartServiceImpl implements CartService {
                     innerType = "POST: Stock rollback - compra cancelada";
                 }
 
-                // Forzar status CANCELLED para eventos de rollback/cancelación
+                // Forzar status según tipo de evento
                 String statusValue;
-                if ("StockRollback_CartCancelled".equals(eventName) || "POST: Stock rollback - compra cancelada".equals(innerType)) {
+                if ("POST: Compra pendiente".equals(eventName)) {
+                    statusValue = "PENDING";
+                } else if ("StockRollback_CartCancelled".equals(eventName) || "POST: Stock rollback - compra cancelada".equals(innerType)) {
                     statusValue = "CANCELLED";
                 } else {
                     statusValue = (purchase != null ? String.valueOf(purchase.getStatus()) : null);
