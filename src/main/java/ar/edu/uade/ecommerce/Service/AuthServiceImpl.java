@@ -35,14 +35,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String login(String email, String password) {
-        User user = userRepository.findByEmail(email);
-        if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            if (!user.isAccountActive()) {
-                throw new RuntimeException("La cuenta no está verificada. Por favor verifica tu correo electrónico.");
-            }
-            return jwtUtil.generateToken(user.getEmail());
+        ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new ar.edu.uade.ecommerce.Exceptions.UserNotFoundException("Usuario no encontrado");
         }
-        throw new RuntimeException("Credenciales inválidas");
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new ar.edu.uade.ecommerce.Exceptions.InvalidCredentialsException("Credenciales inválidas");
+        }
+        if (!user.isAccountActive()) {
+            throw new ar.edu.uade.ecommerce.Exceptions.AccountNotVerifiedException("La cuenta no está verificada. Por favor verifica tu correo electrónico.");
+        }
+        return jwtUtil.generateToken(user.getEmail());
     }
 
     @Override
@@ -63,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
         // Generar y enviar token de verificación
         String tokenStr = generateToken();
         Date expiration = new Date(System.currentTimeMillis() + 15 * 60 * 1000);
-        Token token = new Token();
+        ar.edu.uade.ecommerce.Entity.Token token = new Token();
         token.setUser(savedUser);
         token.setToken(tokenStr);
         token.setExpirationDate(expiration);

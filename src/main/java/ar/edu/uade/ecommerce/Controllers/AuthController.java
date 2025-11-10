@@ -25,147 +25,107 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<UserLoginResponseDTO> login(@RequestBody Map<String, String> request) {
-        try {
-            if (request == null) {
-                UserLoginResponseDTO resp = new UserLoginResponseDTO();
-                resp.setSuccess(false);
-                resp.setBearer_token(null);
-                resp.setUser(null);
-                return ResponseEntity.badRequest().body(resp);
-            }
-            String email = request.get("email");
-            String password = request.get("password");
-            if (email == null || password == null || email.isBlank() || password.isBlank()) {
-                UserLoginResponseDTO resp = new UserLoginResponseDTO();
-                resp.setSuccess(false);
-                resp.setBearer_token(null);
-                resp.setUser(null);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
-            }
-
-            String token = authService.login(email, password);
-            User user = authService.getUserByEmail(email);
-            if (user == null) {
-                UserLoginResponseDTO resp = new UserLoginResponseDTO();
-                resp.setSuccess(false);
-                resp.setBearer_token(null);
-                resp.setUser(null);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(resp);
-            }
-
-            if (token == null) {
-                UserLoginResponseDTO resp = new UserLoginResponseDTO();
-                resp.setSuccess(false);
-                resp.setBearer_token(null);
-                resp.setUser(null);
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(resp);
-            }
-
-            user.setSessionActive(true);
-            authService.saveUser(user);
-            UserLoginResponseDTO.UserBasicDTO userDTO = new UserLoginResponseDTO.UserBasicDTO();
-            userDTO.setId(user.getId());
-            userDTO.setName(user.getName());
-            userDTO.setLastname(user.getLastname());
-            userDTO.setEmail(user.getEmail());
-            userDTO.setAddresses(user.getAddresses());
-            UserLoginResponseDTO response = new UserLoginResponseDTO();
-            response.setSuccess(true);
-            response.setBearer_token(token);
-            response.setUser(userDTO);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Error en /auth/login", e);
-            UserLoginResponseDTO resp = new UserLoginResponseDTO();
-            resp.setSuccess(false);
-            resp.setBearer_token(null);
-            resp.setUser(null);
-            // Mensaje sanitizado para que el frontend no muestre stack traces
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
+        if (request == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failLogin());
         }
+        String email = request.get("email");
+        String password = request.get("password");
+        if (email == null || password == null || email.isBlank() || password.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failLogin());
+        }
+        String token = authService.login(email, password); // puede lanzar excepciones específicas
+        User user = authService.getUserByEmail(email);
+        UserLoginResponseDTO.UserBasicDTO userDTO = new UserLoginResponseDTO.UserBasicDTO();
+        userDTO.setId(user.getId());
+        userDTO.setName(user.getName());
+        userDTO.setLastname(user.getLastname());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setAddresses(user.getAddresses());
+        user.setSessionActive(true);
+        authService.saveUser(user);
+        UserLoginResponseDTO response = new UserLoginResponseDTO();
+        response.setSuccess(true);
+        response.setBearer_token(token);
+        response.setUser(userDTO);
+        return ResponseEntity.ok(response);
+    }
+
+    private UserLoginResponseDTO failLogin() {
+        UserLoginResponseDTO resp = new UserLoginResponseDTO();
+        resp.setSuccess(false);
+        resp.setBearer_token(null);
+        resp.setUser(null);
+        return resp;
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterUserDTO registerUserDTO) {
-        try {
-            if (registerUserDTO == null || registerUserDTO.getEmail() == null || registerUserDTO.getPassword() == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Datos incompletos para el registro");
-            }
-            User existingUser = authService.getUserByEmail(registerUserDTO.getEmail());
-            if (existingUser != null) {
-                if (existingUser.isAccountActive()) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body("La cuenta ya está activa. Inicia sesión.");
-                } else {
-                    // Reenvía el token de verificación
-                    authService.resendVerificationToken(existingUser);
-                    return ResponseEntity.ok("La cuenta ya existe pero no está activa. Se ha reenviado el token de verificación a tu correo.");
-                }
-            }
-            User newUser = authService.registerDTO(registerUserDTO);
-            if (newUser == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No se pudo crear el usuario");
-            }
-            UserResponseDTO responseDTO = new UserResponseDTO();
-            responseDTO.setId(newUser.getId());
-            responseDTO.setName(newUser.getName());
-            responseDTO.setLastname(newUser.getLastname());
-            responseDTO.setEmail(newUser.getEmail());
-            newUser.setRole("USER");
-            // Devolvemos 201 Created con un mensaje claro
-            Map<String, Object> body = new HashMap<>();
-            body.put("message", "Fuiste registrado satisfactoriamente, revisa tu casilla de correo para ingresar luego el token para activar la cuenta");
-            body.put("user", responseDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(body);
-        } catch (Exception e) {
-            logger.error("Error en /auth/register", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocurrió un error en el servidor. Contacte al administrador.");
+        if (registerUserDTO == null || registerUserDTO.getEmail() == null || registerUserDTO.getPassword() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Datos incompletos para el registro");
         }
+        // Validación: nombre debe contener al menos una letra (A-Z o a-z)
+        String name = registerUserDTO.getName();
+        if (name == null || !name.matches(".*[A-Za-zÁÉÍÓÚáéíóúÑñ].*")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El nombre debe contener al menos una letra");
+        }
+        User existingUser = authService.getUserByEmail(registerUserDTO.getEmail());
+        if (existingUser != null) {
+            if (existingUser.isAccountActive()) {
+                // Usar IllegalStateException para que el handler global devuelva 409
+                throw new IllegalStateException("La cuenta ya está activa. Inicia sesión.");
+            } else {
+                // Reenvía el token de verificación
+                authService.resendVerificationToken(existingUser);
+                return ResponseEntity.ok("La cuenta ya existe pero no está activa. Se ha reenviado el token de verificación a tu correo.");
+            }
+        }
+        User newUser = authService.registerDTO(registerUserDTO);
+        UserResponseDTO responseDTO = new UserResponseDTO();
+        responseDTO.setId(newUser.getId());
+        responseDTO.setName(newUser.getName());
+        responseDTO.setLastname(newUser.getLastname());
+        responseDTO.setEmail(newUser.getEmail());
+        newUser.setRole("USER");
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "Fuiste registrado satisfactoriamente, revisa tu casilla de correo para ingresar luego el token para activar la cuenta");
+        body.put("user", responseDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
     @PostMapping("/verify-email")
     public ResponseEntity<String> verifyEmail(@RequestBody Map<String, String> request) {
-        try {
-            if (request == null) {
-                return ResponseEntity.badRequest().body("Solicitud inválida");
-            }
-            String email = request.get("email");
-            String token = request.get("token");
-            if (email == null || token == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email o token faltante");
-            }
-            boolean verified = authService.verifyEmailToken(email, token);
-            if (verified) {
-                return ResponseEntity.ok("Cuenta verificada exitosamente. Ya puedes iniciar sesión.");
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token inválido o expirado");
-            }
-        } catch (Exception e) {
-            logger.error("Error en /auth/verify-email", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocurrió un error en el servidor. Contacte al administrador.");
+        if (request == null) {
+            return ResponseEntity.badRequest().body("Solicitud inválida");
+        }
+        String email = request.get("email");
+        String token = request.get("token");
+        if (email == null || token == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email o token faltante");
+        }
+        boolean verified = authService.verifyEmailToken(email, token);
+        if (verified) {
+            return ResponseEntity.ok("Cuenta verificada exitosamente. Ya puedes iniciar sesión.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token inválido o expirado");
         }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String authHeader) {
-        try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cabecera Authorization inválida");
-            }
-            String token = authHeader.replace("Bearer ", "");
-            String email = authService.getEmailFromToken(token);
-            if (email == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
-            }
-            User user = authService.getUserByEmail(email);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
-            }
-            user.setSessionActive(false);
-            authService.saveUser(user);
-            return ResponseEntity.ok("Sesión cerrada correctamente");
-        } catch (Exception e) {
-            logger.error("Error en /auth/logout", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocurrió un error en el servidor. Contacte al administrador.");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cabecera Authorization inválida");
         }
+        String token = authHeader.replace("Bearer ", "");
+        String email = authService.getEmailFromToken(token);
+        if (email == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token inválido");
+        }
+        User user = authService.getUserByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+        }
+        user.setSessionActive(false);
+        authService.saveUser(user);
+        return ResponseEntity.ok("Sesión cerrada correctamente");
     }
 }

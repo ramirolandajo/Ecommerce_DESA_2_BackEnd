@@ -58,12 +58,17 @@ public class ProductController {
     // Obtiene todos los productos activos con paginación
     @GetMapping
     public org.springframework.data.domain.Page<ProductDTO> getAllProducts(org.springframework.data.domain.Pageable pageable) {
-        org.springframework.data.domain.Page<Product> page = productRepository.findAll(pageable);
-        java.util.List<ProductDTO> activos = page.getContent().stream()
-            .filter(p -> Boolean.TRUE.equals(p.getActive()))
-            .map(this::toDTO)
-            .toList();
-        return new org.springframework.data.domain.PageImpl<>(activos, pageable, activos.size());
+        try {
+            org.springframework.data.domain.Page<Product> page = productRepository.findAll(pageable);
+            java.util.List<ProductDTO> activos = page.getContent().stream()
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                .map(this::toDTO)
+                .toList();
+            return new org.springframework.data.domain.PageImpl<>(activos, pageable, activos.size());
+        } catch (Exception ex) {
+            // Cualquier error inesperado => 500
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al obtener productos");
+        }
     }
 
     // Agrega un producto específico usando mensaje mockeado -> DESACTIVADO
@@ -140,18 +145,18 @@ public class ProductController {
     @PostMapping("/code/{productCode}/review")
     public ReviewResponse addReview(@PathVariable Integer productCode, @RequestBody ReviewRequest reviewRequest) {
         Product product = productRepository.findByProductCode(productCode);
-        if (product == null) throw new RuntimeException("Producto no encontrado por productCode=" + productCode);
+        if (product == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado por productCode=" + productCode);
         // Obtener usuario autenticado
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         ar.edu.uade.ecommerce.Entity.User user = null;
         if (auth != null) {
             String email = auth.getName();
             user = userRepository.findByEmail(email);
-            if (user == null) throw new RuntimeException("Usuario no encontrado");
+            if (user == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
             // Verificar si ya existe una review de este usuario para este producto
             Review existingReview = reviewRepository.findByProductAndUser(product, user);
             if (existingReview != null) {
-                throw new RuntimeException("Ya has calificado/comentado este producto.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya has calificado/comentado este producto.");
             }
         }
         Review review = new Review();
@@ -183,15 +188,15 @@ public class ProductController {
     @GetMapping("/code/{productCode}/review/me")
     public ReviewDTO getMyReview(@PathVariable Integer productCode) {
         Product product = productRepository.findByProductCode(productCode);
-        if (product == null) throw new RuntimeException("Producto no encontrado por productCode=" + productCode);
+        if (product == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado por productCode=" + productCode);
         // Obtener usuario autenticado
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) throw new RuntimeException("Usuario no autenticado");
+        if (auth == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado");
         String email = auth.getName();
         ar.edu.uade.ecommerce.Entity.User user = userRepository.findByEmail(email);
-        if (user == null) throw new RuntimeException("Usuario no encontrado");
+        if (user == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
         Review review = reviewRepository.findByProductAndUser(product, user);
-        if (review == null) throw new RuntimeException("No has calificado/comentado este producto.");
+        if (review == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No has calificado/comentado este producto.");
         return new ReviewDTO(review.getId(), review.getCalification(), review.getDescription());
     }
 
@@ -199,7 +204,7 @@ public class ProductController {
     @GetMapping("/{id}/reviews")
     public ReviewResponse getReviews(@PathVariable Integer id) {
         Optional<Product> productOpt = productRepository.findById(id);
-        if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
+        if (productOpt.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
         Product product = productOpt.get();
         List<Review> reviews = reviewRepository.findByProduct(product);
         float promedio = (float) reviews.stream().mapToDouble(Review::getCalification).average().orElse(0.0);
@@ -279,7 +284,7 @@ public class ProductController {
     @GetMapping("/{id}")
     public ProductWithRelatedDTO getProductById(@PathVariable("id") Long id) {
         Optional<Product> productOpt = productRepository.findById(id.intValue());
-        if (productOpt.isEmpty()) throw new RuntimeException("Producto no encontrado");
+        if (productOpt.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
         Product product = productOpt.get();
         ProductDTO mainProduct = toDTO(product);
         List<Product> allProducts = productRepository.findAll();
