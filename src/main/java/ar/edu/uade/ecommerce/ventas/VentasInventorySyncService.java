@@ -217,14 +217,30 @@ public class VentasInventorySyncService {
 
     @Transactional
     public void crearProductosBatch(Object payload) {
-        JsonNode p = mapper.valueToTree(payload);
-        if (p == null || !p.has("items") || !p.get("items").isArray()) {
-            throw new IllegalArgumentException("Payload inválido para batch: falta 'items' array");
+        JsonNode p;
+        try {
+            if (payload instanceof JsonNode) {
+                p = (JsonNode) payload;
+            } else if (payload instanceof String) {
+                p = mapper.readTree((String) payload);
+            } else if (payload instanceof byte[]) {
+                p = mapper.readTree((byte[]) payload);
+            } else {
+                p = mapper.valueToTree(payload);
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Payload inválido para batch: no se puede parsear", e);
         }
+
+        JsonNode items = p != null && p.isArray() ? p : (p != null ? p.get("items") : null);
+        if (items == null || !items.isArray()) {
+            throw new IllegalArgumentException("Payload inválido para batch: falta array 'items' o el payload no es un array");
+        }
+
         int ok = 0, fail = 0;
-        for (JsonNode item : p.get("items")) {
+        for (JsonNode item : items) {
             try {
-                Integer productCode = asInt(item, "productCode");
+                Integer productCode = asInt(item, "productCode", "product_code");
                 if (productCode == null) throw new IllegalArgumentException("Item sin productCode");
                 Product prod = Optional.ofNullable(productRepository.findByProductCode(productCode)).orElse(new Product());
                 applyFullProduct(prod, item);
@@ -267,9 +283,9 @@ public class VentasInventorySyncService {
         if (hasAny(p, "price")) prod.setPrice(asFloat(p, "price"));
         if (hasAny(p, "discount")) prod.setDiscount(asFloat(p, "discount"));
         if (hasAny(p, "stock")) prod.setStock(asInt(p, "stock"));
-        if (hasAny(p, "new", "isNew")) prod.setNew(Boolean.TRUE.equals(asBool(p, "new", "isNew")));
-        if (hasAny(p, "bestSeller", "isBestseller")) prod.setBestseller(Boolean.TRUE.equals(asBool(p, "bestSeller", "isBestseller")));
-        if (hasAny(p, "featured", "isFeatured")) prod.setFeatured(Boolean.TRUE.equals(asBool(p, "featured", "isFeatured")));
+        if (hasAny(p, "new", "isNew", "is_new")) prod.setNew(Boolean.TRUE.equals(asBool(p, "new", "isNew", "is_new")));
+        if (hasAny(p, "bestSeller", "isBestseller", "is_best_seller")) prod.setBestseller(Boolean.TRUE.equals(asBool(p, "bestSeller", "isBestseller", "is_best_seller")));
+        if (hasAny(p, "featured", "isFeatured", "is_featured")) prod.setFeatured(Boolean.TRUE.equals(asBool(p, "featured", "isFeatured", "is_featured")));
         if (hasAny(p, "hero")) prod.setHero(Boolean.TRUE.equals(asBool(p, "hero")));
         if (hasAny(p, "active")) prod.setActive(Boolean.TRUE.equals(asBool(p, "active")));
         if (hasAny(p, "calification", "rating")) prod.setCalification(asFloat(p, "calification", "rating"));
