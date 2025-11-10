@@ -95,13 +95,17 @@ public class ECommerceEventService {
             sanitizeCartItems(cart); // Asegurar que no salga 'productId' en items
         }
         payload.put("cart", cart);
-        payload.put("status", status);
+        String effectiveStatus = (status == null || status.isBlank()) ? "PENDING" : status;
+        if (!effectiveStatus.equals(status)) {
+            logger.debug("Status nulo/vacío para '{}', usando 'PENDING'.", type);
+        }
+        payload.put("status", effectiveStatus);
 
         ensureBackendTokenAvailable(type);
         // Persistir primero
         persistLocalEvent(type, payload);
         CoreEvent event = new CoreEvent(type, payload, originModuleName);
-        logger.info("Emitiendo evento de compra: {} origin={} payloadType={}", type, originModuleName, payload != null ? payload.getClass().getSimpleName() : "null");
+        logger.info("Emitiendo evento de compra: {} origin={} status={}", type, originModuleName, effectiveStatus);
         coreApiClient.sendEvent(event);
     }
 
