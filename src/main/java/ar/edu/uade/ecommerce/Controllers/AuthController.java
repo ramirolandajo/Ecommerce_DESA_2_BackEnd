@@ -66,7 +66,9 @@ public class AuthController {
         // Validación: nombre debe contener al menos una letra (A-Z o a-z)
         String name = registerUserDTO.getName();
         if (name == null || !name.matches(".*[A-Za-zÁÉÍÓÚáéíóúÑñ].*")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El nombre debe contener al menos una letra");
+            return ResponseEntity
+                    .badRequest()
+                    .body(java.util.Map.of("error", "El nombre debe contener al menos una letra"));
         }
         User existingUser = authService.getUserByEmail(registerUserDTO.getEmail());
         if (existingUser != null) {
