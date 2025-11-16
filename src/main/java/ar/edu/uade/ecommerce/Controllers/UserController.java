@@ -113,21 +113,5 @@ public class UserController {
         return ResponseEntity.ok((List<Address>) user.getAddresses());
     }
 
-    @PutMapping("/disable")
-    public ResponseEntity<?> disableAccount(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null) {
-            return ResponseEntity.status(401).body("Usuario no logueado");
-        }
-        String token = authHeader.replace("Bearer ", "");
-        String email = authService.getEmailFromToken(token);
-        User user = authService.getUserByEmail(email);
-        if (user == null || !user.getSessionActive()) {
-            return ResponseEntity.status(401).body("Usuario no logueado");
-        }
-        user.setEmail(null);
-        user.setAccountActive(false);
-        User updated = userService.saveUser(user);
-        return ResponseEntity.ok(updated);
-    }
 
 }
