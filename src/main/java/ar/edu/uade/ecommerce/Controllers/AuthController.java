@@ -95,20 +95,27 @@ public class AuthController {
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<String> verifyEmail(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestBody Map<String, String> request) {
         if (request == null) {
-            return ResponseEntity.badRequest().body("Solicitud inválida");
+            return ResponseEntity.badRequest().body(Map.of("error", "Solicitud inválida"));
         }
         String email = request.get("email");
         String token = request.get("token");
         if (email == null || token == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email o token faltante");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Email o token faltante"));
         }
-        boolean verified = authService.verifyEmailToken(email, token);
-        if (verified) {
-            return ResponseEntity.ok("Cuenta verificada exitosamente. Ya puedes iniciar sesión.");
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token inválido o expirado");
+        try {
+            boolean verified = authService.verifyEmailToken(email, token);
+            if (verified) {
+                return ResponseEntity.ok(Map.of("message", "Cuenta verificada exitosamente. Ya puedes iniciar sesión."));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "El token ingresado no es el correcto, intentelo nuevamente"));
+            }
+        } catch (Exception ex) {
+            logger.warn("Error verificando token para {}: {}", email, ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "El token ingresado no es el correcto, intentelo nuevamente"));
         }
     }
 
