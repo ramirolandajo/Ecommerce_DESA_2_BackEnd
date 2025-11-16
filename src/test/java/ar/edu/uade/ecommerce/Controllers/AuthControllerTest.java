@@ -161,29 +161,29 @@ class AuthControllerTest {
         assertTrue(response.getBody().toString().contains("Datos incompletos"));
     }
 
-//    @Test
-//    void testVerifyEmail_Success() {
-//        Map<String, String> request = new HashMap<>();
-//        request.put("email", "test@email.com");
-//        request.put("token", "token123");
-//        when(authService.verifyEmailToken("test@email.com", "token123")).thenReturn(true);
-//        ResponseEntity<String> response = authController.verifyEmail(request);
-//        assertEquals(200, response.getStatusCode().value());
-//        assertNotNull(response.getBody());
-//        assertTrue(response.getBody().contains("Cuenta verificada exitosamente"));
-//    }
+    @Test
+    void testVerifyEmail_Success() {
+        Map<String, String> request = new HashMap<>();
+        request.put("email", "test@email.com");
+        request.put("token", "token123");
+        when(authService.verifyEmailToken("test@email.com", "token123")).thenReturn(true);
+        ResponseEntity<String> response = authController.verifyEmail(request);
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("Cuenta verificada exitosamente"));
+    }
 
-//    @Test
-//    void testVerifyEmail_Failure() {
-//        Map<String, String> request = new HashMap<>();
-//        request.put("email", "test@email.com");
-//        request.put("token", "token123");
-//        when(authService.verifyEmailToken("test@email.com", "token123")).thenReturn(false);
-//        ResponseEntity<String> response = authController.verifyEmail(request);
-//        assertEquals(400, response.getStatusCode().value());
-//        assertNotNull(response.getBody());
-//        assertTrue(response.getBody().contains("Token inválido o expirado"));
-//    }
+    @Test
+    void testVerifyEmail_Failure() {
+        Map<String, String> request = new HashMap<>();
+        request.put("email", "test@email.com");
+        request.put("token", "token123");
+        when(authService.verifyEmailToken("test@email.com", "token123")).thenReturn(false);
+        ResponseEntity<String> response = authController.verifyEmail(request);
+        assertEquals(400, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("Token inválido o expirado"));
+    }
 
     @Test
     void testLogout_Success() {

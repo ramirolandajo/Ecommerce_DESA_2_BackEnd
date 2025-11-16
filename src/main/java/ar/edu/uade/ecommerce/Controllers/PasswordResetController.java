@@ -33,7 +33,7 @@ public class PasswordResetController {
         if (valid) {
             return ResponseEntity.ok(Map.of("message", "Token válido"));
         } else {
-            return ResponseEntity.badRequest().body(Map.of("error", "El token enviado no es correcto"));
+            return ResponseEntity.badRequest().body(Map.of("error", "token incorrecto por favor ingréselo nuevamente"));
         }
     }
 
@@ -46,7 +46,7 @@ public class PasswordResetController {
             passwordResetService.changePassword(email, token, newPassword);
             return ResponseEntity.ok(Map.of("message", "Contraseña cambiada exitosamente"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "El token enviado no es correcto"));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }
