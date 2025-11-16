@@ -35,11 +35,36 @@ public class CartController {
         }
         ar.edu.uade.ecommerce.Entity.User user = cartService.findUserByEmail(email);
         cart.setUser(user);
+
+        // Validar y mapear productos por productCode, validar activo y stock antes de crear el carrito
         if (cart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem item : cart.getItems()) {
                 item.setCart(cart);
+                if (item.getProduct() == null || item.getProduct().getProductCode() == null) {
+                    return ResponseEntity.badRequest().header("X-Stock-Error", "Missing productCode").build();
+                }
+                String code = String.valueOf(item.getProduct().getProductCode());
+                ar.edu.uade.ecommerce.Entity.Product realProduct = cartService.getProductById(Integer.valueOf(code));
+                if (realProduct == null) {
+                    return ResponseEntity.status(404).header("X-Stock-Error", "Product not found: " + code).build();
+                }
+                // Validar que el producto esté activo
+                Boolean active = realProduct.getActive();
+                if (active == null || !active) {
+                    return ResponseEntity.status(409).header("X-Product-Error", "Product deactivated: " + code).build();
+                }
+                // Validar cantidad y stock disponible
+                if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                    return ResponseEntity.badRequest().header("X-Stock-Error", "Invalid quantity for product: " + code).build();
+                }
+                if (realProduct.getStock() < item.getQuantity()) {
+                    return ResponseEntity.status(409).header("X-Stock-Error", "Insufficient stock for product: " + code).build();
+                }
+                // usar el producto real para cálculo de precio y persistencia
+                item.setProduct(realProduct);
             }
         }
+
         float finalPrice = 0f;
         if (cart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem item : cart.getItems()) {
