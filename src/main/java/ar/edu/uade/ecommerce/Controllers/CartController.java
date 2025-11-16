@@ -35,6 +35,31 @@ public class CartController {
         }
         ar.edu.uade.ecommerce.Entity.User user = cartService.findUserByEmail(email);
         cart.setUser(user);
+
+        // Validar stock y estado activo antes de crear el carrito
+        if (cart.getItems() != null) {
+            for (ar.edu.uade.ecommerce.Entity.CartItem item : cart.getItems()) {
+                if (item.getProduct() != null && item.getQuantity() != null) {
+                    ar.edu.uade.ecommerce.Entity.Product realProduct = cartService.getProductById(item.getProduct().getId());
+                    if (realProduct == null) {
+                        return ResponseEntity.badRequest()
+                            .header("X-Error-Message", "Producto no encontrado: ID " + item.getProduct().getId())
+                            .build();
+                    }
+                    if (!realProduct.isActive()) {
+                        return ResponseEntity.badRequest()
+                            .header("X-Error-Message", "El producto '" + realProduct.getTitle() + "' no está activo")
+                            .build();
+                    }
+                    if (realProduct.getStock() < item.getQuantity()) {
+                        return ResponseEntity.badRequest()
+                            .header("X-Error-Message", "Stock insuficiente para el producto '" + realProduct.getTitle() + "'. Disponible: " + realProduct.getStock() + ", Solicitado: " + item.getQuantity())
+                            .build();
+                    }
+                }
+            }
+        }
+
         if (cart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem item : cart.getItems()) {
                 item.setCart(cart);
@@ -54,7 +79,6 @@ public class CartController {
         cart.setFinalPrice(finalPrice);
         Cart createdCart = cartService.createCart(cart);
         boolean stockError = false;
-        // Eliminamos kafkaError y la emisión duplicada; la emisión se hace en CartServiceImpl.createCart()
         if (createdCart != null && createdCart.getItems() != null) {
             for (ar.edu.uade.ecommerce.Entity.CartItem item : createdCart.getItems()) {
                 ar.edu.uade.ecommerce.Entity.Product product = item.getProduct();
@@ -72,7 +96,6 @@ public class CartController {
                     }
                 }
             }
-            // No emitir evento aquí (se emite en el servicio)
         }
         ar.edu.uade.ecommerce.Entity.Purchase purchase = new ar.edu.uade.ecommerce.Entity.Purchase();
         purchase.setUser(user);

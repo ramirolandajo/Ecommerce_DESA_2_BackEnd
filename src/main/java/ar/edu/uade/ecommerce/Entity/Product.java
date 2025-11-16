@@ -120,4 +120,9 @@ public class Product {
     public void setFeatured(boolean b) {
         this.isFeatured = b;
     }
+
+
+    public boolean isActive() {
+        return active;
+    }
 }
