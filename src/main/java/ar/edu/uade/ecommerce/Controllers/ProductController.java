@@ -286,10 +286,13 @@ public class ProductController {
         Optional<Product> productOpt = productRepository.findById(id.intValue());
         if (productOpt.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
         Product product = productOpt.get();
+        // Asegurar que el producto esté activo (true)
+        if (!Boolean.TRUE.equals(product.getActive())) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
         ProductDTO mainProduct = toDTO(product);
         List<Product> allProducts = productRepository.findAll();
-        // Filtrar productos relacionados por marca o categoría (excluyendo el mismo producto)
+        // Filtrar productos relacionados por marca o categoría (excluyendo el mismo producto) y solo activos
         List<ProductDTO> related = allProducts.stream()
+            .filter(p -> Boolean.TRUE.equals(p.getActive()))
             .filter(p -> !p.getId().equals(product.getId()) && (
                 (product.getBrand() != null && p.getBrand() != null && p.getBrand().getId().equals(product.getBrand().getId())) ||
                 (product.getCategories() != null && p.getCategories() != null && p.getCategories().stream().anyMatch(cat -> product.getCategories().stream().anyMatch(pc -> pc.getId().equals(cat.getId()))) )
