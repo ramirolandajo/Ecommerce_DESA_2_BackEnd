@@ -41,23 +41,18 @@ public class ProductSearchController {
     }
 
    @GetMapping
-   public List<SearchProductDTO> searchProducts(@RequestParam("query") String query) {
+   public List<Product> searchProducts(@RequestParam("query") String query) {
        String lowerQuery = query.toLowerCase();
        Set<String> relatedTypes = new HashSet<>();
        if (synonyms.containsKey(lowerQuery)) {
            relatedTypes.addAll(synonyms.get(lowerQuery));
        }
        List<Product> products = productRepository.findAll();
-       List<SearchProductDTO> result = products.stream()
+       List<Product> result = products.stream()
            .filter(p -> Boolean.TRUE.equals(p.getActive())
+               && p.getTitle() != null
                && (p.getTitle().toLowerCase().contains(lowerQuery)
                    || relatedTypes.stream().anyMatch(type -> p.getTitle().toLowerCase().contains(type))))
-           .map(p -> new SearchProductDTO(
-               p.getId() != null ? Long.valueOf(p.getId()) : null,
-               p.getTitle(),
-               p.getDescription(),
-               p.getMediaSrc()
-           ))
            .collect(Collectors.toList());
        return result;
    }
