@@ -91,6 +91,7 @@ public class VentasInventorySyncService {
 
     @Transactional
     public void activarProducto(Object payload) {
+        log.info("[Inventario->Ventas] Activando producto con payload: {}", payload);
         JsonNode p = mapper.valueToTree(payload);
         Integer productCode = asInt(p, "productCode");
         Product prod = resolveByProductCodeOrId(p, productCode);
